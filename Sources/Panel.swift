@@ -148,7 +148,6 @@ struct PanelMonitor {
     let top: [PanelCell]        // Spaces in saved order
     let bottom: [PanelCell]     // Spaces on the bar now
     let links: [(Int, Int)]     // top index → bottom index, the same Space
-    let orderDiffers: Bool
 
     var diffs: Int { tiles.filter { $0.state != .ok }.count }
     var hasError: Bool { tiles.contains { $0.isError } }
@@ -171,7 +170,7 @@ struct PanelMonitor {
         guard let k = newCells.firstIndex(of: j), k < newTiles.count else { return nil }
         return newTiles[k]
     }
-    var differs: Bool { diffs > 0 || orderDiffers }
+    var differs: Bool { diffs > 0 }
 }
 
 struct PanelStatus {
@@ -210,7 +209,7 @@ struct PanelData {
                 return PanelTile(index: i, num: state == .unsaved ? "+" : String(format: "%02d", n), entry: t.entry, state: state)
             }
             let saved = ts.indices.filter { ts[$0].state != .unsaved }   // tiles in the save: index here = place in the save
-            var bottom: [PanelCell] = [], links: [(Int, Int)] = [], orderDiffers = false
+            var bottom: [PanelCell] = [], links: [(Int, Int)] = []
             if connected {
                 let live = model.liveSpaces[d] ?? []
                 let place = Dictionary(uniqueKeysWithValues: (pick[d] ?? [:]).map { ($0.value, $0.key) })   // Space ID → saved index
@@ -223,7 +222,6 @@ struct PanelData {
                     guard let id = pick[d]?[i], let j = live.firstIndex(where: { $0.id == id }) else { return nil }
                     return (i, j)
                 }
-                orderDiffers = layout.map { ($0[d] ?? []).map(\.key) != (model.live[d] ?? []) } ?? false
                 // Out of order: every Space whose place among the saved ones on the bar is not its
                 // place in the save (two swapped Spaces are both marked). Missing and unsaved
                 // Spaces do not count, so they shift nobody's place.
@@ -235,7 +233,7 @@ struct PanelData {
             }
             return PanelMonitor(uuid: d, name: model.name(d).uppercased(), tiles: ts,
                                 top: saved.map { PanelCell(label: ts[$0].num, state: ts[$0].state) },
-                                bottom: bottom, links: links, orderDiffers: orderDiffers)
+                                bottom: bottom, links: links)
         }
     }
 
@@ -248,7 +246,7 @@ struct PanelData {
     var differs: Bool { monitors.contains { $0.differs } }
     /// First monitor with a difference, else the first one.
     var defaultMonitor: Int { monitors.firstIndex { $0.differs } ?? 0 }
-    var deviation: String { diffs > 0 ? U("\(diffs) różn.") : differs ? U("Kolejność") : "0" }
+    var deviation: String { diffs > 0 ? U("\(diffs) różn.") : "0" }
 
     func status(_ th: PanelTheme, busy: Bool) -> PanelStatus {
         if connected && busy {

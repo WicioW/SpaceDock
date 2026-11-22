@@ -71,6 +71,12 @@ final class Model: ObservableObject {
         refresh()
         selection = current
         timer = .scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.refresh() }
+        // Global shortcuts: save asks before replacing a save (as the button does); restore beeps
+        // when there is nothing to restore.
+        Hotkeys.shared.start(save: { [weak self] in self?.save() }, restore: { [weak self] in
+            guard let self, self.saved[self.current] != nil, self.trusted, !self.busy else { NSSound.beep(); return }
+            self.restoreNow()
+        })
     }
 
     func refresh() {
@@ -133,9 +139,11 @@ final class Model: ObservableObject {
 
     func spaceCount(_ key: String) -> Int { saved[key]?.values.map(\.count).reduce(0, +) ?? 0 }
 
-    /// The connected set has a save and the Spaces now are in another order (or other windows).
+    /// The connected set has a save and a tile differs from it (moved, missing, not saved): the
+    /// same states the tiles show. A window that only got a new number (app reopened) is not a
+    /// difference, its app still stands in its place.
     func differs(_ key: String) -> Bool {
-        key == current && saved[key].map { $0.mapValues { $0.map(\.key) } != live } ?? false
+        key == current && saved[key] != nil && PanelData(self, key: key).differs
     }
 
     func status(_ key: String) -> String {
@@ -269,7 +277,7 @@ struct SpacesApp: App {
         .windowStyle(.hiddenTitleBar)   // ContentView draws the title itself, next to the window buttons
         .commands { CommandGroup(after: .appInfo) { CheckForUpdatesButton() } }
         Settings {   // app menu → Settings… (⌘,), also from the menu bar icon
-            SettingsPanel().environmentObject(model).padding(20).frame(width: 380)
+            SettingsPanel().environmentObject(model)
         }
         MenuBarExtra {
             MenuContent().environmentObject(model)
@@ -424,7 +432,7 @@ struct ContentView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
             }
-            .safeAreaInset(edge: .bottom) { SettingsPanel().padding(12) }
+            .safeAreaInset(edge: .bottom) { SidebarStatus().padding(12) }
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 420)
             .toolbar(removing: .sidebarToggle)
         } detail: {
@@ -468,84 +476,149 @@ struct SettingsPanel: View {
     @AppStorage(PanelKey.on) private var panelOn = false
     @AppStorage(PanelKey.theme) private var panelTheme = 1
 
+    /// Settings window (⌘, or the gear under the sets): three tabs, the sidebar keeps only the
+    /// watcher's state. Grids keep labels in one column, so the switches line up.
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        TabView {
+            tab {
+                watcherState
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                    GridRow {
+                        Text("Przywracanie")
+                        modePicker($autoRestore)
+                            .help("Automatycznie: po podłączeniu lub odłączeniu monitora. Ręcznie: przycisk Przywróć")
+                    }
+                    GridRow {
+                        Text("Zapis")
+                        modePicker($autoSave)
+                            .help("Automatycznie: zapisuje zmianę kolejności, gdy stoi 5 s, nigdy tuż po zmianie monitorów")
+                    }
+                    GridRow {
+                        Text("Metoda")
+                        Picker("", selection: $restoreMethod) {
+                            Text("Przeciąganie").tag("drag").selectionDisabled(!dragAvailable)
+                            Text("Pełny ekran").tag("fullscreen")
+                            Text("Bezpośrednio").tag("bridge")
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .help("Przeciąganie: Mission Control i wirtualna mysz Karabinera. Pełny ekran: bez Karabinera, okna na chwilę wychodzą z pełnego ekranu, biurka zostają. Bezpośrednio: prywatna funkcja macOS 26+, bez myszy i Karabinera, ułamek sekundy")
+                    }
+                    if !dragAvailable {
+                        GridRow {
+                            Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
+                            Text("Przeciąganie wymaga Karabiner-Elements")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .tabItem { Label("Ogólne", systemImage: "gearshape") }
+
+            tab {
+                Text("Działają z każdej apki. Domyślnie bez skrótów.").foregroundStyle(.secondary)
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 10) {
+                    GridRow {
+                        Text("Skrót: zapis")
+                        ShortcutField(.save)
+                    }
+                    GridRow {
+                        Text("Skrót: przywróć")
+                        ShortcutField(.restore)
+                    }
+                }
+            }
+            .tabItem { Label("Skróty", systemImage: "keyboard") }
+
+            tab {
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                    GridRow {
+                        Text("Język")
+                        Picker("", selection: Binding(get: appLanguage, set: setAppLanguage)) {
+                            Text("Jak w systemie").tag("")
+                            Divider()
+                            Text(verbatim: "Polski").tag("pl")
+                            Text(verbatim: "English").tag("en")
+                            Text(verbatim: "Español").tag("es")
+                            Text(verbatim: "中文（简体）").tag("zh-Hans")
+                        }
+                        .labelsHidden()
+                        .disabled(model.busy)
+                        .help("Zmiana uruchamia apkę ponownie")
+                    }
+                    if panelUnlocked {   // the hidden look, once the shuttle has been clicked 10 times
+                        GridRow {
+                            Text("Wygląd")
+                            Picker("", selection: $panelOn) {
+                                Text("Zwykły").tag(false)
+                                Text("Panel").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                        }
+                        GridRow {
+                            Text("Motyw")
+                            Picker("", selection: $panelTheme) {
+                                ForEach(1...3, id: \.self) { Text(verbatim: "\($0)").tag($0) }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .disabled(!panelOn)
+                        }
+                    }
+                }
+                Toggle("Uruchamiaj przy logowaniu", isOn: Binding(get: { model.loginItem }, set: { model.setLoginItem($0) }))
+                AutoUpdateToggle()
+            }
+            .tabItem { Label("Apka", systemImage: "macwindow") }
+        }
+        .font(.callout)
+        .frame(width: 460)
+    }
+
+    private func tab(@ViewBuilder _ content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 12) { content() }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    @ViewBuilder private var watcherState: some View {
+        if model.trusted {
+            Label("Automat pilnuje monitorów", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+        } else {
+            Label("Automat wyłączony: brak uprawnienia Dostępność", systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Button("Nadaj uprawnienie…") { model.requestAccess() }
+        }
+    }
+}
+
+/// Under the sets in the sidebar: the watcher's state and the way to the settings window.
+struct SidebarStatus: View {
+    @EnvironmentObject var model: Model
+    @Environment(\.openSettings) private var openSettings
+
+    var body: some View {
+        HStack(spacing: 8) {
             if model.trusted {
                 Label("Automat pilnuje monitorów", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
             } else {
-                Label("Automat wyłączony: brak uprawnienia Dostępność", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                Button("Nadaj uprawnienie…") { model.requestAccess() }
+                Button { model.requestAccess() } label: {
+                    Label("Automat wyłączony: nadaj uprawnienie", systemImage: "exclamationmark.triangle.fill")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.orange)
             }
-            // Grid: labels in one column, so both switches get the same width.
-            Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                GridRow {
-                    Text("Przywracanie")
-                    modePicker($autoRestore)
-                        .help("Automatycznie: po podłączeniu lub odłączeniu monitora. Ręcznie: przycisk Przywróć")
-                }
-                GridRow {
-                    Text("Zapis")
-                    modePicker($autoSave)
-                        .help("Automatycznie: zapisuje zmianę kolejności, gdy stoi 5 s, nigdy tuż po zmianie monitorów")
-                }
-                GridRow {
-                    Text("Metoda")
-                    Picker("", selection: $restoreMethod) {
-                        Text("Przeciąganie").tag("drag").selectionDisabled(!dragAvailable)
-                        Text("Pełny ekran").tag("fullscreen")
-                        Text("Bezpośrednio").tag("bridge")
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .help("Przeciąganie: Mission Control i wirtualna mysz Karabinera. Pełny ekran: bez Karabinera, okna na chwilę wychodzą z pełnego ekranu, biurka zostają. Bezpośrednio: prywatna funkcja macOS 26+, bez myszy i Karabinera, ułamek sekundy")
-                }
-                if !dragAvailable {
-                    GridRow {
-                        Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
-                        Text("Przeciąganie wymaga Karabiner-Elements")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                GridRow {
-                    Text("Język")
-                    Picker("", selection: Binding(get: appLanguage, set: setAppLanguage)) {
-                        Text("Jak w systemie").tag("")
-                        Divider()
-                        Text(verbatim: "Polski").tag("pl")
-                        Text(verbatim: "English").tag("en")
-                        Text(verbatim: "Español").tag("es")
-                        Text(verbatim: "中文（简体）").tag("zh-Hans")
-                    }
-                    .labelsHidden()
-                    .disabled(model.busy)
-                    .help("Zmiana uruchamia apkę ponownie")
-                }
-                if panelUnlocked {   // the hidden look, once the shuttle has been clicked 10 times
-                    GridRow {
-                        Text("Wygląd")
-                        Picker("", selection: $panelOn) {
-                            Text("Zwykły").tag(false)
-                            Text("Panel").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                    }
-                    GridRow {
-                        Text("Motyw")
-                        Picker("", selection: $panelTheme) {
-                            ForEach(1...3, id: \.self) { Text(verbatim: "\($0)").tag($0) }
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        .disabled(!panelOn)
-                    }
-                }
-            }
-            Toggle("Uruchamiaj przy logowaniu", isOn: Binding(get: { model.loginItem }, set: { model.setLoginItem($0) }))
-            AutoUpdateToggle()
+            Spacer(minLength: 4)
+            Button {
+                NSApp.activate(ignoringOtherApps: true)
+                openSettings()
+            } label: { Image(systemName: "gearshape") }
+            .buttonStyle(.borderless)
+            .help("Ustawienia")
         }
         .font(.callout)
+        .lineLimit(1)
     }
 }
 

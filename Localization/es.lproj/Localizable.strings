@@ -103,3 +103,22 @@
 /* Updates (Sparkle) */
 "Sprawdź aktualizacje…" = "Buscar actualizaciones…";
 "Sprawdzaj aktualizacje automatycznie" = "Buscar actualizaciones automáticamente";
+
+/* Global shortcuts */
+"Skrót: zapis" = "Atajo: guardar";
+"Skrót: przywróć" = "Atajo: restaurar";
+"Naciśnij skrót…" = "Pulsa el atajo…";
+"Bez skrótu" = "Ninguno";
+"Kliknij i naciśnij skrót z ⌘, ⌃ lub ⌥. Esc: anuluj, Delete: usuń skrót" = "Haz clic y pulsa un atajo con ⌘, ⌃ u ⌥. Esc: cancelar, Supr: quitar el atajo";
+"Zajęty przez inną apkę, wybierz inny." = "Lo usa otra app, elige otro.";
+"Usuń skrót" = "Quitar atajo";
+"Esc: anuluj" = "Esc: cancelar";
+"Dodaj ⌘, ⌃ lub ⌥, sam klawisz zabrałby zwykłe pisanie." = "Añade ⌘, ⌃ u ⌥: una tecla sola bloquearía la escritura normal.";
+"Ten skrót nie dotarł do SpaceDock: zajmuje go macOS (np. ⌃⌘D to Słownik, ⌃⌘Q blokada ekranu) albo inna apka. Wybierz inny, np. z ⌃⌥⌘." = "Este atajo no llegó a SpaceDock: lo usa macOS (p. ej. ⌃⌘D es Consultar, ⌃⌘Q bloquea la pantalla) u otra app. Elige otro, p. ej. con ⌃⌥⌘.";
+
+/* Settings window */
+"Ogólne" = "General";
+"Skróty" = "Atajos";
+"Apka" = "App";
+"Działają z każdej apki. Domyślnie bez skrótów." = "Funcionan desde cualquier app. Ninguno por defecto.";
+"Automat wyłączony: nadaj uprawnienie" = "Vigilancia desactivada: concede el permiso";

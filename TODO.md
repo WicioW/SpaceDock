@@ -42,6 +42,11 @@ kosmosu i dokowania: przestrzenie / okienka „dokują” jak statki do stacji. 
 
 ## Skróty klawiszowe: zapis i przywracanie (2026-11-22)
 
+**Stan (2026-11-22):** ✅ `Sources/Hotkeys.swift`: dwa pola w ustawieniach zwykłego wyglądu
+(„Skrót: zapis”, „Skrót: przywróć”), domyślnie bez skrótu, Delete usuwa, Esc anuluje; skrót
+zajęty przez inną apkę = napis przy polu. Zapis skrótem pyta przed nadpisaniem (jak przycisk),
+przywracanie bez zapisu albo bez zgody = sygnał dźwiękowy. Brak jeszcze w ustawieniach panelu.
+
 Dziś zapis i przywracanie są tylko pod przyciskami (okno, menu w pasku menu). Pomysł:
 - **Tylko globalne**, działają z każdej apki, nie tylko gdy SpaceDock jest na wierzchu. Bez
   osobnych skrótów w oknie.

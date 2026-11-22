@@ -103,3 +103,22 @@
 /* Updates (Sparkle) */
 "Sprawdź aktualizacje…" = "Check for Updates…";
 "Sprawdzaj aktualizacje automatycznie" = "Check for updates automatically";
+
+/* Global shortcuts */
+"Skrót: zapis" = "Save shortcut";
+"Skrót: przywróć" = "Restore shortcut";
+"Naciśnij skrót…" = "Press shortcut…";
+"Bez skrótu" = "None";
+"Kliknij i naciśnij skrót z ⌘, ⌃ lub ⌥. Esc: anuluj, Delete: usuń skrót" = "Click, then press a shortcut with ⌘, ⌃ or ⌥. Esc: cancel, Delete: remove the shortcut";
+"Zajęty przez inną apkę, wybierz inny." = "Taken by another app, choose another one.";
+"Usuń skrót" = "Remove shortcut";
+"Esc: anuluj" = "Esc: cancel";
+"Dodaj ⌘, ⌃ lub ⌥, sam klawisz zabrałby zwykłe pisanie." = "Add ⌘, ⌃ or ⌥: a key alone would take over normal typing.";
+"Ten skrót nie dotarł do SpaceDock: zajmuje go macOS (np. ⌃⌘D to Słownik, ⌃⌘Q blokada ekranu) albo inna apka. Wybierz inny, np. z ⌃⌥⌘." = "This shortcut never reached SpaceDock: macOS (e.g. ⌃⌘D is Look Up, ⌃⌘Q is Lock Screen) or another app keeps it. Choose another one, e.g. with ⌃⌥⌘.";
+
+/* Settings window */
+"Ogólne" = "General";
+"Skróty" = "Shortcuts";
+"Apka" = "App";
+"Działają z każdej apki. Domyślnie bez skrótów." = "They work from any app. None by default.";
+"Automat wyłączony: nadaj uprawnienie" = "Watcher off: grant permission";

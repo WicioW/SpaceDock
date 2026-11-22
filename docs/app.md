@@ -57,8 +57,11 @@ Usunięcie: `sudo rm /etc/sudoers.d/spaces-layout /usr/local/libexec/spaces-layo
 tools/make-app.sh && open ~/Applications/SpaceDock.app
 ```
 Apka nazywa się **SpaceDock**. Instaluje `~/Applications/SpaceDock.app` (identyfikator `io.github.wiciow.spacedock`; do 2026-11-18 był `local.spaces-layout`: ustawienia apka przenosi sama przy pierwszym starcie, zgodę Dostępność i start przy logowaniu trzeba nadać od nowa). W apce działa automat (to samo co `watch`, więc `watch`
-w iTerm trzeba wyłączyć). Ustawienia: przywracanie Automatycznie (po zmianie monitorów) / Ręcznie
-(przycisk „Przywróć”), zapis Ręcznie / Automatycznie, start przy logowaniu. Podczas układania na
+w iTerm trzeba wyłączyć). Ustawienia są w osobnym oknie (⌘, albo koło zębate pod zestawami; w
+pasku zostaje tylko stan automatu): **Ogólne** = przywracanie Automatycznie (po zmianie monitorów) /
+Ręcznie (przycisk „Przywróć”), zapis Ręcznie / Automatycznie, metoda; **Skróty** = globalne skróty
+zapisu i przywracania (`Sources/Hotkeys.swift`, domyślnie brak); **Apka** = język, wygląd, start
+przy logowaniu, aktualizacje. Podczas układania na
 każdym ekranie jest czerwony komunikat „Układam przestrzenie… nie ruszaj myszy”. Log:
 `~/Library/Logs/SpaceDock.log` (menu: „Pokaż log”), bez tytułów okien (tylko numery), więc można go dołączyć do zgłoszenia. Zapisy: `~/Library/Application Support/SpaceDock/` (do 2026-11-21 folder `spaces-layout` i log `spaces-layout.log`; apka przenosi je sama przy pierwszym starcie).
 Zapis obejmuje też biurka (wpis `desktop`), więc ich miejsce na pasku wraca razem z resztą; zapis

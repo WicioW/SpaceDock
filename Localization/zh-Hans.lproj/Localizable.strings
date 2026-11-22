@@ -103,3 +103,22 @@
 /* Updates (Sparkle) */
 "Sprawdź aktualizacje…" = "检查更新…";
 "Sprawdzaj aktualizacje automatycznie" = "自动检查更新";
+
+/* Global shortcuts */
+"Skrót: zapis" = "保存快捷键";
+"Skrót: przywróć" = "恢复快捷键";
+"Naciśnij skrót…" = "请按快捷键…";
+"Bez skrótu" = "无";
+"Kliknij i naciśnij skrót z ⌘, ⌃ lub ⌥. Esc: anuluj, Delete: usuń skrót" = "点按后按下含 ⌘、⌃ 或 ⌥ 的快捷键。Esc：取消，Delete：移除快捷键";
+"Zajęty przez inną apkę, wybierz inny." = "已被其他应用占用，请换一个。";
+"Usuń skrót" = "移除快捷键";
+"Esc: anuluj" = "Esc：取消";
+"Dodaj ⌘, ⌃ lub ⌥, sam klawisz zabrałby zwykłe pisanie." = "请加上 ⌘、⌃ 或 ⌥：单个按键会妨碍正常输入。";
+"Ten skrót nie dotarł do SpaceDock: zajmuje go macOS (np. ⌃⌘D to Słownik, ⌃⌘Q blokada ekranu) albo inna apka. Wybierz inny, np. z ⌃⌥⌘." = "此快捷键未传到 SpaceDock：已被 macOS（如 ⌃⌘D 查询、⌃⌘Q 锁定屏幕）或其他应用占用。请换一个，例如带 ⌃⌥⌘ 的组合。";
+
+/* Settings window */
+"Ogólne" = "通用";
+"Skróty" = "快捷键";
+"Apka" = "应用";
+"Działają z każdej apki. Domyślnie bez skrótów." = "在任何应用中都可使用。默认无快捷键。";
+"Automat wyłączony: nadaj uprawnienie" = "监视已关闭：请授予权限";

@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>SpaceDock — linia graniczna VI, połączone podświetlenie</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@700;900&display=swap">
+<style>
+body{margin:0}
+@keyframes sd-flow{to{stroke-dashoffset:-620}}
+@keyframes sd-blink{0%,54%{opacity:1}55%,100%{opacity:.4}}
+@keyframes sd-tape{to{background-position:28.28px 0}}
+@keyframes sd-tape2{to{background-position:16.97px 0}}
+@keyframes sd-tape3{to{background-position:14.14px 0}}
+@keyframes sd-tape4{to{background-position:22.63px 0}}
+@keyframes sd-marq{to{transform:translateX(-50%)}}
+@keyframes sd-boot{from{opacity:0;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(-30px)}}
+@keyframes sd-type{0%{width:0}10%,100%{width:100%}}
+@keyframes sd-scan{from{left:0}to{left:100%}}
+@keyframes sd-dash{to{stroke-dashoffset:-20}}
+@keyframes sd-level{50%{transform:scaleY(.86)}}
+@keyframes sd-flick{0%,100%{opacity:1}50%{opacity:.88}52%{opacity:.45}54%{opacity:.94}58%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sd-m{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 1100px; height: 700px; position: relative; overflow: hidden; background: #000000; color: {{th.t}}; font-family: 'Chakra Petch', sans-serif; font-size: 13px; line-height: 1.2; display: flex; flex-direction: column">
+
+<div style="height: 30px; flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid {{th.s}}; position: relative">
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span>
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span>
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span>
+<span style="margin-left: 8px; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.24em; color: {{th.t}}">SPACEDOCK</span>
+<svg width="86" height="20" viewBox="0 0 86 20" role="img" aria-label="Wahadłowiec z trzema oknami przed nosem" style="position: absolute; left: 507px; top: 5px" fill="none" stroke="{{th.k}}" stroke-width="1">
+<path d="M26 7L18 4.5L9 0.5H6V7"></path>
+<path d="M26 13L18 15.5L9 19.5H6V13"></path>
+<path d="M4 7H34C40 7 43 9 44 10C43 11 40 13 34 13H4Z"></path>
+<rect x="12" y="8.4" width="18" height="3.2" stroke="{{th.s}}"></rect>
+<rect x="50" y="6.5" width="8" height="7" stroke="{{th.t}}"></rect>
+<rect x="62" y="6.5" width="8" height="7" stroke="{{th.t}}"></rect>
+<rect x="74" y="6.5" width="8" height="7" stroke="{{th.t}}"></rect>
+</svg>
+</div>
+
+<div style="flex: 1; min-height: 0; box-sizing: border-box; padding: 12px 14px; display: flex; gap: 14px">
+
+<div style="width: 794px; flex: none; display: flex; flex-direction: column; gap: 10px">
+
+<div class="sd-m" style="height: 96px; flex: none; display: flex; gap: 14px; animation: sd-boot 0.6s steps(8) both">
+<div style="width: 130px; flex: none">
+<div aria-hidden="true" style="font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 76px; line-height: 76px; color: transparent; -webkit-text-stroke: 2px {{th.s}}">{{setNo}}</div>
+<div aria-hidden="true" class="sd-m" style="height: 12px; margin-top: 8px; background-image: repeating-linear-gradient(-45deg, {{th.s}} 0, {{th.s}} 10px, #000000 10px, #000000 20px); {{tapeAnim}}"></div>
+</div>
+<div style="width: 214px; flex: none; min-width: 0">
+<div style="display: flex; align-items: stretch; gap: 6px; height: 42px">
+<span style="font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', serif; font-weight: 900; font-size: 40px; line-height: 42px; color: {{th.s}}">配置</span>
+<span aria-hidden="true" class="sd-m" style="width: 30px; background-image: repeating-linear-gradient(-45deg, {{th.s}} 0, {{th.s}} 6px, #000000 6px, #000000 12px); {{tapeAnim2}}"></span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 14px; color: {{th.s}}">ZESTAW: {{setNo}}<br>MONITORY: {{monCount}}<br>接続中</span>
+</div>
+<div style="margin-top: 8px; font-size: {{nameFs}}px; line-height: 1.2; font-weight: 700; letter-spacing: 0.04em; color: {{th.k}}; max-height: 34px; overflow: hidden">{{setName}}</div>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; color: {{st.col}}">
+<div class="sd-m" style="height: 20px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; background: {{st.col}}; color: #000000; font-weight: 700; letter-spacing: 0.2em; {{st.anim}}"><span>{{st.top}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0">{{devTxt}}</span></div>
+<div style="flex: 1; min-height: 0; box-sizing: border-box; display: flex; margin-top: 4px; border: 2px solid {{st.col}}">
+<div class="sd-m" style="width: 66px; flex: none; display: flex; align-items: center; justify-content: center; background: {{st.col}}; color: #000000; font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', serif; font-weight: 900; font-size: 28px; line-height: 30px; text-align: center; {{st.anim}}">{{st.jp}}</div>
+<div style="flex: 1; min-width: 0; box-sizing: border-box; padding: 0 10px; display: flex; flex-direction: column; justify-content: center">
+<span style="font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap">{{st.word}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap">{{st.sub}}</span>
+</div>
+</div>
+</div>
+<div style="width: 172px; flex: none; position: relative; height: 84px; align-self: center">
+<sc-for list="{{sets}}" as="k" hint-placeholder-count="7">
+<button type="button" aria-label="{{k.aria}}" style="position: absolute; left: {{k.hx}}px; top: {{k.hy}}px; width: 40px; height: 32px; padding: 0; border: 0; background: {{th.s}}; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); font: inherit; cursor: pointer"><span class="sd-m" style="position: absolute; left: 1.5px; top: 1.5px; right: 1.5px; bottom: 1.5px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; {{k.hcss}}">{{k.no}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div class="sd-m" style="height: 320px; flex: none; display: flex; gap: 12px; border-top: 1px solid {{th.s}}; padding-top: 6px; box-sizing: border-box; animation: sd-boot 0.6s steps(8) 0.2s both">
+<sc-for list="{{mons}}" as="m" hint-placeholder-count="1">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div style="height: 26px; flex: none; display: flex; gap: 6px; margin-bottom: 6px">
+<sc-for list="{{monTabs}}" as="t" hint-placeholder-count="2">
+<button type="button" onClick="{{t.pick}}" style="flex: 1; min-width: 0; height: 26px; padding: 0 8px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 6px; font: inherit; font-size: {{tabFs}}px; font-weight: 700; white-space: nowrap; overflow: hidden; cursor: pointer; {{t.css}}"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{t.label}}</span><span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500">{{t.short}}</span></button>
+</sc-for>
+</div>
+<div style="height: 22px; flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 8px; border: 1px solid {{th.s}}; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; overflow: hidden"><span style="font-family: 'Orbitron', sans-serif; font-weight: 700; {{det.tagCss}}">{{det.tag}}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #FFFFFF">{{det.text}}</span><span style="margin-left: auto; flex: none; color: {{det.col}}">{{det.state}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; padding-top: 20px; flex: none; box-sizing: border-box; max-height: 186px; overflow-y: auto">
+<sc-for list="{{m.tiles}}" as="t" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 6px; align-items: start; height: 40px; opacity: {{t.op}}; transition: opacity .075s linear" onMouseEnter="{{t.hover}}" onMouseLeave="{{t.leave}}">
+<span style="font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 14px; line-height: 22px">{{t.num}}</span>
+<div style="min-width: 0; transform: skewY(-5deg); transform-origin: left center">
+<div class="sd-m" style="height: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 8px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; {{t.css}}"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{t.appU}}</span></div>
+<div style="margin-top: 3px; padding-left: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{t.col2}}">{{t.line2}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{m.showField}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 66px; margin-top: 6px; display: flex; gap: 14px; border-top: 1px dashed {{th.s}}">
+<div style="flex: 1; min-width: 0; position: relative; font-family: 'JetBrains Mono', monospace; font-size: 11px">
+<span style="position: absolute; left: 0; top: 6px">ZAPIS 保存</span>
+<span style="position: absolute; left: 0; bottom: 4px">TERAZ</span>
+<svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" style="position: absolute; left: 76px; top: 26px; width: calc(100% - 76px); height: calc(100% - 50px)">
+<path class="sd-m" d="{{m.links}}" opacity="{{m.linkOp}}" stroke="{{th.k}}" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-dasharray="6 4" style="animation: sd-dash 0.8s linear infinite"></path>
+<path d="{{m.linksErr}}" opacity="{{m.linkOp}}" stroke="{{th.e}}" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-dasharray="2 3"></path>
+<path d="{{m.linksNew}}" opacity="{{m.linkOp}}" stroke="{{th.w}}" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-dasharray="2 3"></path>
+<path d="{{m.linkHi}}" stroke="{{m.linkHiCol}}" stroke-width="2.5" vector-effect="non-scaling-stroke"></path>
+</svg>
+<sc-for list="{{m.cellsA}}" as="c" hint-placeholder-count="7"><span style="position: absolute; left: calc(76px + (100% - 76px) * {{c.f}}); top: 4px; width: 24px; height: 18px; margin-left: -12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; transition: opacity .075s linear; {{c.css}}" onMouseEnter="{{c.hover}}" onMouseLeave="{{c.leave}}">{{c.t}}</span></sc-for>
+<sc-for list="{{m.cellsB}}" as="c" hint-placeholder-count="7"><span style="position: absolute; left: calc(76px + (100% - 76px) * {{c.f}}); bottom: 2px; width: 24px; height: 18px; margin-left: -12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; transition: opacity .075s linear; {{c.css}}" onMouseEnter="{{c.hover}}" onMouseLeave="{{c.leave}}">{{c.t}}</span></sc-for>
+</div>
+<div style="width: 100px; flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{m.bars}}" as="b" hint-placeholder-count="2">
+<div style="position: relative; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 14px; text-align: center">
+<span style="position: absolute; left: 0; right: 0; bottom: calc(18px + (100% - 36px) * {{b.f}})">{{b.n}}</span>
+<span aria-hidden="true" class="sd-m" style="position: absolute; left: 0; right: 0; bottom: 16px; height: calc((100% - 36px) * {{b.f}}); transform-origin: bottom; background: repeating-linear-gradient(0deg, {{b.col}} 0, {{b.col}} 5px, transparent 5px, transparent 7px); animation: sd-level 1.6s steps(4) infinite; animation-delay: {{b.d}}s"></span>
+<span style="position: absolute; left: 0; right: 0; bottom: 0">{{b.t}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="height: 18px; flex: none; display: flex; align-items: center">
+<div aria-hidden="true" class="sd-m" style="width: 110px; flex: none; height: 18px; background-image: repeating-linear-gradient(-45deg, {{st.col}} 0, {{st.col}} 10px, #000000 10px, #000000 20px); {{tapeAnim}}"></div>
+<div style="flex: 1; min-width: 0; height: 18px; overflow: hidden; background: {{st.col}}; color: #000000; font-size: 12px; font-weight: 700; letter-spacing: 0.2em; line-height: 18px; white-space: nowrap"><span class="sd-m" style="display: inline-block; animation: sd-marq 26s linear infinite">{{banner}}</span></div>
+<div aria-hidden="true" class="sd-m" style="width: 110px; flex: none; height: 18px; background-image: repeating-linear-gradient(-45deg, {{st.col}} 0, {{st.col}} 10px, #000000 10px, #000000 20px); {{tapeAnim}}; animation-direction: reverse"></div>
+</div>
+
+<div class="sd-m" style="flex: 1; min-height: 0; border-top: 1px solid {{th.s}}; padding-top: 4px; animation: sd-boot 0.6s steps(8) 0.4s both">
+<div style="height: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; letter-spacing: 0.14em"><span>一致率 WSPÓŁCZYNNIK ZGODNOŚCI {{okN}}/{{savedN}} · {{pct}}%</span><span style="display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0"><span style="width: 18px; height: 2px; background: {{th.s}}"></span>ZAPIS 保存<span style="width: 18px; height: 2px; background: {{th.k}}; margin-left: 8px"></span>STAN TERAZ</span></div>
+<div style="position: relative; height: 138px">
+<svg aria-hidden="true" width="794" height="138" viewBox="0 0 794 138" fill="none" style="position: absolute; left: 0; top: 0">
+<path d="{{rb.plus}}" stroke="{{th.k}}" stroke-width="1"></path>
+<path d="{{rb.seps}}" stroke="{{th.t}}" stroke-width="1" stroke-dasharray="2 4"></path>
+<path d="{{rb.saved}}" stroke="{{th.s}}" stroke-width="0.8" opacity="0.8"></path>
+<path d="{{rb.now}}" stroke="{{th.k}}" stroke-width="0.8" opacity="0.8"></path>
+<path class="sd-m" d="{{rb.savedMid}}" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="50 570" style="animation: sd-flow 3.2s linear infinite"></path>
+<path class="sd-m" d="{{rb.nowMid}}" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="50 570" style="animation: sd-flow 3.2s linear infinite"></path>
+<path d="{{rb.calls}}" stroke="{{th.t}}" stroke-width="1"></path>
+<path d="{{rb.cursor}}" stroke="{{th.t}}" stroke-width="2"></path>
+</svg>
+<span aria-hidden="true" class="sd-m" style="position: absolute; top: 0; left: 0; width: 28px; height: 138px; margin-left: -28px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.22)); border-right: 1px solid #FFFFFF; animation: sd-scan 7s linear infinite"></span>
+<sc-for list="{{rb.nodes}}" as="n" hint-placeholder-count="8">
+<span aria-hidden="true" style="position: absolute; left: {{n.mx}}px; top: 64px; width: 10px; height: 10px; box-sizing: border-box; {{n.mk}}; opacity: {{n.op}}"></span>
+<div style="position: absolute; left: {{n.x}}px; top: {{n.top}}px; transform: translateX(-50%); text-align: center; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 14px; {{n.css}}; opacity: {{n.op}}"><div>{{n.t}}</div><sc-if value="{{n.has2}}" hint-placeholder-val="{{ false }}"><div>{{n.t2}}</div></sc-if></div>
+</sc-for>
+<sc-for list="{{rb.monTags}}" as="g" hint-placeholder-count="1"><span style="position: absolute; left: {{g.x}}px; top: 0; padding: 0 4px; border: 1px solid {{th.t}}; font-size: 11px; font-weight: 600; background: #000000">{{g.t}}</span></sc-for>
+</div>
+<div style="position: relative; height: 22px; border-top: 1.5px solid {{th.t}}">
+<sc-for list="{{rb.scale}}" as="k" hint-placeholder-count="8"><span style="position: absolute; left: {{k.x}}px; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 13px"><span aria-hidden="true" style="width: 1px; height: 5px; background: {{th.t}}"></span>{{k.t}}</span></sc-for>
+</div>
+</div>
+
+</div>
+
+<div class="sd-m" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; animation: sd-boot 0.6s steps(8) 0.3s both">
+<div>
+<div style="height: 20px; display: flex; justify-content: space-between; font-weight: 600; letter-spacing: 0.14em; border-bottom: 1px solid {{th.s}}"><span>ZESTAWY</span><span style="font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', serif; font-weight: 900; color: {{th.s}}; letter-spacing: 0">配置</span></div>
+<sc-for list="{{sets}}" as="k" hint-placeholder-count="7">
+<button type="button" aria-label="{{k.aria}}" style="display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 6px; align-items: center; width: 100%; height: 19px; margin-top: 2px; padding: 0 6px; box-sizing: border-box; text-align: left; font: inherit; cursor: pointer; {{k.css}}">
+<span style="font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 11px">{{k.no}}</span>
+<span style="font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{k.name}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px">{{k.tag}}</span>
+</button>
+</sc-for>
+</div>
+
+<div>
+<div style="height: 20px; font-weight: 600; letter-spacing: 0.14em; border-bottom: 1px solid {{th.s}}">USTAWIENIA 設定</div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 28px">
+<span style="font-weight: 600">PRZYWRACANIE</span>
+<span style="display: flex">
+<button type="button" style="height: 20px; padding: 0 6px; border: 1px solid {{th.k}}; background: #000000; color: {{th.k}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">RĘCZNIE 手動</button>
+<button type="button" aria-pressed="true" style="height: 20px; padding: 0 6px; border: 1px solid {{th.k}}; background: {{th.k}}; color: #000000; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">AUTO 自動</button>
+</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 28px">
+<span style="font-weight: 600">ZAPIS 保存</span>
+<span style="display: flex">
+<button type="button" aria-pressed="true" style="height: 20px; padding: 0 6px; border: 1px solid {{th.k}}; background: {{th.k}}; color: #000000; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">RĘCZNIE 手動</button>
+<button type="button" style="height: 20px; padding: 0 6px; border: 1px solid {{th.k}}; background: #000000; color: {{th.k}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">AUTO 自動</button>
+</span>
+</div>
+<div style="padding: 3px 0 5px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600">METODA 方式</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px">BRAK KARABINERA</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 4px">
+<button type="button" disabled style="height: 22px; padding: 0; border: 1px dashed {{th.t}}; background: #000000; color: {{th.t}}; font: inherit; font-size: 11px; letter-spacing: -0.01em; font-weight: 600; text-decoration: line-through; cursor: not-allowed">PRZECIĄGANIE</button>
+<button type="button" style="height: 22px; padding: 0; border: 1px solid {{th.k}}; background: #000000; color: {{th.k}}; font: inherit; font-size: 11px; letter-spacing: -0.01em; font-weight: 600; cursor: pointer">PEŁNY EKRAN</button>
+<button type="button" aria-pressed="true" style="height: 22px; padding: 0; border: 1px solid {{th.k}}; background: {{th.k}}; color: #000000; font: inherit; font-size: 11px; letter-spacing: -0.01em; font-weight: 700; cursor: pointer">BEZPOŚREDNIO</button>
+</div>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 28px">
+<span style="font-weight: 600">JĘZYK 言語</span>
+<span style="display: flex">
+<button type="button" aria-pressed="true" style="width: 34px; height: 20px; padding: 0; border: 1px solid {{th.k}}; background: {{th.k}}; color: #000000; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">PL</button>
+<button type="button" style="width: 34px; height: 20px; padding: 0; border: 1px solid {{th.k}}; background: #000000; color: {{th.k}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">EN</button>
+<button type="button" style="width: 34px; height: 20px; padding: 0; border: 1px solid {{th.k}}; background: #000000; color: {{th.k}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">ES</button>
+<button type="button" style="width: 34px; height: 20px; padding: 0; border: 1px solid {{th.k}}; background: #000000; color: {{th.k}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">ZH</button>
+</span>
+</div>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 16px">
+<div style="display: flex; justify-content: space-between"><span>URUCHAMIAJ PRZY LOGOWANIU 起動</span><button type="button" aria-pressed="true" style="padding: 0 6px; border: 0; background: {{th.k}}; color: #000000; font: inherit; font-weight: 500; cursor: pointer">WŁ</button></div>
+<div style="display: flex; justify-content: space-between; margin-top: 3px"><span>AUTOMAT PILNUJE MONITORÓW 監視</span><span style="color: {{th.k}}">CHECK</span></div>
+<div style="display: flex; justify-content: space-between"><span>UPRAWNIENIE DOSTĘPNOŚCI</span><span style="color: {{th.k}}">CHECK</span></div>
+</div>
+</div>
+
+<div>
+<div style="height: 20px; display: flex; justify-content: space-between; font-weight: 600; letter-spacing: 0.14em; border-bottom: 1px solid {{th.s}}"><span>ODCHYLENIE 偏差</span><span>{{devTxt}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 6px; transform: skewX(-18deg)">
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="3"><span style="height: 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; {{z.css}}">{{z.t}}</span></sc-for>
+</div>
+</div>
+
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 15px; border-top: 1px solid {{th.s}}; padding-top: 4px">
+<sc-for list="{{logs}}" as="l" hint-placeholder-count="3"><div class="sd-m" style="white-space: nowrap; overflow: hidden; animation: sd-type 9s steps(34) infinite backwards; animation-delay: {{l.d}}s">{{l.t}}</div></sc-for>
+</div>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<div style="position: relative; height: 70px">
+<button type="button" style="width: 100%; height: 70px; box-sizing: border-box; padding: 28px 10px 0; text-align: left; border: 1.5px solid {{th.s}}; background: #000000; color: {{th.s}}; font: inherit; cursor: pointer">
+<span style="display: block; font-size: 18px; line-height: 20px; font-weight: 700; letter-spacing: 0.08em">ZAPISZ OBECNY UKŁAD</span>
+<span style="display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px">保存 · NADPISUJE ZAPIS</span>
+</button>
+<div class="sd-m" style="position: absolute; left: 0; top: 0; right: 0; height: 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{th.s}}; background-image: repeating-linear-gradient(-45deg, {{th.s}} 0, {{th.s}} 8px, #000000 8px, #000000 16px); animation: sd-tape4 0.9s linear infinite; pointer-events: none"><span style="padding: 0 8px; background: #000000; color: {{th.s}}; font-size: 12px; font-weight: 700; letter-spacing: 0.1em">OSŁONA · PODNIEŚ</span></div>
+</div>
+<button type="button" style="height: 56px; box-sizing: border-box; padding: 0 10px; text-align: left; font: inherit; cursor: pointer; {{restCss}}">
+<span style="display: block; font-size: 22px; line-height: 24px; font-weight: 700; letter-spacing: 0.08em">{{restLabel}}</span>
+<span style="display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px">{{restSub}}</span>
+</button>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"setup":{"editor":"enum","options":["1","2","3","4"],"default":"1"},"spot":{"editor":"enum","options":["0","1","2","3","4","5","6","7","8"],"default":"1"},"mode":{"editor":"enum","options":["diff","restore"],"default":"diff"},"monitor":{"editor":"enum","options":["auto","1","2","3","4"],"default":"auto"},"theme":{"editor":"enum","options":["1","2","3"],"default":"1"},"$preview":{"width":1100,"height":700}}'>
+class Component extends DCLogic {
+componentDidMount() {
+if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+this._t = setInterval(() => this.setState({ tick: ((this.state && this.state.tick) || 0) + 1 }), 140);
+}
+componentWillUnmount() {
+clearInterval(this._t);
+}
+renderVals() {
+const tick = (this.state && this.state.tick) || 0;
+const wob = 0.72 + 0.28 * Math.cos(tick * 0.3);
+const setup = Math.min(4, Math.max(1, Number(this.props.setup ?? 1) || 1));
+const restoring = (this.props.mode ?? 'diff') === 'restore';
+const TH = { '1': ['#9B6CFF', '#B4FF39', '#D9C9FF', '#FF3B30', '#FFD60A'], '2': ['#FF3FB4', '#3FF0FF', '#D6F7FF', '#FF4A1C', '#FFD60A'], '3': ['#FF2A2A', '#5CF0B0', '#FF8A1E', '#FFFFFF', '#FFD60A'] };
+const tc = TH[String(this.props.theme ?? '1')] || TH['1'];
+const C1 = tc[0], C2 = tc[1], C3 = tc[2], CE = tc[3], CW = tc[4], HATCH = CE + '4D';
+const th = { s: C1, k: C2, t: C3, e: CE, w: CW };
+const S = (n, app, title, win, st, kind) => ({ n: n, app: app, title: title, win: win, st: st || 'ok', kind: kind || 'app' });
+const D = () => S(1, 'Biurko', 'Biurko 1', 0, 'ok', 'desk');
+const SETS = [
+{ name: 'SAM LAPTOP', sub: '1 MONITOR', mons: [
+{ id: 'MON-01', name: 'WBUDOWANY RETINA', spaces: [D(), S(2, 'Claude', 'Claude', 412), S(3, 'Brave', 'Raport.pdf', 388), S(4, 'Brave', 'Status', 391), S(5, 'Fork', 'spaces-layout', 407), S(6, 'IntelliJ IDEA', 'spaces-layout', 0, 'missing'), S(7, 'Bitwarden', 'Sejf', 420), S(0, 'Docker', 'Docker Desktop', 433, 'unsaved')] }] },
+{ name: 'LAPTOP + DELL G3223Q', sub: '2 MONITORY', mons: [
+{ id: 'MON-01', name: 'WBUDOWANY RETINA', spaces: [D(), S(2, 'Claude', 'Claude', 412), S(3, 'Fork', 'spaces-layout', 407), S(4, 'Bitwarden', 'Sejf', 420)] },
+{ id: 'MON-02', name: 'DELL G3223Q', spaces: [D(), S(2, 'Brave', 'Raport — specyfikacja v2 (wersja robocza).pdf', 388), S(3, 'Brave', 'Status — panel usług', 391), S(4, 'IntelliJ IDEA Ultimate', 'spaces-layout – SpaceRestorer.swift', 402), S(5, 'Arc', 'GitHub', 407), S(6, 'Docker', 'Docker Desktop', 433, 'nofs'), S(7, 'Terminal', 'zsh', 441), S(8, 'Slack', '#general', 446), S(9, 'Figma', 'SpaceDock UI', 0, 'missing'), S(10, 'Postman', 'API', 452), S(11, 'DataGrip', 'prod-db', 455), S(12, 'Safari', 'Dokumentacja', 458), S(13, 'Notatki', 'Pomysły', 461), S(14, 'Kalendarz', 'Listopad', 463), S(15, 'Poczta', 'Odebrane', 467), S(16, 'Spotify', 'Focus', 470), S(17, 'Xcode', 'SpaceDock', 474), S(18, 'Podgląd', 'Faktura.pdf', 477), S(19, 'Finder', 'Pobrane', 480), S(0, 'Zoom', 'Spotkanie', 483, 'unsaved')] }] },
+{ name: 'LAPTOP + DELL G3223Q + PL2779Q', sub: '3 MONITORY', mons: [
+{ id: 'MON-01', name: 'WBUDOWANY RETINA', spaces: [D(), S(2, 'Claude', 'Claude', 412), S(3, 'Bitwarden', 'Sejf', 420)] },
+{ id: 'MON-02', name: 'DELL G3223Q', spaces: [D(), S(2, 'IntelliJ IDEA', 'spaces-layout', 402), S(3, 'Fork', 'spaces-layout', 407), S(4, 'Docker', 'Docker Desktop', 433)] },
+{ id: 'MON-03', name: 'PL2779Q', spaces: [D(), S(2, 'Brave', 'Raport.pdf', 388), S(3, 'Brave', 'Status', 391)] }] },
+{ name: 'LAPTOP + G3223Q + PL2779Q + U2720Q', sub: '4 MONITORY', mons: [
+{ id: 'MON-01', name: 'RETINA', spaces: [D(), S(2, 'Claude', 'Claude', 412)] },
+{ id: 'MON-02', name: 'DELL G3223Q', spaces: [D(), S(2, 'IntelliJ IDEA', 'spaces-layout', 402), S(3, 'Fork', 'spaces-layout', 407)] },
+{ id: 'MON-03', name: 'PL2779Q', spaces: [D(), S(2, 'Brave', 'Raport.pdf', 388), S(3, 'Brave', 'Status', 391)] },
+{ id: 'MON-04', name: 'U2720Q', spaces: [D(), S(2, 'Bitwarden', 'Sejf', 420), S(0, 'Docker', 'Docker Desktop', 433, 'unsaved')] }] }
+];
+const set = SETS[setup - 1], N = set.mons.length;
+const firstDiff = set.mons.findIndex((m) => m.spaces.some((s) => s.st !== 'ok'));
+const propMon = Number(this.props.monitor) || 0;
+const stMon = (this.state && this.state.monKey === setup) ? this.state.mon : null;
+const ms = Math.min(N - 1, Math.max(0, stMon != null ? stMon : propMon ? propMon - 1 : restoring ? 0 : firstDiff));
+const pf = Number(this.props.spot ?? 1) || 0;
+const sh = (this.state && this.state.hovKey === setup) ? this.state.hov : null;
+const fk0 = sh != null ? sh : pf ? ms + ':' + (pf - 1) : null;
+const FK = (fk0 && Number(fk0.split(':')[0]) === ms && set.mons[ms].spaces[Number(fk0.split(':')[1])]) ? fk0 : null;
+const stCol = (t) => t.moving ? C3 : t.st === 'unsaved' ? CW : (t.st === 'missing' || t.st === 'nofs') ? CE : C2;
+const WORD = { ok: 'OK', unsaved: 'NIE ZAPISANA', missing: 'NIE OTWARTA', nofs: 'NIE NA PEŁNYM EKRANIE' };
+const barCss = (st, kind) => st === 'moving' ? 'background:' + C3 + ';color:#000000'
+: st === 'unsaved' ? 'background:' + CW + ';color:#000000'
+: st === 'missing' ? 'box-shadow:inset 0 0 0 1.5px ' + CE + ';color:' + CE + ';background-image:repeating-linear-gradient(-45deg,' + HATCH + ' 0,' + HATCH + ' 5px,transparent 5px,transparent 10px);animation:sd-tape3 .7s linear infinite'
+: st === 'nofs' ? 'box-shadow:inset 0 0 0 2px ' + CE + ';color:' + CE + ';background-image:repeating-linear-gradient(-45deg,' + HATCH + ' 0,' + HATCH + ' 5px,transparent 5px,transparent 10px);animation:sd-tape3 .7s linear infinite'
+: kind === 'desk' ? 'box-shadow:inset 0 0 0 2px ' + C2 + ';color:' + C2 : 'background:' + C2 + ';color:#04120C';
+
+let all = [];
+const mons = set.mons.map((m, mi) => {
+const tiles = m.spaces.map((s, si) => {
+const moving = restoring && mi === 0 && si === 3;
+const st = moving ? 'moving' : s.st;
+const foc = FK === mi + ':' + si, dim = !!FK && !foc;
+const o = { foc: foc, dim: dim, op: '1', leave: () => this.setState({ hov: null, hovKey: setup }), key: mi + ':' + si, full: s.app + ' — ' + s.title + (s.win ? ' · okno #' + s.win : ''), hover: () => this.setState({ hov: mi + ':' + si, hovKey: setup }), st: s.st, moving: moving, mi: mi, kind: s.kind, num: s.n ? ('0' + s.n).slice(-2) : '+', appU: s.app.toUpperCase(), win: s.win ? '#' + s.win : '',
+line2: moving ? 'W RUCHU › POZ. ' + s.n : s.st === 'ok' ? s.title : WORD[s.st], col2: (moving || s.st === 'ok') ? C3 : s.st === 'unsaved' ? CW : CE, css: barCss(st, s.kind) + (foc ? ';outline:2px solid ' + (moving ? C3 : s.st === 'unsaved' ? CW : (s.st === 'missing' || s.st === 'nofs') ? CE : C2) + ';outline-offset:2px' : '') };
+all.push(o);
+return o;
+});
+const nd = tiles.filter((t) => t.st !== 'ok').length;
+const colW = (794 - 12 * (N - 1)) / N, perRow = Math.max(1, Math.floor((colW + 8) / 158));
+const free = 218 - Math.ceil(tiles.length / perRow) * 54;
+const A = tiles.filter((t) => t.st !== 'unsaved'), B = tiles.filter((t) => t.st === 'ok' || t.st === 'unsaved');
+const L = Math.max(A.length, B.length), fx = (i) => (i + 0.5) / L;
+let links = '', linksErr = '', linksNew = '';
+A.forEach((t, i) => {
+const j = B.indexOf(t), xa = (fx(i) * 100).toFixed(1);
+if (j < 0) { linksErr += 'M' + xa + ' 0V40'; return; }
+const xb = (fx(j) * 100).toFixed(1);
+links += 'M' + xa + ' 0C' + xa + ' 55 ' + xb + ' 45 ' + xb + ' 100';
+});
+B.forEach((t, j) => { if (t.st === 'unsaved') linksNew += 'M' + (fx(j) * 100).toFixed(1) + ' 100V60'; });
+let linkHi = '', linkHiCol = C2;
+const ft = tiles.find((t) => t.foc);
+if (ft) {
+const i = A.indexOf(ft), j = B.indexOf(ft), xa = (fx(Math.max(i, 0)) * 100).toFixed(1), xb = (fx(Math.max(j, 0)) * 100).toFixed(1);
+if (i >= 0 && j >= 0) { linkHi = 'M' + xa + ' 0C' + xa + ' 55 ' + xb + ' 45 ' + xb + ' 100'; linkHiCol = ft.moving ? C3 : C2; }
+else if (i >= 0) { linkHi = 'M' + xa + ' 0V40'; linkHiCol = CE; }
+else { linkHi = 'M' + xb + ' 100V60'; linkHiCol = CW; }
+}
+const ringOf = (t) => t.foc ? ';outline:2px solid ' + stCol(t) + ';outline-offset:2px' : '';
+return { nd: nd, err: tiles.some((t) => t.st === 'missing' || t.st === 'nofs'), id: m.id, name: m.name, tiles: tiles, info: tiles.length + ' · ' + (nd ? nd + ' RÓŻN.' : 'ZGODNE'),
+showField: true, linkHi: linkHi, linkHiCol: linkHiCol, linkOp: '1', links: links, linksErr: linksErr, linksNew: linksNew,
+cellsA: A.map((t, i) => ({ f: fx(i).toFixed(4), t: t.num, hover: t.hover, leave: t.leave, css: (t.st === 'ok' ? 'border:1px solid ' + C1 + ';color:' + C1 : 'border:1px dashed ' + CE + ';color:' + CE) + (t.foc ? ';outline:2px solid ' + (t.st === 'ok' ? C1 : CE) + ';outline-offset:2px' : '') })),
+cellsB: B.map((t, j) => ({ f: fx(j).toFixed(4), t: t.num, hover: t.hover, leave: t.leave, css: 'color:#000000;background:' + (t.moving ? C3 : t.st === 'unsaved' ? CW : C2) + ringOf(t) })),
+bars: [{ t: 'ZAPIS', n: A.length, f: (A.length / Math.max(A.length, B.length, 1)).toFixed(2), col: C1, d: 0 }, { t: 'TERAZ', n: B.length, f: (B.length / Math.max(A.length, B.length, 1)).toFixed(2), col: C2, d: 0.4 }] };
+});
+const diffs = all.filter((s) => s.st !== 'ok');
+const savedN = all.filter((s) => s.st !== 'unsaved').length;
+const okN = all.filter((s) => s.st === 'ok').length;
+const isDiff = diffs.length > 0;
+const hasMissing = diffs.some((d) => d.st === 'missing' || d.st === 'nofs');
+
+const KJ = { ok: '一致', unsaved: '未保存', missing: '未起動', nofs: '相違' };
+const selT = mons[ms].tiles, hk = FK;
+const dT = selT.find((t) => t.key === hk) || selT.find((t) => t.st !== 'ok') || selT[0];
+const det = { tagCss: FK ? 'padding:0 6px;color:#000000;background:' + (dT.moving ? C3 : dT.st === 'ok' ? C2 : dT.col2) : 'color:' + C2, tag: dT.num, text: dT.full, col: dT.col2, state: (dT.moving ? 'W RUCHU' : dT.st === 'ok' ? 'ZGODNA' : WORD[dT.st]) + ' ' + KJ[dT.st] };
+const monTabs = mons.map((m, i) => ({ label: (N >= 3 ? '' : '画面 ') + m.id + ' · ' + m.name, short: m.tiles.length + ' · ' + (m.nd ? m.nd + ' RÓŻN.' : 'OK'), id: m.id, name: m.name, info: m.info, pick: () => this.setState({ mon: i, monKey: setup }),
+css: i === ms ? 'border:1.5px solid ' + C2 + ';background:' + C2 + ';color:#000000' : m.err ? 'border:1.5px solid ' + CE + ';background:transparent;color:' + CE : m.nd ? 'border:1.5px solid ' + CW + ';background:transparent;color:' + CW : 'border:1px solid ' + C2 + ';background:transparent;color:' + C2 }));
+all = all.filter((o) => o.mi === ms);
+const dense = all.length > 10, SHORT = { unsaved: 'NOWA 未保存', missing: 'BRAK 未起動', nofs: 'OKNO 相違' };
+const W = 794, H = 138, c = 69, amp = 26, x0 = 36, n = all.length;
+const step = (W - 72) / Math.max(n - 1, 1);
+const wstep = step / Math.max(1, Math.round(step / 80));
+const xs = all.map((o, i) => x0 + i * step);
+const line = (sign, saved, off, sc) => {
+let d = '';
+for (let x = 0; x <= W; x += 6) {
+let y = sign * amp * sc * wob * Math.sin(Math.PI * (x - x0 + off) / wstep);
+for (let i = 0; i < n; i++) {
+const st = all[i].st;
+if (st === 'ok') continue;
+if ((st === 'unsaved') === saved) y += (saved ? -1 : 1) * 0.95 * amp * Math.exp(-Math.pow((x - xs[i]) / (0.3 * wstep), 2));
+}
+d += (x ? 'L' : 'M') + x + ' ' + (c + y).toFixed(1);
+}
+return d;
+};
+const bundle = (sign, saved) => { let d = ''; for (let j = 0; j < 9; j++) d += line(sign, saved, (j - 4) * 3.5, 1 - Math.abs(j - 4) * 0.04); return d; };
+let plus = '';
+all.forEach((o, i) => {
+if ([all[i - 1], all[i + 1]].some((q) => q && (q.st !== 'ok' || q.moving))) return;
+const py = i % 2 === 1 ? c - amp - 21 : c + amp + 21, px = xs[i];
+plus += 'M' + (px - 5).toFixed(1) + ' ' + py + 'h10M' + px.toFixed(1) + ' ' + (py - 5) + 'v10';
+});
+let calls = '', seps = '';
+const monTags = [];
+const nodes = all.map((o, i) => {
+const up = i % 2 === 0, ok = o.st === 'ok' && !o.moving, x = xs[i];
+calls += up ? 'M' + x + ' ' + (c - 8) + 'V' + (c - amp - 12) : 'M' + x + ' ' + (c + 8) + 'V' + (c + amp + 12);
+if (i === 0 || all[i - 1].mi !== o.mi) {
+if (i) seps += 'M' + (x - step / 2).toFixed(1) + ' 0V' + H;
+monTags.push({ x: (i ? x - step / 2 + 4 : 0).toFixed(0), t: set.mons[o.mi].id });
+}
+return {
+op: '1',
+x: x.toFixed(1), mx: (x - 5).toFixed(1), top: up ? (ok ? c - amp - 28 : c - amp - 38) : c + amp + 14,
+mk: o.moving ? 'background:' + C3 : o.st === 'unsaved' ? 'background:' + CW + ';transform:rotate(45deg)' : o.st !== 'ok' ? 'border:2px solid ' + CE + ';background:#000000' : o.kind === 'desk' ? 'border:2px solid ' + C2 + ';background:#000000' : 'background:' + C2,
+t: (dense && ok) ? o.num : o.num + ' ' + o.appU, t2: o.moving ? 'W RUCHU' : dense ? SHORT[o.st] : WORD[o.st], has2: !ok,
+css: (o.foc ? 'outline:1.5px solid ' + stCol(o) + ';outline-offset:3px;' : '') + (ok ? 'color:' + C3 : 'color:#000000;background:' + (o.moving ? C3 : o.st === 'unsaved' ? CW : CE) + ';padding:0 5px;font-weight:500')
+};
+});
+const rb = {
+plus: plus, seps: seps, calls: calls, nodes: nodes, monTags: [],
+saved: bundle(-1, true), now: bundle(1, false), savedMid: line(-1, true, 0, 1), nowMid: line(1, false, 0, 1),
+cursor: restoring && xs[3] ? 'M' + xs[3] + ' 0V' + H : '',
+scale: xs.map((x, i) => ({ x: x.toFixed(1), t: String(i + 1) }))
+};
+
+const KEYS = [1, 0, 2, 0, 0, 3, 4];
+const LIST = [['SAM LAPTOP', 1, 0], ['PL2779Q', 1, 7], ['LAPTOP + DELL G3223Q', 2, 0], ['LAPTOP + PL2779Q', 2, 8], ['DELL G3223Q + PL2779Q', 2, 8], ['LAPTOP + DELL G3223Q + PL2779Q', 3, 0], ['LAPTOP + G3223Q + PL2779Q + U2720Q', 4, 0]];
+const selNo = ('0' + (KEYS.indexOf(setup) + 1)).slice(-2);
+const sets = LIST.map((l, i) => {
+const key = KEYS[i], sel = key === setup, src = key ? SETS[key - 1] : null;
+const sp = src ? src.mons.reduce((a, m) => a + m.spaces.filter((s) => s.st !== 'unsaved').length, 0) : l[2];
+return { hx: (i % 5) * 31 + 4, hy: Math.floor(i / 5) * 34 + ((i % 5) % 2 ? 16 : 0), hcss: sel ? 'background:' + C2 + ';color:#000000;animation:sd-blink 1.2s steps(1) infinite' : 'background:#000000;color:' + C3, no: ('0' + (i + 1)).slice(-2), name: l[0], tag: String(sp), aria: 'Zestaw ' + (i + 1) + ': ' + l[0] + ', ' + sp + ' przestrzeni' + (sel ? ', podłączony' : ''),
+css: sel ? 'border:1.5px solid ' + C2 + ';background:' + C2 + ';color:#04120C' : 'border:1px solid ' + C3 + ';background:#000000;color:' + C3 };
+});
+
+const SEG = { '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg' };
+const seg = (str, on, off) => {
+const out = [];
+str.split('').forEach((ch) => {
+if (ch === '.') { out[out.length - 1].dot = on; return; }
+const d = { dot: off };
+'abcdefg'.split('').forEach((k) => { d[k] = (SEG[ch] || '').indexOf(k) >= 0 ? on : off; });
+out.push(d);
+});
+return out;
+};
+
+const blink = 'animation:sd-blink 1.2s steps(1) infinite';
+const st = restoring ? { col: C1, top: 'PROCEDURA', jp: '復元', word: 'PRZYWRACANIE', sub: 'RUCH 3 Z 5 · 60%', anim: blink }
+: isDiff ? { col: hasMissing ? CE : CW, top: 'UWAGA', jp: '相違', word: 'RÓŻNICA', sub: 'UKŁAD INNY NIŻ ZAPIS', anim: blink }
+: { col: C2, top: 'STAN', jp: '一致', word: 'ZGODNY', sub: 'UKŁAD ZGODNY Z ZAPISEM', anim: '' };
+const zone = (t, on, col) => ({ t: t, css: on ? 'background:' + col + ';color:#000000' : 'border:1px solid ' + C3 + ';color:' + C3 });
+
+return {
+restoring: restoring, th: th, mons: [mons[ms]], monTabs: monTabs, tabFs: N >= 3 ? 11 : 12, det: det, rb: rb, sets: sets, st: st,
+setNo: selNo, setName: set.name, nameFs: set.name.length > 22 ? 13 : 15, monCount: String(N), monWord: set.sub,
+okN: okN, savedN: savedN, pct: Math.round(okN / savedN * 100),
+tapeAnim: (restoring || isDiff) ? 'animation:sd-tape .5s linear infinite' : '',
+tapeAnim2: (restoring || isDiff) ? 'animation:sd-tape2 .5s linear infinite' : '',
+banner: (restoring ? 'PRZYWRACANIE · RUCH 3 Z 5 · 復元 · ' : isDiff ? 'UWAGA · UKŁAD INNY NIŻ ZAPIS · 相違 · ' : 'STAN ZGODNY Z ZAPISEM · 一致 · ').repeat(8),
+segTime: seg(restoring ? '0.17' : '0.29', C2, '#0B2A1E'),
+timeLabel: restoring ? 'Czas 0,17 sekundy' : 'Ostatnie ułożenie 0,29 sekundy',
+timeCap: restoring ? 'CZAS' : 'OSTATNIE UŁOŻENIE',
+movesCap: restoring ? 'RUCH 3/5' : 'RUCHY 05',
+devTxt: isDiff ? diffs.length + ' RÓŻN.' : '0',
+zones: [zone('ZGODNY', !isDiff, C2), zone('NADMIAR', isDiff && !hasMissing, CW), zone('BRAKI', hasMissing, CE)],
+logs: (restoring ? ['013 RUCH 1/5 CLAUDE › POZ. 2 OK', '014 RUCH 2/5 FORK › POZ. 5 OK', '015 RUCH 3/5 BRAVE › POZ. 4 …']
+: diffs.slice(0, 2).map((d) => (d.st === 'unsaved' ? '+ ' : '− ') + d.appU + ' · ' + WORD[d.st]).concat(['> OSTATNIO: 5 RUCHÓW W 0,29 S'])).map((t, i) => ({ t: t, d: (i * 0.8).toFixed(1) })),
+restCss: restoring ? 'border:1.5px solid ' + C3 + ';background:#000000;color:' + C3 : isDiff ? 'border:1.5px solid ' + C2 + ';background:' + C2 + ';color:#04120C' : 'border:1px solid ' + C2 + ';background:#000000;color:' + C2,
+restLabel: restoring ? 'PRZYWRACANIE' : 'PRZYWRÓĆ',
+restSub: restoring ? '復元 · RUCH 3 Z 5' : isDiff ? '復元 · UKŁAD Z ZAPISU' : '復元 · UKŁAD ZGODNY'
+};
+}
+}
+</script>
+</body>
+</html>

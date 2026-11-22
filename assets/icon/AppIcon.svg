@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="spaceDock: wahadłowiec lecący ukośnie w górę, luk otwarty, w środku okna aplikacji">
+<defs>
+<linearGradient id="f-bg" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#4C86FF"></stop>
+<stop offset="1" stop-color="#2442D6"></stop>
+</linearGradient>
+<clipPath id="f-sq"><rect x="100" y="100" width="824" height="824" rx="185"></rect></clipPath>
+<filter id="f-shadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.45"></feDropShadow>
+</filter>
+
+<linearGradient id="f-body" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EEF1F7"></stop>
+<stop offset="0.45" stop-color="#FFFFFF"></stop>
+<stop offset="1" stop-color="#C9D1E0"></stop>
+</linearGradient>
+<linearGradient id="f-wing" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#E2E7F0"></stop>
+<stop offset="1" stop-color="#FBFCFE"></stop>
+</linearGradient>
+<linearGradient id="f-door" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#C7CFDF"></stop>
+<stop offset="1" stop-color="#8A95AF"></stop>
+</linearGradient>
+<linearGradient id="f-door2" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#9AA5BE"></stop>
+<stop offset="1" stop-color="#C3CBDC"></stop>
+</linearGradient>
+<linearGradient id="f-c1" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#5EA0FF"></stop>
+<stop offset="1" stop-color="#2B5BE0"></stop>
+</linearGradient>
+<linearGradient id="f-c2" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#FFB86B"></stop>
+<stop offset="0.5" stop-color="#EC5A8C"></stop>
+<stop offset="1" stop-color="#6A4BD9"></stop>
+</linearGradient>
+<linearGradient id="f-c3" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#41D9A0"></stop>
+<stop offset="1" stop-color="#1FA37A"></stop>
+</linearGradient>
+<clipPath id="f-fus"><path d="M215 437 L760 437 C830 437 872 480 884 512 C872 544 830 587 760 587 L215 587 Z"></path></clipPath>
+<filter id="f-soft" x="-15%" y="-15%" width="130%" height="140%">
+<feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#040820" flood-opacity="0.5"></feDropShadow>
+</filter>
+<filter id="f-win" x="-20%" y="-20%" width="140%" height="150%">
+<feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.45"></feDropShadow>
+</filter>
+</defs>
+
+<g filter="url(#f-shadow)"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#f-bg)"></rect></g>
+
+<g clip-path="url(#f-sq)">
+<path d="M250 212 Q250 260 298 260 Q250 260 250 308 Q250 260 202 260 Q250 260 250 212 Z" fill="#FFD34D"></path>
+<path d="M790 746 Q790 780 824 780 Q790 780 790 814 Q790 780 756 780 Q790 780 790 746 Z" fill="#FFD34D"></path>
+<g transform="translate(500 524) rotate(-45) scale(1.5) translate(-575 -512)">
+<g filter="url(#f-soft)">
+<!-- vertical tail seen from above -->
+<rect x="140" y="505" width="190" height="14" rx="4" fill="#D5DBE6"></rect>
+
+<!-- delta wings -->
+<path d="M612 437 L472 392 L305 214 L235 214 L235 437 Z" fill="url(#f-wing)"></path>
+<path d="M612 587 L472 632 L305 810 L235 810 L235 587 Z" fill="url(#f-wing)"></path>
+<path d="M612 437 L472 392 L305 214" fill="none" stroke="#262D47" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"></path>
+<path d="M612 587 L472 632 L305 810" fill="none" stroke="#262D47" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"></path>
+<!-- elevons -->
+<rect x="235" y="226" width="26" height="211" fill="#B9C2D4"></rect>
+<rect x="235" y="587" width="26" height="211" fill="#B9C2D4"></rect>
+
+<!-- main engines -->
+<path d="M215 470 L178 464 L178 494 L215 490 Z" fill="#0B0D14"></path>
+<path d="M215 497 L172 492 L172 532 L215 527 Z" fill="#0B0D14"></path>
+<path d="M215 534 L178 530 L178 560 L215 554 Z" fill="#0B0D14"></path>
+
+<!-- fuselage -->
+<path d="M215 437 L760 437 C830 437 872 480 884 512 C872 544 830 587 760 587 L215 587 Z" fill="url(#f-body)"></path>
+<g clip-path="url(#f-fus)">
+<circle cx="914" cy="512" r="52" fill="#141824"></circle>
+</g>
+<!-- cockpit windows -->
+<path d="M776 472 L812 480 L812 492 L776 492 Z" fill="#141824"></path>
+<path d="M776 532 L812 532 L812 544 L776 552 Z" fill="#141824"></path>
+<path d="M800 496 L826 500 L826 524 L800 528 Z" fill="#141824"></path>
+
+<!-- OMS pods -->
+<ellipse cx="262" cy="458" rx="58" ry="27" fill="url(#f-body)" stroke="#BCC4D5" stroke-width="3"></ellipse>
+<ellipse cx="262" cy="566" rx="58" ry="27" fill="url(#f-body)" stroke="#BCC4D5" stroke-width="3"></ellipse>
+<!-- vertical stabilizer (top view) -->
+<path d="M326 503 L170 500 L150 512 L170 524 L326 521 Z" fill="#15181F" stroke="#15181F" stroke-width="4" stroke-linejoin="round"></path>
+</g>
+
+<!-- open payload bay doors: narrow strips along the bay -->
+<rect x="330" y="384" width="410" height="52" rx="3" fill="url(#f-door)"></rect>
+<rect x="330" y="588" width="410" height="52" rx="3" fill="url(#f-door2)"></rect>
+<g stroke="#7A86A2" stroke-width="3">
+<line x1="432" y1="386" x2="432" y2="434"></line>
+<line x1="535" y1="386" x2="535" y2="434"></line>
+<line x1="637" y1="386" x2="637" y2="434"></line>
+<line x1="432" y1="590" x2="432" y2="638"></line>
+<line x1="535" y1="590" x2="535" y2="638"></line>
+<line x1="637" y1="590" x2="637" y2="638"></line>
+</g>
+
+<!-- payload bay -->
+<rect x="330" y="446" width="410" height="132" rx="4" fill="#262D47"></rect>
+
+<!-- cargo: app window thumbnails -->
+<g filter="url(#f-win)">
+<rect x="344" y="470" width="110" height="84" rx="8" fill="#FFFFFF"></rect>
+<rect x="351" y="487" width="96" height="60" rx="4" fill="url(#f-c1)"></rect>
+<rect x="468" y="458" width="130" height="108" rx="9" fill="#FFFFFF"></rect>
+<rect x="476" y="478" width="114" height="80" rx="5" fill="url(#f-c2)"></rect>
+<rect x="612" y="474" width="114" height="78" rx="8" fill="#FFFFFF"></rect>
+<rect x="619" y="490" width="100" height="55" rx="4" fill="url(#f-c3)"></rect>
+</g>
+
+</g>
+
+</g>
+
+<rect x="101" y="101" width="822" height="822" rx="184" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="2"></rect>
+</svg>

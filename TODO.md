@@ -39,3 +39,33 @@ kosmosu i dokowania: przestrzenie / okienka „dokują” jak statki do stacji. 
   zwykłego wyglądu (przełącznik w ustawieniach, kolejne 10 kliknięć)?
 - Gdy w systemie jest włączone „Ogranicz ruch”: krótsza animacja albo samo przejście bez lotu.
 - Jasny i ciemny tryb dla obu wyglądów.
+
+## Skróty klawiszowe: zapis i przywracanie (2026-11-22)
+
+Dziś zapis i przywracanie są tylko pod przyciskami (okno, menu w pasku menu). Pomysł:
+- **Tylko globalne**, działają z każdej apki, nie tylko gdy SpaceDock jest na wierzchu. Bez
+  osobnych skrótów w oknie.
+- **Skrót ustawia użytkownik** w ustawieniach: pole „naciśnij skrót” osobno dla zapisu i dla
+  przywracania, z możliwością wyczyszczenia (= skrót wyłączony). Domyślnie oba puste, żeby nie
+  gryźć się z systemem ani innymi apkami.
+- **Jak:** `RegisterEventHotKey` z Carbon, bez nowej zależności i bez dodatkowej zgody (Dostępność
+  już mamy, ale ten mechanizm jej nie wymaga). Gdy skrót jest zajęty przez inną apkę, rejestracja
+  się nie uda: pokazać to przy polu.
+- **Do ustalenia:** potwierdzenie przed zapisem, bo nadpisuje poprzedni układ (dźwięk /
+  powiadomienie / krótki błysk ikony w pasku menu zamiast okna?); co gdy przywracanie już trwa.
+
+## Zwykły wygląd: kolory rozjechania między zapisem a ekranami (2026-11-22)
+
+W zwykłym wyglądzie (nie „panel” za easter eggiem) kafelek, który różni się od zapisu, ma dziś
+zawsze tę samą pomarańczową ramkę i napis (`SpaceTile` w `Sources/App.swift`), a przestawionych
+przestrzeni nie oznacza wcale. Pomysł: na monitorach pokazać konkretne apki w dwóch kolorach:
+- **czerwony:** zamknięta / brak, czyli „Nie otwarte”, „Brak biurka”, „Nie na pełnym ekranie”;
+- **żółty:** na złym miejscu, „Przestawione › N” (N = gdzie jest teraz na pasku).
+
+Panel już to liczy (`SpaceState` w `Sources/Panel.swift`: `moved`, `missing`, `noFullScreen`,
+`unsaved`): przenieść to liczenie w jedno wspólne miejsce i użyć w obu wyglądach, zamiast liczyć
+drugi raz.
+
+**Do ustalenia:** kolor dla „Nie zapisane” (nowa przestrzeń spoza zapisu; dziś pomarańczowy, może
+niebieski jak w panelu); kolor plus napis, nie sam kolor (daltoniści); czy żółty jest czytelny
+w jasnym trybie.

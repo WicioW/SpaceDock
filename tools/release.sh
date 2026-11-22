@@ -59,4 +59,5 @@ echo "Appcast: dist/appcast.xml"
 
 if [ "$2" = "--publish" ]; then
     gh release create "v$VERSION" "$ZIP" "$ZIP.sha256" "$DMG" "$DMG.sha256" dist/appcast.xml --title "SpaceDock $VERSION" --generate-notes
+    tools/update-cask.sh "$VERSION" --publish   # Homebrew: brew install --cask wiciow/spacedock/spacedock
 fi

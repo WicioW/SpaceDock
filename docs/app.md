@@ -134,7 +134,8 @@ Sprawdzone lokalnie 2026-11-22: 0.1.0 → 0.1.1 z `localhost`.
   przewijania; zwykły użytkownik nie.
 - **Wydanie:** `tools/release.sh <wersja> [--publish]`. Wersja zawsze wyższa niż poprzednia i
   nigdy użyta drugi raz. Skrypt podpisuje zip (`sign_update`) i pisze `dist/appcast.xml` z jedną
-  pozycją (najnowszą); `--publish` dołącza go do wydania.
+  pozycją (najnowszą); `--publish` dołącza go do wydania i aktualizuje cask w tapie Homebrew
+  (`tools/update-cask.sh`, suma SHA-256 brana z opublikowanego wydania).
 - **Test lokalny:** zainstalować starszą wersję z kanałem na `localhost`, zbudować nowszą z
   adresami na `localhost` i podać `dist/` serwerem:
   ```bash

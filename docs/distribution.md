@@ -78,9 +78,12 @@ Da się za to ograniczyć zależność do minimum:
    Skrypt `tools/release.sh`: build uniwersalny (`--arch arm64 --arch x86_64`), podpis,
    zip, appcast (punkt 5), `gh release create`. Na start lokalnie, potem GitHub Actions
    (certyfikat `.p12` w sekretach repo).
-2. **Własny tap Homebrew:** repo `<login>/homebrew-tap`, plik `Casks/spacedock.rb`
-   (`url` do zipa z Releases, `sha256`, `auto_updates true`). Instalacja:
-   `brew install --cask <login>/tap/spacedock`. Tap może aktualizować skrypt wydania.
+2. **Własny tap Homebrew:** ✅ repo `WicioW/homebrew-spacedock`, plik `Casks/spacedock.rb`
+   (`url` do DMG z Releases, `sha256` z wydania, `auto_updates true`, `zap`, uwaga o „Otwórz mimo
+   to”). Pisze go `tools/update-cask.sh <wersja> [--publish]`, wołany przez `release.sh --publish`
+   (`gh api`, committer z adresem noreply). Homebrew 7 ładuje tylko zaufane tapy, więc instalacja:
+   `brew tap wiciow/spacedock`, `brew trust wiciow/spacedock`, `brew install --cask spacedock`.
+   Brew stawia kwarantannę, więc pierwsze uruchomienie jak z DMG.
 3. **Pierwsze uruchomienie:** README pokazuje „Otwórz mimo to” (od macOS 15 prawy klik → Otwórz
    już nie omija Gatekeepera) i alternatywę w Terminalu:
    `xattr -dr com.apple.quarantine /Applications/SpaceDock.app`.
@@ -119,7 +122,7 @@ Okno startowe w 3 krokach: zgoda Dostępność → (opcjonalnie) tryb szybki: st
 |---|---|---|
 | M1 | ✅ (2026-11-22) Repo publiczne [WicioW/SpaceDock](https://github.com/WicioW/SpaceDock): jeden commit bez historii (gałąź `main`); prywatna historia tylko lokalnie na gałęzi `history`, **nigdy jej nie wysyłać**; tytuły okien w docs podmienione | — |
 | M2 | ✅ certyfikat „SpaceDock” + `tools/release.sh` (uniwersalny build, podpis, zip, SHA-256; `--publish` = wydanie przez gh); ✅ [Release 0.1.0](https://github.com/WicioW/SpaceDock/releases/tag/v0.1.0) (DMG, zip, appcast) | M1 |
-| M3 | Własny tap Homebrew | M2 |
+| M3 | ✅ Własny tap Homebrew (`WicioW/homebrew-spacedock`, `tools/update-cask.sh`) | M2 |
 | ~~M4~~ | ~~pomocnik roota~~: zbędne po P9; zamiast tego: „Przeciąganie” w ustawieniach tylko, gdy jest Karabiner + pomocnik | M1 |
 | M5 | ✅ Sparkle 2.10.1 (aktualizacje w apce, appcast w każdym wydaniu, test lokalny 0.1.0 → 0.1.1; docs/app.md) | M2 |
 | M6 | Onboarding: zgoda Dostępność → pierwszy zapis | M1 |

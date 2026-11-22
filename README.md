@@ -31,6 +31,13 @@ at the end of the bar. SpaceDock keeps one saved layout per monitor set ("Laptop
    System Settings → Privacy & Security → Accessibility.
 4. Arrange your Spaces and click **Save Current Layout**. Do this once for every monitor set.
 
+Or with [Homebrew](https://brew.sh) (step 2 still applies):
+```bash
+brew tap wiciow/spacedock
+brew trust wiciow/spacedock
+brew install --cask spacedock
+```
+
 Updates come inside the app: once a day SpaceDock checks the latest GitHub release and offers to
 install a newer version (or **Check for Updates…** in the menu). Updates are signed, install
 without the Open Anyway step and keep the Accessibility permission.

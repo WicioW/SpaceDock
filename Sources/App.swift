@@ -582,7 +582,7 @@ struct ProfileView: View {
                         .help(model.trusted ? "Ustaw przestrzenie jak w zapisie" : "Wymaga uprawnienia Dostępność dla tej apki")
                 }
             }
-            if let layout = model.saved[key] {
+            if model.saved[key] != nil {
                 HStack(alignment: .top, spacing: 16) {
                     ForEach(model.displays(key), id: \.self) { uuid in
                         MonitorView(name: model.name(uuid), tiles: model.tiles(key)[uuid] ?? [])

@@ -124,14 +124,6 @@ final class Model: ObservableObject {
         return d.count == 1 && screens[d[0]]?.builtin == true ? String(localized: "Sam laptop") : d.map(name).joined(separator: " + ")
     }
 
-    /// Tiles per display: for the connected set the save next to the bars now (orange marks for
-    /// Spaces not saved and saved ones not open), otherwise just the save.
-    func tiles(_ key: String) -> [String: [Tile]] {
-        guard let layout = saved[key] else { return [:] }
-        guard key == current else { return layout.mapValues { $0.map { Tile(entry: $0, mark: .none) } } }
-        return layoutDiff(saved: layout, live: liveSpaces, describe: describe)
-    }
-
     /// Names a Space on the bar now (one that is not in the save).
     func describe(_ s: LiveSpace) -> Entry {
         Entry(bundleID: s.bundle,
@@ -583,9 +575,10 @@ struct ProfileView: View {
                 }
             }
             if model.saved[key] != nil {
+                // The panel look's states (ok, moved, missing, …): one computation for both looks.
                 HStack(alignment: .top, spacing: 16) {
-                    ForEach(model.displays(key), id: \.self) { uuid in
-                        MonitorView(name: model.name(uuid), tiles: model.tiles(key)[uuid] ?? [])
+                    ForEach(PanelData(model, key: key).monitors, id: \.uuid) { m in
+                        MonitorView(name: model.name(m.uuid), tiles: m.tiles)
                     }
                 }
             } else if model.saved.isEmpty {
@@ -636,7 +629,7 @@ struct FirstSteps: View {
 
 struct MonitorView: View {
     let name: String
-    let tiles: [Tile]
+    let tiles: [PanelTile]
 
     var body: some View {
         VStack(spacing: 8) {
@@ -647,7 +640,7 @@ struct MonitorView: View {
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], alignment: .leading, spacing: 8) {
                         ForEach(Array(tiles.enumerated()), id: \.offset) { i, t in
-                            SpaceTile(index: i + 1, entry: t.entry, mark: t.mark)
+                            SpaceTile(index: i + 1, tile: t)
                         }
                     }
                 }
@@ -666,16 +659,24 @@ struct MonitorView: View {
 
 struct SpaceTile: View {
     let index: Int
-    let entry: Entry
-    var mark: TileMark = .none
-    /// Orange caption for a tile that differs from the bar now.
-    private var markText: LocalizedStringKey? {
-        switch mark {
-        case .none: nil
-        case .unsaved: "Nie zapisane"
-        case .missing where entry.isDesktop: "Brak biurka"
-        case .missing: NSRunningApplication.runningApplications(withBundleIdentifier: entry.bundleID).isEmpty
-            ? "Nie otwarte" : "Nie na pełnym ekranie"
+    let tile: PanelTile
+    private var entry: Entry { tile.entry }
+
+    /// Yellow text is unreadable on the light background: a darker yellow there.
+    private static let yellow = Color(nsColor: NSColor(name: nil) {
+        $0.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .systemYellow : NSColor(red: 0.62, green: 0.46, blue: 0, alpha: 1)
+    })
+
+    /// Caption and color for a tile that differs from the bar now: red = nothing behind it
+    /// (app closed, no desktop, window not full screen), yellow = in the wrong place, blue = not
+    /// in the save. Always with words, not color alone.
+    private var mark: (text: String, color: Color)? {
+        switch tile.state {
+        case .ok: nil
+        case .moved: (String(localized: "Przestawione") + " › \(tile.now)", Self.yellow)
+        case .unsaved: (String(localized: "Nie zapisane"), .blue)
+        case .missing: (entry.isDesktop ? String(localized: "Brak biurka") : String(localized: "Nie otwarte"), .red)
+        case .noFullScreen: (String(localized: "Nie na pełnym ekranie"), .red)
         }
     }
     private var name: String { entry.isDesktop ? String(localized: "Biurko") : entry.app }   // saves store the Polish word
@@ -689,18 +690,18 @@ struct SpaceTile: View {
             if !entry.title.isEmpty {
                 Text(entry.title).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             }
-            if let markText {
-                Text(markText).font(.caption2.weight(.semibold)).foregroundStyle(.orange).lineLimit(1)
+            if let mark {
+                Text(verbatim: mark.text).font(.caption2.weight(.semibold)).foregroundStyle(mark.color).lineLimit(1)
             } else if let w = entry.window {
                 Text(verbatim: "#\(w)").font(.caption2.monospacedDigit()).foregroundStyle(.tertiary)
             }
         }
-        .opacity(mark == .missing ? 0.55 : 1)   // a saved place with nothing behind it now
+        .opacity(tile.state == .missing ? 0.55 : 1)   // a saved place with nothing behind it now
         .padding(.horizontal, 6)
         .frame(width: 120, height: 96)
         .background(RoundedRectangle(cornerRadius: 8).fill(.background))
         .overlay {
-            if mark != .none { RoundedRectangle(cornerRadius: 8).strokeBorder(.orange, lineWidth: 2) }
+            if let mark { RoundedRectangle(cornerRadius: 8).strokeBorder(mark.color, lineWidth: 2) }
         }
         .overlay(alignment: .topLeading) {
             Text("\(index)").font(.caption2.bold()).foregroundStyle(.secondary).padding(5)

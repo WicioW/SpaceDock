@@ -93,8 +93,7 @@ private func J(_ mark: String) -> String { panelChinese ? panelMarks[mark] ?? ma
 
 // MARK: - Data
 
-/// `moved`: saved and on the bar, but not where the save has it (one of the Spaces a restore
-/// would move; the rest are in the right order among themselves).
+/// `moved`: saved and on the bar, but at another place among the saved Spaces than in the save.
 enum SpaceState { case ok, moved, unsaved, missing, noFullScreen }
 
 struct PanelTile {
@@ -225,9 +224,11 @@ struct PanelData {
                     return (i, j)
                 }
                 orderDiffers = layout.map { ($0[d] ?? []).map(\.key) != (model.live[d] ?? []) } ?? false
-                // Out of order: every Space outside the longest run that already stands in saved order.
-                let inOrder = longestIncreasing(links.map(\.1))
-                for (i, j) in links where !inOrder.contains(j) {
+                // Out of order: every Space whose place among the saved ones on the bar is not its
+                // place in the save (two swapped Spaces are both marked). Missing and unsaved
+                // Spaces do not count, so they shift nobody's place.
+                let places = links.map(\.1).sorted()
+                for (k, (i, j)) in links.enumerated() where places[k] != j {
                     ts[saved[i]].state = .moved
                     ts[saved[i]].now = j + 1
                 }

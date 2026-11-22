@@ -56,6 +56,10 @@ Dziś zapis i przywracanie są tylko pod przyciskami (okno, menu w pasku menu). 
 
 ## Zwykły wygląd: kolory rozjechania między zapisem a ekranami (2026-11-22)
 
+**Stan (2026-11-22):** ✅ zwykły wygląd bierze stany z `PanelData` (jedno liczenie dla obu
+wyglądów): czerwony = nie otwarte / brak biurka / nie na pełnym ekranie, żółty = „Przestawione › N”, każda apka na innym miejscu wśród zapisanych niż w zapisie (zamiana = obie)
+(w jasnym trybie ciemniejszy żółty), niebieski = nie zapisane. Zawsze kolor plus napis.
+
 W zwykłym wyglądzie (nie „panel” za easter eggiem) kafelek, który różni się od zapisu, ma dziś
 zawsze tę samą pomarańczową ramkę i napis (`SpaceTile` w `Sources/App.swift`), a przestawionych
 przestrzeni nie oznacza wcale. Pomysł: na monitorach pokazać konkretne apki w dwóch kolorach:

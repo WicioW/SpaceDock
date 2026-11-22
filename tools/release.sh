@@ -32,9 +32,7 @@ ditto -c -k --keepParent "$APP" "$ZIP"   # ditto keeps the signature intact (zip
 cat "$ZIP.sha256"
 
 DMG="dist/SpaceDock-$VERSION.dmg"
-mkdir dist/dmg && ditto "$APP" dist/dmg/SpaceDock.app && ln -s /Applications dist/dmg/Applications
-hdiutil create -quiet -volname "SpaceDock $VERSION" -srcfolder dist/dmg -format UDZO "$DMG"
-rm -rf dist/dmg
+tools/make-dmg.sh "$APP" "$DMG" "SpaceDock $VERSION"   # shuttle background, first-launch steps
 (cd dist && shasum -a 256 "SpaceDock-$VERSION.dmg" > "SpaceDock-$VERSION.dmg.sha256")
 cat "$DMG.sha256"
 

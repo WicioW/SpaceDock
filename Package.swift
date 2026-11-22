@@ -13,8 +13,10 @@ let package = Package(
             name: "spaces-layout",
             dependencies: [.product(name: "Sparkle", package: "Sparkle")],
             path: "Sources",
-            // Sparkle.framework sits in SpaceDock.app/Contents/Frameworks (tools/make-app.sh).
-            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
+            // Sparkle.framework: in SpaceDock.app/Contents/Frameworks (tools/make-app.sh), and next to
+            // the bare binary in .build (CLI commands, selftest).
+            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks",
+                                           "-Xlinker", "-rpath", "-Xlinker", "@executable_path"])]
         ),
     ]
 )

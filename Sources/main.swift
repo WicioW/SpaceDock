@@ -617,6 +617,7 @@ case "restore-fast": withOverlay { restore(fast: true) }; list()
 case "restore-bridge": withOverlay { restoreBridge() }; list()
 case "goto": print(goTo(Int(CommandLine.arguments.last ?? "") ?? -1) ? "OK" : "Nie udało się")
 case "panel-shot": panelShot(Array(CommandLine.arguments.dropFirst(2)))
+case "dmg-background": MainActor.assumeIsolated { dmgBackground(Array(CommandLine.arguments.dropFirst(2))) }
 case "selftest": selftest()
 case "mcdump": mcdump()
 case "mcbars": mcbars()

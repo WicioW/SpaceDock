@@ -127,6 +127,11 @@ Sprawdzone lokalnie 2026-11-22: 0.1.0 → 0.1.1 z `localhost`.
   `assets/sparkle-public-key.txt` (w repo, `make-app.sh` wpisuje go jako `SUPublicEDKey`).
   Kopia: `generate_keys --account spacedock -x <plik>` do menedżera haseł. Utrata klucza =
   użytkownicy nie dostaną już żadnej aktualizacji (muszą pobrać nową wersję ręcznie).
+- **DMG:** `tools/make-dmg.sh` (wołany przez `release.sh`): tło z wahadłowcem i instrukcją
+  pierwszego otwarcia (`dmg-background`, `Sources/DMGBackground.swift`), układ okna zapisuje
+  Finder przez AppleScript (raz zgoda: Prywatność i ochrona → Automatyzacja → Terminal → Finder).
+  Kto ma włączone pokazywanie ukrytych plików, widzi folder `.background` poza oknem i pasek
+  przewijania; zwykły użytkownik nie.
 - **Wydanie:** `tools/release.sh <wersja> [--publish]`. Wersja zawsze wyższa niż poprzednia i
   nigdy użyta drugi raz. Skrypt podpisuje zip (`sign_update`) i pisze `dist/appcast.xml` z jedną
   pozycją (najnowszą); `--publish` dołącza go do wydania.

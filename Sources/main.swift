@@ -25,6 +25,11 @@ func spaces(ofWindow id: CGWindowID) -> [Int] {
 @_silgen_name("_AXUIElementCreateWithRemoteToken")
 private func _AXUIElementCreateWithRemoteToken(_ token: CFData) -> Unmanaged<AXUIElement>?
 
+/// Process serial number of a pid, for SkyLight's front-process call (deprecated in the SDK,
+/// so Swift hides it; still exported).
+@_silgen_name("GetProcessForPID")
+private func processForPID(_ pid: pid_t, _ psn: UnsafeMutablePointer<ProcessSerialNumber>) -> OSStatus
+
 @_silgen_name("_AXUIElementGetWindow")
 private func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
 
@@ -114,8 +119,9 @@ func axWindows(pid: pid_t) -> [AXUIElement] {
 
 /// One window of the app by its number, also on a Space that is not shown (e.g. the title of a
 /// full-screen Brave window behind another Space).
-// ponytail: brute force over AX element IDs 0..<2000 (~ms when the window is early, a few
-// hundred ms worst case per app); cache per pid if saving ever feels slow.
+// ponytail: brute force over AX element IDs 0..<50000, ~10 µs each: ~0.5 s for a window not
+// found. Chromium numbers every AX element from one counter, so a Brave window opened after long
+// use sits past 2000 (6063, 2026-11-23); cache per pid if it ever runs out or feels slow.
 func axWindow(pid: pid_t, id: CGWindowID) -> AXUIElement? {
     if let w = axWindows(pid: pid).first(where: { windowID($0) == id }) { return w }
     // Chromium and Electron apps (Brave, Claude, Bitwarden) give the window's number to inner
@@ -123,13 +129,13 @@ func axWindow(pid: pid_t, id: CGWindowID) -> AXUIElement? {
     return remoteElements(pid: pid).first { windowID($0) == id && (attr($0, kAXRoleAttribute) as String?) == kAXWindowRole as String }
 }
 
-/// AX elements of an app reached through remote tokens (element IDs 0..<2000), lazily.
-private func remoteElements(pid: pid_t) -> AnySequence<AXUIElement> {
+/// AX elements of an app reached through remote tokens (element IDs from `range`), lazily.
+private func remoteElements(pid: pid_t, _ range: Range<UInt64> = 0..<50_000) -> AnySequence<AXUIElement> {
     var token = Data(count: 20)
     token.replaceSubrange(0..<4, with: withUnsafeBytes(of: pid) { Data($0) })
     token.replaceSubrange(4..<8, with: withUnsafeBytes(of: Int32(0)) { Data($0) })
     token.replaceSubrange(8..<12, with: withUnsafeBytes(of: Int32(0x636f636f)) { Data($0) })
-    return AnySequence((UInt64(0)..<2000).lazy.compactMap { element -> AXUIElement? in
+    return AnySequence(range.lazy.compactMap { element -> AXUIElement? in
         token.replaceSubrange(12..<20, with: withUnsafeBytes(of: element) { Data($0) })
         return _AXUIElementCreateWithRemoteToken(token as CFData)?.takeRetainedValue()
     })
@@ -215,23 +221,64 @@ func pressCtrlArrow(right: Bool) {
 
 func isShown(_ spaceID: Int) -> Bool { liveDisplays().contains { $0.current == spaceID } }
 
-/// Shows `spaceID`. For a full-screen Space, activating its app jumps there in one animation;
-/// otherwise (or for an app with several full-screen windows) steps with Ctrl+arrows.
+/// Brings one window of an app to the front, by its number: macOS jumps to that window's Space,
+/// also when the app has several full-screen windows (activating the app picks its last used
+/// one). Private SkyLight, as window switchers do (AltTab): front process with that window, then
+/// a key-window event record. False when a symbol is missing.
+func focusWindow(pid: pid_t, id: CGWindowID) -> Bool {
+    typealias Front = @convention(c) (UnsafeMutablePointer<ProcessSerialNumber>, CGWindowID, UInt32) -> CGError
+    typealias Post = @convention(c) (UnsafeMutablePointer<ProcessSerialNumber>, UnsafeMutablePointer<UInt8>) -> CGError
+    guard let f = dlsym(skylight, "_SLPSSetFrontProcessWithOptions"), let p = dlsym(skylight, "SLPSPostEventRecordTo") else { return false }
+    var psn = ProcessSerialNumber()
+    guard processForPID(pid, &psn) == noErr else { return false }
+    _ = unsafeBitCast(f, to: Front.self)(&psn, id, 0x200)   // kCPSUserGenerated
+    var bytes = [UInt8](repeating: 0, count: 0xF8)
+    bytes[0x04] = 0xF8
+    bytes[0x3A] = 0x10
+    withUnsafeBytes(of: id) { bytes.replaceSubrange(0x3C..<0x40, with: $0) }
+    for i in 0x20..<0x30 { bytes[i] = 0xFF }
+    for kind: UInt8 in [1, 2] {   // key window: press, release
+        bytes[0x08] = kind
+        _ = unsafeBitCast(p, to: Post.self)(&psn, &bytes)
+    }
+    // The raise is what makes macOS switch to the window's Space; the two calls above alone
+    // front the app but leave the screen where it is (JumpTest, 2026-11-23).
+    if let w = axWindow(pid: pid, id: id) { AXUIElementPerformAction(w, kAXRaiseAction as CFString) }
+    else { print("  AX okno \(windowLabel(id)): nie znalezione, skok nie przełączy przestrzeni") }
+    return true
+}
+
+/// Shows `spaceID`. For a full-screen Space, focusing its window jumps there in one animation;
+/// when that does not land there, steps with Ctrl+arrows.
 /// Ctrl+arrows act on the display under the pointer, so the pointer is moved there first.
 func goTo(_ spaceID: Int) -> Bool {
     if isShown(spaceID) { return true }
-    if let pid = liveDisplays().flatMap(\.spaces).first(where: { $0.id == spaceID })?.pid {
-        NSRunningApplication(processIdentifier: pid)?.activate()
+    let start = Date()
+    let took = { String(format: "%.1f s", Date().timeIntervalSince(start)) }
+    if let s = liveDisplays().flatMap(\.spaces).first(where: { $0.id == spaceID }), let pid = s.pid {
+        let app = bundleID(pid) ?? "?"
+        let how: String
+        if let id = s.windowID, focusWindow(pid: pid, id: id) {
+            how = "okno \(windowLabel(id))"
+        } else {
+            NSRunningApplication(processIdentifier: pid)?.activate()
+            how = "aktywacja apki"
+        }
         if waitUntil(timeout: 1.5, { isShown(spaceID) }) {
+            print("  → przestrzeń \(spaceID) (\(app)): skok, \(how)  (\(took()))")
             Thread.sleep(forTimeInterval: 0.1)
             return true
         }
+        let at = liveDisplays().map { String($0.current) }.joined(separator: ", ")
+        print("  → przestrzeń \(spaceID) (\(app)): skok (\(how)) wylądował na \(at)")
     }
+    var steps = 0
     for _ in 0..<30 {
         guard let d = liveDisplays().first(where: { $0.spaces.contains { $0.id == spaceID } }),
               let cur = d.spaces.firstIndex(where: { $0.id == d.current }),
               let dst = d.spaces.firstIndex(where: { $0.id == spaceID }) else { return false }
         if cur == dst {
+            if steps > 0 { print("  → przestrzeń \(spaceID): strzałki ×\(steps)  (\(took()))") }
             Thread.sleep(forTimeInterval: 0.1) // let the slide animation finish before AX calls
             return true
         }
@@ -240,6 +287,7 @@ func goTo(_ spaceID: Int) -> Bool {
             CGWarpMouseCursorPosition(CGPoint(x: b.midX, y: b.midY))
         }
         pressCtrlArrow(right: dst > cur)
+        steps += 1
         let moved = waitUntil(timeout: 2) { liveDisplays().first { $0.uuid == d.uuid }?.current != d.current }
         if !moved { print("Skrót Ctrl+strzałka nie przełączył przestrzeni"); return false }
     }

@@ -59,9 +59,11 @@ tools/make-app.sh && open ~/Applications/SpaceDock.app
 Apka nazywa się **SpaceDock**. Instaluje `~/Applications/SpaceDock.app` (identyfikator `io.github.wiciow.spacedock`; do 2026-11-18 był `local.spaces-layout`: ustawienia apka przenosi sama przy pierwszym starcie, zgodę Dostępność i start przy logowaniu trzeba nadać od nowa). W apce działa automat (to samo co `watch`, więc `watch`
 w iTerm trzeba wyłączyć). Ustawienia są w osobnym oknie (⌘, albo koło zębate pod zestawami; w
 pasku zostaje tylko stan automatu): **Ogólne** = przywracanie Automatycznie (po zmianie monitorów) /
-Ręcznie (przycisk „Przywróć”), zapis Ręcznie / Automatycznie, metoda; **Skróty** = globalne skróty
-zapisu i przywracania (`Sources/Hotkeys.swift`, domyślnie brak); **Apka** = język, wygląd, start
-przy logowaniu, aktualizacje. Podczas układania na
+Ręcznie (przycisk „Przywróć”), zapis Ręcznie / Automatycznie, metoda; **Skróty** = globalne skróty zapisu, przywracania i przywracania z otwieraniem zamkniętych apek
+(`Sources/Hotkeys.swift`, domyślnie brak); **Apka** = język, wygląd, start
+przy logowaniu, aktualizacje. Kafelek obecnego zestawu: klik zaznacza go pierścieniem, dwuklik przenosi na
+tę przestrzeń (podniesienie okna przez SkyLight + AX, `goTo`), ↗ na czerwonym kafelku otwiera zamkniętą apkę.
+„Przywróć i otwórz apki” najpierw otwiera zamknięte apki z zapisu i zostaje na nich (bez powrotu). Podczas układania na
 każdym ekranie jest czerwony komunikat „Układam przestrzenie… nie ruszaj myszy”. Log:
 `~/Library/Logs/SpaceDock.log` (menu: „Pokaż log”), bez tytułów okien (tylko numery), więc można go dołączyć do zgłoszenia. Zapisy: `~/Library/Application Support/SpaceDock/` (do 2026-11-21 folder `spaces-layout` i log `spaces-layout.log`; apka przenosi je sama przy pierwszym starcie).
 Zapis obejmuje też biurka (wpis `desktop`), więc ich miejsce na pasku wraca razem z resztą; zapis

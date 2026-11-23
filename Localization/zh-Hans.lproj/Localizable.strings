@@ -119,6 +119,14 @@
 /* Settings window */
 "Ogólne" = "通用";
 "Skróty" = "快捷键";
+"Ustaw" = "设置";
 "Apka" = "应用";
 "Działają z każdej apki. Domyślnie bez skrótów." = "在任何应用中都可使用。默认无快捷键。";
 "Automat wyłączony: nadaj uprawnienie" = "监视已关闭：请授予权限";
+
+/* Opening closed apps */
+"Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)" = "打开、进入全屏并按保存的位置放置（恢复整个布局）";
+"Przywróć i otwórz apki" = "恢复并打开应用";
+"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie" = "先打开已保存但关闭的应用，再排列空间";
+"Skrót: przywróć i otwórz" = "恢复并打开快捷键";
+"Kliknij dwa razy, żeby przejść do tej przestrzeni" = "双击可前往此空间";

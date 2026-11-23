@@ -6,10 +6,16 @@ import SwiftUI
 /// by default (a default could clash with the system or another app). Carbon's
 /// RegisterEventHotKey needs no permission. Stored per action as "keyCode modifiers label".
 final class Hotkeys: ObservableObject {
-    enum Action: UInt32 { case save = 1, restore = 2 }
+    enum Action: UInt32, CaseIterable { case save = 1, restore = 2, restoreOpen = 3 }
 
     static let shared = Hotkeys()
-    static func key(_ a: Action) -> String { a == .save ? "hotkeySave" : "hotkeyRestore" }
+    static func key(_ a: Action) -> String {
+        switch a {
+        case .save: "hotkeySave"
+        case .restore: "hotkeyRestore"
+        case .restoreOpen: "hotkeyRestoreOpen"
+        }
+    }
 
     @Published var recording: Action?
     @Published var taken: Set<Action> = []   // shortcut already registered by another app
@@ -21,9 +27,9 @@ final class Hotkeys: ObservableObject {
     private var monitor: Any?
 
     /// Called once by the app model: installs the handler and registers the stored shortcuts.
-    func start(save: @escaping () -> Void, restore: @escaping () -> Void) {
-        guard handlers.isEmpty else { return }
-        handlers = [.save: save, .restore: restore]
+    func start(_ handlers: [Action: () -> Void]) {
+        guard self.handlers.isEmpty else { return }
+        self.handlers = handlers
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
             var id = EventHotKeyID()
@@ -39,7 +45,7 @@ final class Hotkeys: ObservableObject {
         refs.values.forEach { UnregisterEventHotKey($0) }
         refs = [:]
         var failed: Set<Action> = []
-        for a in [Action.save, .restore] {
+        for a in Action.allCases {
             let parts = (UserDefaults.standard.string(forKey: Self.key(a)) ?? "").split(separator: " ", maxSplits: 2)
             guard parts.count == 3, let code = UInt32(parts[0]), let mods = UInt32(parts[1]) else { continue }
             var ref: EventHotKeyRef?
@@ -102,6 +108,11 @@ final class Hotkeys: ObservableObject {
     private static func carbon(_ m: NSEvent.ModifierFlags) -> UInt32 {
         (m.contains(.command) ? UInt32(cmdKey) : 0) | (m.contains(.control) ? UInt32(controlKey) : 0)
             | (m.contains(.option) ? UInt32(optionKey) : 0) | (m.contains(.shift) ? UInt32(shiftKey) : 0)
+    }
+
+    /// The stored shortcut's label ("⌃⌥⌘S"), nil when none is set.
+    static func label(_ a: Action) -> String? {
+        (UserDefaults.standard.string(forKey: key(a)) ?? "").split(separator: " ", maxSplits: 2).dropFirst(2).first.map(String.init)
     }
 
     private static let keyNames: [Int: String] = [

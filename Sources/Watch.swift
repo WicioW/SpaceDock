@@ -48,15 +48,17 @@ var dragAvailable: Bool {
 
 /// restore-drag first (any number of monitors); the full-screen restore finishes the job when
 /// the virtual mouse is unavailable or a drag did not take.
-func runRestore() {
+func runRestore(openApps: Bool = false, only: String? = nil) {
     restoring = true
     let key = profileKey()
     let shown = liveDisplays().map { d in (id: d.current, window: d.spaces.first { $0.id == d.current }?.windowID) }
     let front = NSWorkspace.shared.frontmostApplication
+    var opened = false   // apps just opened: stay on them, the Space shown before was only the way in
     defer {
-        if profileKey() == key { returnTo(shown, front) }
+        if profileKey() == key, !opened { returnTo(shown, front) }
         restoring = false; lastRestoreAt = Date()
     }
+    if openApps, let saved = loadAll()[key] { opened = launchMissingApps(saved, only: only) }
     // Method from the app's settings: "bridge" (default, P9: SkyLight WMBridge), "drag"
     // (Mission Control, Karabiner's virtual mouse) or "fullscreen" (P8, no Karabiner).
     switch UserDefaults.standard.string(forKey: "restoreMethod") ?? "bridge" {
@@ -96,7 +98,7 @@ private func returnTo(_ shown: [(id: Int, window: CGWindowID?)], _ front: NSRunn
 /// read on every tick, so the app's setting applies at once.
 @discardableResult
 func startWatch(autoSave: @escaping () -> Bool, autoRestore: @escaping () -> Bool = { true },
-                restore: @escaping () -> Void = runRestore) -> Timer {
+                restore: @escaping () -> Void = { runRestore() }) -> Timer {
     // Monitor changes are detected by polling the display set: CGDisplayRegisterReconfigurationCallback
     // never fired in this CLI (test 2026-11-16, docs/experiments.md T32), while the polled list updates.
     var key = profileKey(), lastChange = Date.distantPast, pending = false

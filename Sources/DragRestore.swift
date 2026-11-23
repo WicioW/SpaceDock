@@ -85,6 +85,7 @@ enum TileMark { case none, unsaved, missing }
 struct Tile {
     let entry: Entry
     let mark: TileMark
+    var space: Int? = nil   // the Space on the bar now, when there is one
 }
 
 /// What the window shows for a connected set: per display the saved places in saved order
@@ -102,9 +103,9 @@ func layoutDiff(saved: Layout, live: [String: [LiveSpace]], describe: (LiveSpace
         for s in live[d] ?? [] {
             if let i = place[s.id] { anchor = i } else if unsaved.contains(s.id) { after[anchor, default: []].append(s) }
         }
-        func extra(_ i: Int) -> [Tile] { (after[i] ?? []).map { Tile(entry: describe($0), mark: .unsaved) } }
+        func extra(_ i: Int) -> [Tile] { (after[i] ?? []).map { Tile(entry: describe($0), mark: .unsaved, space: $0.id) } }
         out[d] = extra(-1) + (saved[d] ?? []).indices.flatMap { i in
-            [Tile(entry: saved[d]![i], mark: pick[d]?[i] == nil ? .missing : .none)] + extra(i)
+            [Tile(entry: saved[d]![i], mark: pick[d]?[i] == nil ? .missing : .none, space: pick[d]?[i])] + extra(i)
         }
     }
     return out
@@ -416,6 +417,55 @@ func enterMissingFullScreen(_ saved: Layout) {
         let ok = enterFullScreen(t, on: monitors[d])
         print(String(format: "  %@ %@ %@  (%.1f s)", ok ? "⤢" : "✗", e.app, windowLabel(id), Date().timeIntervalSince(t0)))
     }
+}
+
+/// Manual restore ("open closed apps" in Settings) and Open on a red tile: each app of the save
+/// with no full-screen Space and no window now is launched (or, running without a window, asked
+/// to reopen one), then up to 20 s for its window. Every restore method then finds an ordinary
+/// window, puts it in full screen and in its saved place. `only`: just that app.
+/// ponytail: one launch per app; a save with two windows of a closed app gets the windows the
+/// app reopens by itself (browsers restore theirs), add "new window" per entry if that falls short.
+/// True when it opened something: the restore then stays on it instead of going back.
+@discardableResult
+func launchMissingApps(_ saved: Layout, only: String? = nil) -> Bool {
+    let fullScreen = Set(liveDisplays().flatMap(\.spaces).filter(\.isFullScreen).compactMap { bundleID($0.pid) })
+    let apps = Set(saved.values.joined().filter { !$0.isDesktop && (only == nil || $0.bundleID == only) }.map(\.bundleID))
+        .filter { !fullScreen.contains($0) && normalWindow($0, excluding: []) == nil }
+        .sorted()
+    guard !apps.isEmpty else { return false }
+    print("Zamknięte apki z zapisu: \(apps.count), otwieram")
+    slowRestoreStarts()
+    let config = NSWorkspace.OpenConfiguration()
+    config.activates = false
+    let launched = apps.filter { b in
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: b) else {
+            print("  ✗ \(b): nie ma tej apki na tym Macu"); return false
+        }
+        NSWorkspace.shared.openApplication(at: url, configuration: config)
+        return true
+    }
+    let t0 = Date()
+    for b in launched {
+        // A window macOS brings back in full screen (Fork quit that way) is no normal window: its
+        // own Space counts too, or this waited the full 20 s (2026-11-23).
+        let ok = waitUntil(timeout: max(1, 20 - Date().timeIntervalSince(t0))) {
+            normalWindow(b, excluding: []) != nil || liveDisplays().flatMap(\.spaces).contains { $0.isFullScreen && bundleID($0.pid) == b }
+        }
+        print(String(format: "  %@ %@  (%.1f s)", ok ? "↗" : "✗ bez okna:", b, Date().timeIntervalSince(t0)))
+    }
+    // An app that was in full screen when it quit goes back to full screen by itself, a moment
+    // after its window shows (macOS window restoration), and a full-screen request for another
+    // window during that transition is dropped with a beep. So: wait until the full-screen
+    // Spaces stop changing for 2 s (at most 10 s), then enterMissingFullScreen does the rest.
+    let fullScreenNow = { Set(liveDisplays().flatMap(\.spaces).filter(\.isFullScreen).map(\.id)) }
+    var last = fullScreenNow(), since = Date()
+    _ = waitUntil(timeout: 10) {
+        let now = fullScreenNow()
+        if now != last { last = now; since = Date() }
+        return Date().timeIntervalSince(since) >= 2
+    }
+    print(String(format: "  pasek stoi  (%.1f s)", Date().timeIntervalSince(t0)))
+    return !launched.isEmpty
 }
 
 @discardableResult

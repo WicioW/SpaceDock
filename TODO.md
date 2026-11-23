@@ -81,6 +81,13 @@ w jasnym trybie.
 
 ## Otwieranie zamkniętych apek z zapisu (2026-11-22)
 
+**Stan (2026-11-23):** ✅ `launchMissingApps` (DragRestore.swift) przed każdą metodą przywracania:
+uruchamia apki z zapisu bez okna i bez pełnego ekranu, czeka do 20 s na okno, resztę robi zwykłe
+przywracanie. Osobna akcja „Przywróć i otwórz apki” (przycisk w nagłówku, menu w pasku menu,
+własny skrót); zwykłe „Przywróć” tylko przestawia, automat po zmianie monitorów nigdy nie otwiera.
+Po otwarciu czeka, aż pasek stoi 2 s (apki same wracające na pełny ekran). Czerwony kafelek
+apki ma przycisk „otwórz” (tylko ta apka, potem cały układ). Brak jeszcze w panelu.
+
 1. **Jedna apka:** kafelek na czerwono („Nie otwarte”) dostaje akcję (klik / przycisk „Otwórz”):
    SpaceDock uruchamia apkę, czeka na jej okno, włącza pełny ekran i stawia przestrzeń na miejscu
    z zapisu.

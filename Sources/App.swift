@@ -61,6 +61,7 @@ final class Model: ObservableObject {
     @Published var screens = (try? JSONDecoder().decode([String: ScreenInfo].self, from: Data(contentsOf: screensFile))) ?? [:]
     @Published var selection: String?
     @Published var busy = false
+    @Published var pickedSpace: Int?   // tile clicked once in the window (white ring); twice = go there
     @Published var columns = NavigationSplitViewVisibility.all   // sidebar shown or hidden (@State needs a macro plugin the CLI toolchain lacks)
     @Published var trusted = AXIsProcessTrusted()
     @Published var loginItem = SMAppService.mainApp.status == .enabled
@@ -73,10 +74,12 @@ final class Model: ObservableObject {
         timer = .scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.refresh() }
         // Global shortcuts: save asks before replacing a save (as the button does); restore beeps
         // when there is nothing to restore.
-        Hotkeys.shared.start(save: { [weak self] in self?.save() }, restore: { [weak self] in
+        let restore = { [weak self] (openApps: Bool) in
             guard let self, self.saved[self.current] != nil, self.trusted, !self.busy else { NSSound.beep(); return }
-            self.restoreNow()
-        })
+            self.restoreNow(openApps: openApps)
+        }
+        Hotkeys.shared.start([.save: { [weak self] in self?.save() },
+                              .restore: { restore(false) }, .restoreOpen: { restore(true) }])
     }
 
     func refresh() {
@@ -85,7 +88,7 @@ final class Model: ObservableObject {
         if t, watcher == nil {
             watcher = startWatch(autoSave: { UserDefaults.standard.bool(forKey: "autoSave") },
                                  autoRestore: { UserDefaults.standard.object(forKey: "autoRestore") as? Bool ?? true },
-                                 restore: { [weak self] in self?.restoreNow() })
+                                 restore: { [weak self] in self?.restoreNow(openApps: false) })
         }
         let all = loadAll(), key = profileKey(), order = liveAppOrder()
         if all != saved { saved = all }
@@ -185,14 +188,16 @@ final class Model: ObservableObject {
     }
 
     /// Restores off the main thread; the "please wait" overlay shows only once a slow method
-    /// (drag, full screen) starts, so the direct method runs without a red flash.
-    func restoreNow() {
+    /// (drag, full screen) starts, so the direct method runs without a red flash. `openApps`:
+    /// launch the saved apps that are closed first ("Przywróć i otwórz apki": its own button and
+    /// shortcut; never the watcher's restore). `only`: open just that app (Open on a red tile).
+    func restoreNow(openApps: Bool = false, only: String? = nil) {
         guard !busy else { return }
         busy = true
         restoring = true   // the watcher skips its ticks from now on, not only once runRestore starts
         slowRestoreStarts = { DispatchQueue.main.async { if self.busy { Overlay.show() } } }
         DispatchQueue.global().async {
-            runRestore()
+            runRestore(openApps: openApps, only: only)
             DispatchQueue.main.async { Overlay.hide(); self.busy = false; self.refresh() }
         }
     }
@@ -323,6 +328,8 @@ struct MenuContent: View {
             NSApp.activate(ignoringOtherApps: true)
         }
         Button("Przywróć") { model.restoreNow() }
+            .disabled(model.saved[model.current] == nil || model.busy || !model.trusted)
+        Button("Przywróć i otwórz apki") { model.restoreNow(openApps: true) }
             .disabled(model.saved[model.current] == nil || model.busy || !model.trusted)
         Button("Zapisz obecny układ") { model.save() }
         Toggle("Przywracaj automatycznie", isOn: $autoRestore)
@@ -475,11 +482,12 @@ struct SettingsPanel: View {
     @AppStorage(PanelKey.unlocked) private var panelUnlocked = false
     @AppStorage(PanelKey.on) private var panelOn = false
     @AppStorage(PanelKey.theme) private var panelTheme = 1
+    @AppStorage("settingsTab") private var settingsTab = "general"   // the panel look opens "shortcuts" directly
 
     /// Settings window (⌘, or the gear under the sets): three tabs, the sidebar keeps only the
     /// watcher's state. Grids keep labels in one column, so the switches line up.
     var body: some View {
-        TabView {
+        TabView(selection: $settingsTab) {
             tab {
                 watcherState
                 Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
@@ -514,6 +522,7 @@ struct SettingsPanel: View {
                 }
             }
             .tabItem { Label("Ogólne", systemImage: "gearshape") }
+            .tag("general")
 
             tab {
                 Text("Działają z każdej apki. Domyślnie bez skrótów.").foregroundStyle(.secondary)
@@ -526,9 +535,14 @@ struct SettingsPanel: View {
                         Text("Skrót: przywróć")
                         ShortcutField(.restore)
                     }
+                    GridRow {
+                        Text("Skrót: przywróć i otwórz")
+                        ShortcutField(.restoreOpen)
+                    }
                 }
             }
             .tabItem { Label("Skróty", systemImage: "keyboard") }
+            .tag("shortcuts")
 
             tab {
                 Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
@@ -571,6 +585,7 @@ struct SettingsPanel: View {
                 AutoUpdateToggle()
             }
             .tabItem { Label("Apka", systemImage: "macwindow") }
+            .tag("app")
         }
         .font(.callout)
         .frame(width: 460)
@@ -645,6 +660,9 @@ struct ProfileView: View {
                     Button(model.busy ? "Przywracam…" : "Przywróć") { model.restoreNow() }
                         .disabled(model.saved[key] == nil || model.busy || !model.trusted)
                         .help(model.trusted ? "Ustaw przestrzenie jak w zapisie" : "Wymaga uprawnienia Dostępność dla tej apki")
+                    Button("Przywróć i otwórz apki") { model.restoreNow(openApps: true) }
+                        .disabled(model.saved[key] == nil || model.busy || !model.trusted)
+                        .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie")
                 }
             }
             if model.saved[key] != nil {
@@ -731,6 +749,7 @@ struct MonitorView: View {
 }
 
 struct SpaceTile: View {
+    @EnvironmentObject var model: Model
     let index: Int
     let tile: PanelTile
     private var entry: Entry { tile.entry }
@@ -779,6 +798,30 @@ struct SpaceTile: View {
         .overlay(alignment: .topLeading) {
             Text("\(index)").font(.caption2.bold()).foregroundStyle(.secondary).padding(5)
         }
-        .help(entry.title.isEmpty ? name : "\(name) — \(entry.title)")
+        .overlay(alignment: .topTrailing) {
+            // A red app tile: open the app (if closed), full screen, and the restore puts it in place.
+            if !entry.isDesktop, tile.state == .missing || tile.state == .noFullScreen {
+                Button { model.restoreNow(openApps: true, only: entry.bundleID) } label: {
+                    Image(systemName: "arrow.up.forward.app").font(.system(size: 15))
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.red)
+                .padding(4)
+                .disabled(model.busy || !model.trusted)
+                .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
+            }
+        }
+        .overlay {   // picked by a click: a ring just outside the tile, so a colored mark stays visible
+            if tile.space != nil, tile.space == model.pickedSpace {
+                RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary, lineWidth: 2).padding(-4)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {   // double click: show this Space (its app, full screen)
+            if let id = tile.space { DispatchQueue.global().async { _ = goTo(id) } }
+        }
+        .simultaneousGesture(TapGesture().onEnded { if let id = tile.space { model.pickedSpace = id } })
+        .help(tile.space == nil ? (entry.title.isEmpty ? name : "\(name) — \(entry.title)")
+              : (entry.title.isEmpty ? name : "\(name) — \(entry.title)") + "\n" + String(localized: "Kliknij dwa razy, żeby przejść do tej przestrzeni"))
     }
 }

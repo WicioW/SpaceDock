@@ -102,6 +102,7 @@ struct PanelTile {
     let entry: Entry
     var state: SpaceState
     var now = 0              // place on the bar now, for a moved Space
+    var space: Int? = nil    // the Space on the bar now (connected set), to go to it
 
     var isError: Bool { state == .missing || state == .noFullScreen }
     var app: String { (entry.isDesktop ? String(localized: "Biurko") : entry.app).uppercased() }
@@ -206,7 +207,7 @@ struct PanelData {
                     ? .missing : .noFullScreen
                 }
                 if state != .unsaved { n += 1 }
-                return PanelTile(index: i, num: state == .unsaved ? "+" : String(format: "%02d", n), entry: t.entry, state: state)
+                return PanelTile(index: i, num: state == .unsaved ? "+" : String(format: "%02d", n), entry: t.entry, state: state, space: t.space)
             }
             let saved = ts.indices.filter { ts[$0].state != .unsaved }   // tiles in the save: index here = place in the save
             var bottom: [PanelCell] = [], links: [(Int, Int)] = []
@@ -991,7 +992,7 @@ struct PanelZone: View {
                             ScrollView(.vertical) {
                                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 124), spacing: 8)], alignment: .leading, spacing: 8) {
                                     ForEach(m.tiles, id: \.index) { t in
-                                        PanelTileView(th: th, tile: t, lit: state.hover == t.index).onHover { state.point(t.index, $0) }
+                                        tile(t)
                                     }
                                 }
                                 .padding(.top, 20)
@@ -1010,6 +1011,30 @@ struct PanelZone: View {
         }
         .padding(.top, 6)
         .overlay(alignment: .top) { th.s.frame(height: 1) }
+    }
+
+    /// Same actions as the normal look: click marks the tile, double click shows its Space,
+    /// ↗ on a missing app opens it and restores.
+    private func tile(_ t: PanelTile) -> some View {
+        let openable = data.connected && !t.entry.isDesktop && (t.state == .missing || t.state == .noFullScreen)
+        return PanelTileView(th: th, tile: t, lit: state.hover == t.index, picked: t.space != nil && t.space == model.pickedSpace)
+            .onHover { state.point(t.index, $0) }
+            .onTapGesture(count: 2) { if let id = t.space { DispatchQueue.global().async { _ = goTo(id) } } }
+            .simultaneousGesture(TapGesture().onEnded { if let id = t.space { model.pickedSpace = id } })
+            .overlay(alignment: .topTrailing) {
+                if openable {
+                    Button { model.restoreNow(openApps: true, only: t.entry.bundleID) } label: { PanelHot(enabled: !model.busy && model.trusted) { hot in
+                        Text(verbatim: "↗").font(PanelFont.ui(13, .bold)).foregroundStyle(hot ? .black : th.e)
+                            .frame(width: 20, height: 18).background(PanelScanned(color: hot ? th.e : .black))
+                            .overlay(Rectangle().strokeBorder(th.e, lineWidth: 1))
+                    } }
+                    .buttonStyle(.plain)
+                    .disabled(model.busy || !model.trusted)
+                    .offset(x: 2, y: -4)
+                    .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
+                }
+            }
+            .help(t.space == nil ? "" : String(localized: "Kliknij dwa razy, żeby przejść do tej przestrzeni"))
     }
 
     private func tab(_ i: Int, _ m: PanelMonitor) -> some View {
@@ -1062,6 +1087,7 @@ struct PanelTileView: View {
     let th: PanelTheme
     let tile: PanelTile
     var lit = false   // pointer over this Space: a ring around the bar, nothing else changes
+    var picked = false   // clicked once (double click goes there): the same ring, kept
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -1073,7 +1099,7 @@ struct PanelTileView: View {
                     .padding(.horizontal, 8)
                     .frame(maxWidth: .infinity, minHeight: 22, maxHeight: 22, alignment: .leading)
                     .background(bar)
-                    .overlay(Rectangle().stroke(tile.ring(th), lineWidth: 2).padding(-3).opacity(lit ? 1 : 0))   // 2 pt, 2 pt off the bar
+                    .overlay(Rectangle().stroke(tile.ring(th), lineWidth: 2).padding(-3).opacity(lit || picked ? 1 : 0))   // 2 pt, 2 pt off the bar
                 PanelSlide(text: tile.state == .ok ? tile.entry.title : tile.word, font: PanelFont.mono(), measure: PanelFont.nsMono(11), on: lit)
                     .foregroundStyle(tile.color(th)).padding(.leading, 8).frame(height: 15)
             }
@@ -1592,7 +1618,10 @@ struct PanelRail: View {
     @AppStorage("autoSave") private var autoSave = false
     @AppStorage("autoRestore") private var autoRestore = true
     @AppStorage("restoreMethod") private var restoreMethod = "bridge"
+    @AppStorage("settingsTab") private var settingsTab = "general"
     @Environment(\.panelStill) private var reduceMotion
+    @Environment(\.openSettings) private var openSettings
+    @ObservedObject private var hotkeys = Hotkeys.shared   // redraws the shortcut row once one is recorded
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1710,6 +1739,14 @@ struct PanelRail: View {
                 }
             }
             .padding(.top, 3).padding(.bottom, 5)
+            row(U("Skróty")) {
+                Text(verbatim: Hotkeys.Action.allCases.compactMap(Hotkeys.label).joined(separator: " ")).font(PanelFont.mono()).lineLimit(1)
+                segment(U("Ustaw"), on: false, width: 60) {
+                    settingsTab = "shortcuts"
+                    NSApp.activate(ignoringOtherApps: true)
+                    openSettings()
+                }
+            }
             row(U("Język") + (" " + J("言語"))) {
                 HStack(spacing: 0) {
                     ForEach(["pl", "en", "es", "zh-Hans"], id: \.self) { lang in
@@ -1894,6 +1931,20 @@ struct PanelRail: View {
             .buttonStyle(.plain)
             .disabled(!canRestore)
             .opacity(here ? 1 : 0.4)
+            Button { model.restoreNow(openApps: true) } label: { PanelHot(enabled: canRestore) { hot in
+                Text(verbatim: U("Przywróć i otwórz apki")).font(PanelFont.ui(15, .bold)).tracking(1.2)
+                    .lineLimit(1).minimumScaleFactor(0.5)
+                    .foregroundStyle(hot ? .black : restoreColor)
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: 32, maxHeight: 32, alignment: .leading)
+                    .background(PanelScanned(color: hot ? th.k : .black))
+                    .overlay(Rectangle().strokeBorder(restoreColor, lineWidth: 1))
+                    .contentShape(Rectangle())
+            } }
+            .buttonStyle(.plain)
+            .disabled(!canRestore)
+            .opacity(here ? 1 : 0.4)
+            .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie")
         }
     }
 }

@@ -119,6 +119,14 @@
 /* Settings window */
 "Ogólne" = "General";
 "Skróty" = "Atajos";
+"Ustaw" = "Configurar";
 "Apka" = "App";
 "Działają z każdej apki. Domyślnie bez skrótów." = "Funcionan desde cualquier app. Ninguno por defecto.";
 "Automat wyłączony: nadaj uprawnienie" = "Vigilancia desactivada: concede el permiso";
+
+/* Opening closed apps */
+"Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)" = "Abrir, pantalla completa y colocar como se guardó (restaura toda la disposición)";
+"Przywróć i otwórz apki" = "Restaurar y abrir apps";
+"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie" = "Primero abre las apps guardadas que están cerradas y luego coloca los espacios";
+"Skrót: przywróć i otwórz" = "Atajo: restaurar y abrir";
+"Kliknij dwa razy, żeby przejść do tej przestrzeni" = "Haz doble clic para ir a este espacio";

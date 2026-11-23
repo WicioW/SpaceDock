@@ -119,6 +119,14 @@
 /* Settings window */
 "Ogólne" = "General";
 "Skróty" = "Shortcuts";
+"Ustaw" = "Set";
 "Apka" = "App";
 "Działają z każdej apki. Domyślnie bez skrótów." = "They work from any app. None by default.";
 "Automat wyłączony: nadaj uprawnienie" = "Watcher off: grant permission";
+
+/* Opening closed apps */
+"Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)" = "Open, enter full screen and place as saved (restores the whole layout)";
+"Przywróć i otwórz apki" = "Restore and Open Apps";
+"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie" = "Opens the saved apps that are closed first, then arranges the Spaces";
+"Skrót: przywróć i otwórz" = "Restore and open shortcut";
+"Kliknij dwa razy, żeby przejść do tej przestrzeni" = "Double-click to go to this Space";

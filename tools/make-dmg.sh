@@ -19,9 +19,11 @@ swift build -c release >/dev/null
 .build/release/spaces-layout dmg-background "$WORK"
 tiffutil -cathidpicheck "$WORK/background.png" "$WORK/background@2x.png" -out "$WORK/src/.background/background.tiff" >/dev/null 2>&1
 
-# Read-write image first (Finder writes the layout into it), then compressed.
-hdiutil create -quiet -volname "$VOL" -srcfolder "$WORK/src" -fs HFS+ -format UDRW -size 60m "$WORK/rw.dmg"
-DEV="$(hdiutil attach -readwrite -noverify -noautoopen "$WORK/rw.dmg" | awk '/^\/dev\// { print $1; exit }')"
+# Read-write image first (Finder writes the layout into it), then compressed. diskutil image, not
+# hdiutil (deprecated, see man hdiutil); its blank images offer no HFS+, APFS is fine from macOS 10.13.
+diskutil image create blank --format RAW --size 60m --volumeName "$VOL" -fs APFS "$WORK/rw.dmg" >/dev/null
+DEV="$(diskutil image attach "$WORK/rw.dmg" | awk '/^\/dev\// { print $1; exit }')"   # whole image, e.g. /dev/disk7
+ditto "$WORK/src" "/Volumes/$VOL"
 # Icon centers and window size: DMGLayout in Sources/DMGBackground.swift (640 × 400).
 osascript <<APPLESCRIPT
 tell application "Finder"
@@ -55,6 +57,6 @@ end tell
 APPLESCRIPT
 rm -rf "/Volumes/$VOL/.fseventsd"
 sync
-hdiutil detach -quiet "$DEV"
+diskutil eject "$DEV" >/dev/null
 rm -f "$OUT"
-hdiutil convert -quiet "$WORK/rw.dmg" -format UDZO -o "$OUT"
+diskutil image create from --format UDZO "$WORK/rw.dmg" "$OUT" >/dev/null

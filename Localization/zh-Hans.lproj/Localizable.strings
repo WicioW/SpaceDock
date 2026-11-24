@@ -126,7 +126,7 @@
 
 /* Opening closed apps */
 "Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)" = "打开、进入全屏并按保存的位置放置（恢复整个布局）";
-"Przywróć i otwórz apki" = "恢复并打开应用";
-"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie" = "先打开已保存但关闭的应用，再排列空间";
-"Skrót: przywróć i otwórz" = "恢复并打开快捷键";
+"Przywróć z brakującymi" = "恢复（含缺失的应用）";
+"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca" = "先打开已保存但关闭的应用，再排列空间。应用会像平常一样启动：SpaceDock 不会恢复它们关闭前的状态（例如浏览器标签页）";
+"Skrót: przywróć z brakującymi" = "恢复（含缺失的应用）快捷键";
 "Kliknij dwa razy, żeby przejść do tej przestrzeni" = "双击可前往此空间";

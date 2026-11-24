@@ -1963,7 +1963,7 @@ struct PanelRail: View {
             .disabled(!canRestore)
             .opacity(here ? 1 : 0.4)
             Button { model.restoreNow(openApps: true) } label: { PanelHot(enabled: canRestore) { hot in
-                Text(verbatim: U("Przywróć i otwórz apki")).font(PanelFont.ui(15, .bold)).tracking(1.2)
+                Text(verbatim: U("Przywróć z brakującymi")).font(PanelFont.ui(15, .bold)).tracking(1.2)
                     .lineLimit(1).minimumScaleFactor(0.5)
                     .foregroundStyle(hot ? .black : restoreColor)
                     .padding(.horizontal, 10)
@@ -1975,7 +1975,7 @@ struct PanelRail: View {
             .buttonStyle(.plain)
             .disabled(!canRestore)
             .opacity(here ? 1 : 0.4)
-            .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie")
+            .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca")
         }
     }
 }

@@ -63,7 +63,7 @@ Ręcznie (przycisk „Przywróć”), zapis Ręcznie / Automatycznie, metoda; **
 (`Sources/Hotkeys.swift`, domyślnie brak); **Apka** = język, wygląd, start
 przy logowaniu, aktualizacje. Kafelek obecnego zestawu: klik zaznacza go pierścieniem, dwuklik przenosi na
 tę przestrzeń (podniesienie okna przez SkyLight + AX, `goTo`), ↗ na czerwonym kafelku otwiera zamkniętą apkę.
-„Przywróć i otwórz apki” najpierw otwiera zamknięte apki z zapisu i zostaje na nich (bez powrotu). Podczas układania na
+„Przywróć z brakującymi” najpierw otwiera zamknięte apki z zapisu i zostaje na nich (bez powrotu). Apka startuje jak po zwykłym uruchomieniu: stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca. Podczas układania na
 każdym ekranie jest czerwony komunikat „Układam przestrzenie… nie ruszaj myszy”. Log:
 `~/Library/Logs/SpaceDock.log` (menu: „Pokaż log”), bez tytułów okien (tylko numery), więc można go dołączyć do zgłoszenia. Zapisy: `~/Library/Application Support/SpaceDock/` (do 2026-11-21 folder `spaces-layout` i log `spaces-layout.log`; apka przenosi je sama przy pierwszym starcie).
 Zapis obejmuje też biurka (wpis `desktop`), więc ich miejsce na pasku wraca razem z resztą; zapis

@@ -126,7 +126,7 @@
 
 /* Opening closed apps */
 "Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)" = "Open, enter full screen and place as saved (restores the whole layout)";
-"Przywróć i otwórz apki" = "Restore and Open Apps";
-"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie" = "Opens the saved apps that are closed first, then arranges the Spaces";
-"Skrót: przywróć i otwórz" = "Restore and open shortcut";
+"Przywróć z brakującymi" = "Restore with Missing Apps";
+"Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca" = "Opens the saved apps that are closed first, then arranges the Spaces. Apps start as usual: SpaceDock does not bring back their state from before they were closed (such as browser tabs)";
+"Skrót: przywróć z brakującymi" = "Restore with missing apps shortcut";
 "Kliknij dwa razy, żeby przejść do tej przestrzeni" = "Double-click to go to this Space";

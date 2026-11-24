@@ -189,7 +189,7 @@ final class Model: ObservableObject {
 
     /// Restores off the main thread; the "please wait" overlay shows only once a slow method
     /// (drag, full screen) starts, so the direct method runs without a red flash. `openApps`:
-    /// launch the saved apps that are closed first ("Przywróć i otwórz apki": its own button and
+    /// launch the saved apps that are closed first ("Przywróć z brakującymi": its own button and
     /// shortcut; never the watcher's restore). `only`: open just that app (Open on a red tile).
     func restoreNow(openApps: Bool = false, only: String? = nil) {
         guard !busy else { return }
@@ -329,8 +329,9 @@ struct MenuContent: View {
         }
         Button("Przywróć") { model.restoreNow() }
             .disabled(model.saved[model.current] == nil || model.busy || !model.trusted)
-        Button("Przywróć i otwórz apki") { model.restoreNow(openApps: true) }
+        Button("Przywróć z brakującymi") { model.restoreNow(openApps: true) }
             .disabled(model.saved[model.current] == nil || model.busy || !model.trusted)
+            .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca")
         Button("Zapisz obecny układ") { model.save() }
         Toggle("Przywracaj automatycznie", isOn: $autoRestore)
         Toggle("Zapisuj automatycznie", isOn: $autoSave)
@@ -536,7 +537,7 @@ struct SettingsPanel: View {
                         ShortcutField(.restore)
                     }
                     GridRow {
-                        Text("Skrót: przywróć i otwórz")
+                        Text("Skrót: przywróć z brakującymi")
                         ShortcutField(.restoreOpen)
                     }
                 }
@@ -660,9 +661,9 @@ struct ProfileView: View {
                     Button(model.busy ? "Przywracam…" : "Przywróć") { model.restoreNow() }
                         .disabled(model.saved[key] == nil || model.busy || !model.trusted)
                         .help(model.trusted ? "Ustaw przestrzenie jak w zapisie" : "Wymaga uprawnienia Dostępność dla tej apki")
-                    Button("Przywróć i otwórz apki") { model.restoreNow(openApps: true) }
+                    Button("Przywróć z brakującymi") { model.restoreNow(openApps: true) }
                         .disabled(model.saved[key] == nil || model.busy || !model.trusted)
-                        .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie")
+                        .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca")
                 }
             }
             if model.saved[key] != nil {

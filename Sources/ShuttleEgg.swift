@@ -1,16 +1,16 @@
 import SwiftUI
 
 // Easter egg in the title row (TODO.md): the shuttle from the app icon seen from above, payload
-// bay doors open, three Space thumbnails ahead of its nose. A click lights it up for a moment;
+// bay doors open, three Space thumbnails ahead of its nose. It lights up while pressed;
 // 10 quick clicks and it flies forward, the thumbnails ending up in its bay. Drawn 1:1 with the
 // approved sketch, in units of 0.1 pt (shuttle 34 × 23 pt, thumbnails 4.6 × 3.4 pt everywhere).
 
 final class ShuttleEggState: ObservableObject {
     @Published var lit = false
     @Published var flightStart: Date?
-    private var streak = 0, lastTap = Date.distantPast, litUntil = Date.distantPast
+    private var streak = 0, lastTap = Date.distantPast
 
-    static let quickClick: TimeInterval = 0.4, clicksToFly = 10, flash: TimeInterval = 0.6
+    static let quickClick: TimeInterval = 0.4, clicksToFly = 10
     static let flight: TimeInterval = 2, hold: TimeInterval = 1.5
 
     /// `onFly` runs when the 10th quick click lands.
@@ -19,12 +19,6 @@ final class ShuttleEggState: ObservableObject {
         let now = Date()
         streak = now.timeIntervalSince(lastTap) <= Self.quickClick ? streak + 1 : 1
         lastTap = now
-        lit = true
-        litUntil = now.addingTimeInterval(Self.flash)
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.flash) { [weak self] in
-            guard let self, self.flightStart == nil, Date() >= self.litUntil else { return }
-            self.lit = false
-        }
         guard streak >= Self.clicksToFly else { return }
         streak = 0
         flightStart = now
@@ -33,6 +27,19 @@ final class ShuttleEggState: ObservableObject {
             self?.flightStart = nil
             self?.lit = false
         }
+    }
+
+    /// Lit only while the button is held (the click itself lands on release, too late to light up).
+    func press(_ down: Bool) {
+        if flightStart == nil { lit = down }
+    }
+}
+
+/// Plain button that reports press and release to the shuttle, so it lights up on mouse down.
+struct ShuttlePress: ButtonStyle {
+    let egg: ShuttleEggState
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.onChange(of: configuration.isPressed) { _, down in egg.press(down) }
     }
 }
 
@@ -63,7 +70,7 @@ struct ShuttleEgg: View {
             .frame(width: 68, height: 24)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ShuttlePress(egg: egg))
         .accessibilityHidden(true)   // decoration
     }
 }

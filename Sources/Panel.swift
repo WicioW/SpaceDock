@@ -834,7 +834,7 @@ struct PanelShuttle: View {
             .frame(width: 86, height: 20)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ShuttlePress(egg: egg))
         .accessibilityHidden(true)   // decoration; the look also switches in Settings
     }
 }

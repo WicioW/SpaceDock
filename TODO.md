@@ -4,8 +4,8 @@ Pomysły na później. Plan wydania jest w [docs/distribution.md](docs/distribut
 
 ## Easter egg: wahadłowiec zjada przestrzenie (2026-11-18)
 
-**Stan (2026-11-19):** ✅ scenka w wierszu tytułu i wywołanie (`Sources/ShuttleEgg.swift`): klik =
-kolor na 0,6 s, 10 kliknięć (≤ 0,4 s odstępu) = lot 2 s i okna w luku, po 1,5 s powrót na start;
+**Stan (2026-11-19):** ✅ scenka w wierszu tytułu i wywołanie (`Sources/ShuttleEgg.swift`): wciśnięcie =
+kolor, póki trzymasz (od 2026-11-24), 10 kliknięć (≤ 0,4 s odstępu) = lot 2 s i okna w luku, po 1,5 s powrót na start;
 „Ogranicz ruch” = bez lotu. ✅ (2026-11-21) nowy wygląd „panel” (`Sources/Panel.swift`, `docs/design-handoff.md`): odblokowany lotem, motyw 1–3 w ustawieniach.
 
 **Gdzie:** w wierszu tytułu okna, na środku (2026-11-19; wcześniej obok napisu „SpaceDock”).
@@ -118,3 +118,19 @@ Dziś jest jeden zapis na zestaw monitorów. Pomysł: kilka nazwanych układów 
 - Skróty: „przywróć” przywraca wybrany układ? osobne skróty per układ?
 - Format `layouts.json` (dziś klucz = zestaw monitorów, wartość = jeden układ): migracja starych
   zapisów do układu „Domyślny”.
+
+## Strzałki w oknie apki: zestawy monitorów i układy (2026-11-24)
+
+**Dopiero po** „Kilka układów na jeden zestaw monitorów” (wyżej): bez kilku układów strzałki
+w lewo/prawo nie mają czego przełączać.
+
+Gdy okno SpaceDock jest na wierzchu (nie globalnie):
+- **↑ / ↓**: poprzedni / następny zestaw monitorów,
+- **← / →**: poprzedni / następny układ apek w wybranym zestawie.
+
+**Do ustalenia:**
+- Strzałka tylko zmienia to, co widać w oknie, czy od razu przywraca układ (raczej tylko widok,
+  przywrócenie dalej przyciskiem / skrótem).
+- Kolizja z zaznaczaniem kafelka (klik = zaznaczenie): czy strzałki mają też przesuwać zaznaczenie.
+- Na końcu listy: zatrzymać się czy zawijać.
+- To samo w panelu (easter egg).

@@ -46,8 +46,7 @@ final class Hotkeys: ObservableObject {
         refs = [:]
         var failed: Set<Action> = []
         for a in Action.allCases {
-            let parts = (UserDefaults.standard.string(forKey: Self.key(a)) ?? "").split(separator: " ", maxSplits: 2)
-            guard parts.count == 3, let code = UInt32(parts[0]), let mods = UInt32(parts[1]) else { continue }
+            guard let (code, mods, _) = Self.parse(UserDefaults.standard.string(forKey: Self.key(a)) ?? "") else { continue }
             var ref: EventHotKeyRef?
             let status = RegisterEventHotKey(code, mods, EventHotKeyID(signature: OSType(0x5344_4B21), id: a.rawValue),   // 'SDK!'
                                              GetApplicationEventTarget(), 0, &ref)
@@ -112,7 +111,14 @@ final class Hotkeys: ObservableObject {
 
     /// The stored shortcut's label ("⌃⌥⌘S"), nil when none is set.
     static func label(_ a: Action) -> String? {
-        (UserDefaults.standard.string(forKey: key(a)) ?? "").split(separator: " ", maxSplits: 2).dropFirst(2).first.map(String.init)
+        parse(UserDefaults.standard.string(forKey: key(a)) ?? "")?.label
+    }
+
+    /// Stored shortcut "keyCode carbonModifiers label" ("1 4352 ⌃⌥⌘S"); nil when empty or broken.
+    static func parse(_ stored: String) -> (code: UInt32, mods: UInt32, label: String)? {
+        let parts = stored.split(separator: " ", maxSplits: 2)
+        guard parts.count == 3, let code = UInt32(parts[0]), let mods = UInt32(parts[1]) else { return nil }
+        return (code, mods, String(parts[2]))
     }
 
     private static let keyNames: [Int: String] = [
@@ -147,7 +153,7 @@ struct ShortcutField: View {
                 } label: {
                     if recording {
                         Text("Naciśnij skrót…").frame(minWidth: 110)
-                    } else if let label = stored.split(separator: " ", maxSplits: 2).dropFirst(2).first {
+                    } else if let label = Hotkeys.parse(stored)?.label {
                         Text(verbatim: String(label)).frame(minWidth: 110)
                     } else {
                         Text("Bez skrótu").foregroundStyle(.secondary).frame(minWidth: 110)

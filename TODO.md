@@ -45,7 +45,7 @@ kosmosu i dokowania: przestrzenie / okienka „dokują” jak statki do stacji. 
 **Stan (2026-11-22):** ✅ `Sources/Hotkeys.swift`: dwa pola w ustawieniach zwykłego wyglądu
 („Skrót: zapis”, „Skrót: przywróć”), domyślnie bez skrótu, Delete usuwa, Esc anuluje; skrót
 zajęty przez inną apkę = napis przy polu. Zapis skrótem pyta przed nadpisaniem (jak przycisk),
-przywracanie bez zapisu albo bez zgody = sygnał dźwiękowy. Brak jeszcze w ustawieniach panelu.
+przywracanie bez zapisu albo bez zgody = sygnał dźwiękowy. Panel: wiersz „Skróty” z przyciskiem „Ustaw” (otwiera tę zakładkę ustawień).
 
 Dziś zapis i przywracanie są tylko pod przyciskami (okno, menu w pasku menu). Pomysł:
 - **Tylko globalne**, działają z każdej apki, nie tylko gdy SpaceDock jest na wierzchu. Bez
@@ -86,7 +86,7 @@ uruchamia apki z zapisu bez okna i bez pełnego ekranu, czeka do 20 s na okno, r
 przywracanie. Osobna akcja „Przywróć i otwórz apki” (przycisk w nagłówku, menu w pasku menu,
 własny skrót); zwykłe „Przywróć” tylko przestawia, automat po zmianie monitorów nigdy nie otwiera.
 Po otwarciu czeka, aż pasek stoi 2 s (apki same wracające na pełny ekran). Czerwony kafelek
-apki ma przycisk „otwórz” (tylko ta apka, potem cały układ). Brak jeszcze w panelu.
+apki ma przycisk „otwórz” (tylko ta apka, potem cały układ). ✅ (2026-11-24) to samo w panelu (segment ↗ na pasku).
 
 1. **Jedna apka:** kafelek na czerwono („Nie otwarte”) dostaje akcję (klik / przycisk „Otwórz”):
    SpaceDock uruchamia apkę, czeka na jej okno, włącza pełny ekran i stawia przestrzeń na miejscu

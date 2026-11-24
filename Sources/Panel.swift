@@ -180,6 +180,13 @@ struct PanelStatus {
     let active: Bool   // blinks, tapes run
 }
 
+/// `links`: (place in the save, place on the bar) of each saved Space on the bar, in save order.
+/// Returns (place in the save, place on the bar from 1) of every one whose rank among them differs.
+func outOfOrder(_ links: [(Int, Int)]) -> [(Int, Int)] {
+    let places = links.map(\.1).sorted()
+    return links.enumerated().compactMap { k, l in places[k] != l.1 ? (l.0, l.1 + 1) : nil }
+}
+
 struct PanelData {
     let key: String
     let connected: Bool
@@ -226,10 +233,9 @@ struct PanelData {
                 // Out of order: every Space whose place among the saved ones on the bar is not its
                 // place in the save (two swapped Spaces are both marked). Missing and unsaved
                 // Spaces do not count, so they shift nobody's place.
-                let places = links.map(\.1).sorted()
-                for (k, (i, j)) in links.enumerated() where places[k] != j {
+                for (i, now) in outOfOrder(links) {
                     ts[saved[i]].state = .moved
-                    ts[saved[i]].now = j + 1
+                    ts[saved[i]].now = now
                 }
             }
             return PanelMonitor(uuid: d, name: model.name(d).uppercased(), tiles: ts,

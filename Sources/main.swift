@@ -232,11 +232,17 @@ func focusWindow(pid: pid_t, id: CGWindowID) -> Bool {
     var psn = ProcessSerialNumber()
     guard processForPID(pid, &psn) == noErr else { return false }
     _ = unsafeBitCast(f, to: Front.self)(&psn, id, 0x200)   // kCPSUserGenerated
-    var bytes = [UInt8](repeating: 0, count: 0xF8)
+    // Record as AltTab writes it (2026): declared 0xF8 bytes in a zeroed 0x100 buffer, because
+    // WindowServer on macOS 14.7.4+ reads past 0xF8 (paneru#123); both point fields a finite spot
+    // off any content, not NaN, so no app takes it for a click into the window (AltTab#5381).
+    var bytes = [UInt8](repeating: 0, count: 0x100)
     bytes[0x04] = 0xF8
     bytes[0x3A] = 0x10
     withUnsafeBytes(of: id) { bytes.replaceSubrange(0x3C..<0x40, with: $0) }
-    for i in 0x20..<0x30 { bytes[i] = 0xFF }
+    withUnsafeBytes(of: CGPoint(x: 300_000, y: 300_000)) {
+        bytes.replaceSubrange(0x10..<0x20, with: $0)
+        bytes.replaceSubrange(0x20..<0x30, with: $0)
+    }
     for kind: UInt8 in [1, 2] {   // key window: press, release
         bytes[0x08] = kind
         _ = unsafeBitCast(p, to: Post.self)(&psn, &bytes)
@@ -520,6 +526,16 @@ func selftest() {
     assert(flights == 0)
     egg.tap { flights += 1 }
     assert(flights == 1 && egg.flightStart != nil)
+    // "moved": rank among the saved Spaces on the bar, so gaps from unsaved or missing ones do not count
+    let moved = { (l: [(Int, Int)]) in outOfOrder(l).map { "\($0.0)>\($0.1)" } }
+    assert(moved([(0, 0), (1, 2), (2, 3)]).isEmpty)                // unsaved Space at place 1
+    assert(moved([(0, 0), (2, 1)]).isEmpty)                        // saved Space 1 missing
+    assert(moved([(0, 1), (1, 0)]) == ["0>2", "1>1"])              // swap marks both
+    assert(moved([(0, 2), (1, 0), (2, 1)]) == ["0>3", "1>1", "2>2"]) // first one went last
+    // stored shortcut
+    assert(Hotkeys.parse("1 4352 ⌃⌥⌘S")! == (1, 4352, "⌃⌥⌘S"))
+    assert(Hotkeys.parse("49 256 ⌘Space")?.label == "⌘Space")
+    assert(Hotkeys.parse("") == nil && Hotkeys.parse("x 256 ⌘S") == nil && Hotkeys.parse("1 256") == nil)
     print("selftest OK")
 }
 
@@ -681,7 +697,7 @@ case "watch":
 case "vhid-serve":
     vhidServe()
 case "restore-drag":
-    withOverlay { restoreDrag() }; list()
+    withOverlay { _ = restoreDrag() }; list()
 case "vhid-click", "vhid-drag":
     vhidCommand(Array(CommandLine.arguments.dropFirst()))
 case "mcclickv":

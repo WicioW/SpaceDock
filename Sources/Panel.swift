@@ -1017,23 +1017,12 @@ struct PanelZone: View {
     /// ↗ on a missing app opens it and restores.
     private func tile(_ t: PanelTile) -> some View {
         let openable = data.connected && !t.entry.isDesktop && (t.state == .missing || t.state == .noFullScreen)
-        return PanelTileView(th: th, tile: t, lit: state.hover == t.index, picked: t.space != nil && t.space == model.pickedSpace)
+        return PanelTileView(th: th, tile: t, lit: state.hover == t.index, picked: t.space != nil && t.space == model.pickedSpace,
+                             open: openable ? { model.restoreNow(openApps: true, only: t.entry.bundleID) } : nil,
+                             openEnabled: !model.busy && model.trusted)
             .onHover { state.point(t.index, $0) }
             .onTapGesture(count: 2) { if let id = t.space { DispatchQueue.global().async { _ = goTo(id) } } }
             .simultaneousGesture(TapGesture().onEnded { if let id = t.space { model.pickedSpace = id } })
-            .overlay(alignment: .topTrailing) {
-                if openable {
-                    Button { model.restoreNow(openApps: true, only: t.entry.bundleID) } label: { PanelHot(enabled: !model.busy && model.trusted) { hot in
-                        Text(verbatim: "↗").font(PanelFont.ui(13, .bold)).foregroundStyle(hot ? .black : th.e)
-                            .frame(width: 20, height: 18).background(PanelScanned(color: hot ? th.e : .black))
-                            .overlay(Rectangle().strokeBorder(th.e, lineWidth: 1))
-                    } }
-                    .buttonStyle(.plain)
-                    .disabled(model.busy || !model.trusted)
-                    .offset(x: 2, y: -4)
-                    .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
-                }
-            }
             .help(t.space == nil ? "" : String(localized: "Kliknij dwa razy, żeby przejść do tej przestrzeni"))
     }
 
@@ -1088,6 +1077,8 @@ struct PanelTileView: View {
     let tile: PanelTile
     var lit = false   // pointer over this Space: a ring around the bar, nothing else changes
     var picked = false   // clicked once (double click goes there): the same ring, kept
+    var open: (() -> Void)? = nil   // a missing app: the end of the bar is a button that opens it
+    var openEnabled = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -1096,9 +1087,10 @@ struct PanelTileView: View {
             VStack(alignment: .leading, spacing: 3) {
                 PanelSlide(text: tile.app, font: PanelFont.ui(13, .bold), measure: PanelFont.nsUI(13), tracking: 0.5, on: lit)
                     .foregroundStyle(tile.state == .moved ? th.w : tile.state == .unsaved ? .black : tile.isError ? th.e : tile.entry.isDesktop ? th.k : .black)
-                    .padding(.horizontal, 8)
+                    .padding(.leading, 8).padding(.trailing, open == nil ? 8 : 30)   // the name ends 6 pt before the open segment
                     .frame(maxWidth: .infinity, minHeight: 22, maxHeight: 22, alignment: .leading)
                     .background(bar)
+                    .overlay(alignment: .trailing) { if let open { openSegment(open) } }
                     .overlay(Rectangle().stroke(tile.ring(th), lineWidth: 2).padding(-3).opacity(lit || picked ? 1 : 0))   // 2 pt, 2 pt off the bar
                 PanelSlide(text: tile.state == .ok ? tile.entry.title : tile.word, font: PanelFont.mono(), measure: PanelFont.nsMono(11), on: lit)
                     .foregroundStyle(tile.color(th)).padding(.leading, 8).frame(height: 15)
@@ -1116,6 +1108,28 @@ struct PanelTileView: View {
         .animation(reduceMotion ? nil : .linear(duration: 0.075), value: lit)
     }
 
+    /// Design RO variant A: the last 24 pt of the bar, inside its outline, tilted with it. Black
+    /// over the stripes, a 1.5 pt line on the left, a drawn arrow; hover inverts like every panel
+    /// button; disabled dims the arrow only.
+    private func openSegment(_ action: @escaping () -> Void) -> some View {
+        let inset: CGFloat = tile.state == .missing ? 1.5 : 2
+        return Button(action: action) { PanelHot(enabled: openEnabled) { hot in
+            PanelOpenArrow().stroke(hot ? Color.black : th.e, style: StrokeStyle(lineWidth: 1.8, lineCap: .square))
+                .frame(width: 11, height: 11)
+                .opacity(openEnabled ? 1 : 0.35)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(hot ? AnyView(PanelScanned(color: th.e)) : AnyView(Color.black))
+                .overlay(alignment: .leading) { th.e.frame(width: 1.5) }
+                .contentShape(Rectangle())
+        } }
+        .buttonStyle(.plain)
+        .allowsHitTesting(openEnabled)   // not .disabled: that would dim the black and the line too
+        .accessibilityAddTraits(openEnabled ? [] : .isStaticText)
+        .frame(width: 24 - inset)
+        .padding([.top, .bottom, .trailing], inset)
+        .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
+    }
+
     /// State by shape, not only color: full bar, outline, excess color, outline with running stripes.
     @ViewBuilder private var bar: some View {
         switch tile.state {
@@ -1126,6 +1140,17 @@ struct PanelTileView: View {
         case .ok:
             if tile.entry.isDesktop { Rectangle().strokeBorder(th.k, lineWidth: 2) } else { PanelScanned(color: th.k) }
         }
+    }
+}
+
+/// Open arrow, drawn on a 10×10 grid: the diagonal, then the head in the top right corner.
+struct PanelOpenArrow: Shape {
+    func path(in r: CGRect) -> Path {
+        let x = { (v: CGFloat) in r.minX + v / 10 * r.width }, y = { (v: CGFloat) in r.minY + v / 10 * r.height }
+        var p = Path()
+        p.move(to: CGPoint(x: x(2), y: y(8))); p.addLine(to: CGPoint(x: x(8), y: y(2)))
+        p.move(to: CGPoint(x: x(3.6), y: y(2))); p.addLine(to: CGPoint(x: x(8), y: y(2))); p.addLine(to: CGPoint(x: x(8), y: y(6.4)))
+        return p
     }
 }
 

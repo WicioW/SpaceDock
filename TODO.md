@@ -1,6 +1,6 @@
 # TODO: pomysły
 
-Pomysły na później. Plan wydania jest w [docs/distribution.md](docs/distribution.md).
+Pomysły na później. Plan wydania jest w [docs/distribution.md](docs/distribution.md). Luźne pomysły bez decyzji: [docs/improvements.md](docs/improvements.md).
 
 ## Easter egg: wahadłowiec zjada przestrzenie (2026-11-18)
 
@@ -83,7 +83,7 @@ w jasnym trybie.
 
 **Stan (2026-11-23):** ✅ `launchMissingApps` (DragRestore.swift) przed każdą metodą przywracania:
 uruchamia apki z zapisu bez okna i bez pełnego ekranu, czeka do 20 s na okno, resztę robi zwykłe
-przywracanie. Osobna akcja „Przywróć i otwórz apki” (przycisk w nagłówku, menu w pasku menu,
+przywracanie. Osobna akcja „Przywróć z brakującymi” (do 2026-11-24 „Przywróć i otwórz apki”) (przycisk w nagłówku, menu w pasku menu,
 własny skrót); zwykłe „Przywróć” tylko przestawia, automat po zmianie monitorów nigdy nie otwiera.
 Po otwarciu czeka, aż pasek stoi 2 s (apki same wracające na pełny ekran). Czerwony kafelek
 apki ma przycisk „otwórz” (tylko ta apka, potem cały układ). ✅ (2026-11-24) to samo w panelu (segment ↗ na pasku).
@@ -109,15 +109,58 @@ otwierać apki (raczej nie, tylko ręczne).
 Dziś jest jeden zapis na zestaw monitorów. Pomysł: kilka nazwanych układów na ten sam zestaw
 (np. „Praca”, „Wieczór”) i wybór, który przywrócić.
 
-**Najpierw designy**, dla zwykłego wyglądu i dla panelu (easter egg), dopiero potem kod.
+**Stan (2026-11-24):** ustalenia gotowe (niżej, sesja pytań + research w sieci). Dalej:
+**designy** dla zwykłego wyglądu i panelu (easter egg), potem kod. Odrzucone i odłożone pomysły:
+[docs/improvements.md](docs/improvements.md).
 
-**Do ustalenia:**
-- Który układ przywraca automat po zmianie monitorów (ostatnio użyty? oznaczony jako domyślny?).
-- Gdzie wybór układu: lista w pasku pod zestawem, przełącznik w nagłówku, menu w pasku menu.
-- Zapis: nadpisuje wybrany układ czy tworzy nowy; nazywanie, zmiana nazwy, usuwanie.
-- Skróty: „przywróć” przywraca wybrany układ? osobne skróty per układ?
-- Format `layouts.json` (dziś klucz = zestaw monitorów, wartość = jeden układ): migracja starych
-  zapisów do układu „Domyślny”.
+**Pojęcia:**
+- **Zestaw monitorów:** podłączone ekrany; nie wybiera się go, wynika z kabli.
+- **Układ** (w rozmowie „zestaw aplikacji”): pełny zapis kolejności przestrzeni na wszystkich
+  monitorach zestawu, jak dzisiejszy zapis. Zestaw ma listę układów.
+- **Wybrany układ:** ostatnio przywrócony albo utworzony; pamiętany po restarcie apki.
+- **Podgląd:** klik w inny układ w oknie tylko go pokazuje (kafelki z różnicami), nic nie przestawia.
+
+**Lista układów:**
+- Nazwę wpisuje użytkownik (niepusta, unikalna w zestawie); żadnych domyślnych „Układ 1”.
+- Kolejność przeciąganiem; numery ciągłe 1, 2, 3… (usunięcie nr 4 przesuwa nr 5 na 4).
+- Usuwanie z potwierdzeniem; po usunięciu ostatniego zestaw jest bez zapisu.
+- Pierwszy zapis na nowym zestawie pyta o nazwę („Zapisz” nieaktywny przy pustym polu).
+- Migracja: dzisiejszy zapis zestawu staje się układem bez nazwy, wiersz ma pole „Nadaj nazwę”,
+  nic nie blokuje. `layouts.json`: klucz = zestaw monitorów, wartość = lista układów
+  (nazwa + zapis) i wybrany.
+- Układy innych zestawów: podgląd tak, przywrócenie nie.
+
+**Akcje:**
+- „Przywróć” / „Przywróć z brakującymi” (dwa przyciski jak dziś): na wybranym naprawiają
+  rozjechanie; w podglądzie ładują oglądany układ, który od tej chwili jest wybrany.
+- „Zapisz”: nadpisuje wybrany; w podglądzie niedostępny.
+- „Zapisz jako nowy…”: pyta o nazwę, tworzy układ z obecnego ekranu i od razu go wybiera.
+- „Zapisuj automatycznie”: zawsze do wybranego (nigdy do podglądanego).
+- Po zmianie monitorów („Przywracaj automatycznie”): ostatnio wybrany układ tego zestawu
+  (po aktualizacji: jedyny istniejący). Bez układu domyślnego.
+- Otwieranie apek nie przywraca ich stanu (np. kart przeglądarki); przeglądarki dalej po bundle
+  + tytule.
+
+**Apki spoza układu** (globalne ustawienie, dwie wartości):
+- **Zostaw** (domyślnie): zostają na końcu jako „Nie zapisane”.
+- **Schowaj:** każde przywrócenie (ręczne, skrót, automat) wyprowadza z pełnego ekranu i
+  minimalizuje przestrzenie pełnoekranowe spoza układu. Zwykłych okien na biurkach nie rusza.
+  W opisie ustawienia: automat schowa też świeżo otwartą, niezapisaną apkę pełnoekranową.
+- Apek nie zamykamy nigdy (niezapisana praca).
+
+**Skróty:**
+- Jeden modyfikator w ustawieniach (np. ⌃⌥), numer pozycji na liście dochodzi sam: ⌃⌥1 =
+  pierwszy układ obecnego zestawu, pozycje 1–9. Przypięte do pozycji, nie do nazwy; przy każdym
+  układzie na liście widać jego skrót. Numer poza końcem listy = sygnał dźwiękowy.
+- Przy modyfikatorze: czy skróty układów przywracają tylko przestawiając, czy z brakującymi.
+- Ostrzeżenie przy skrócie z samym ⌘ (⌘1–9 to karty w przeglądarkach, okna w IntelliJ).
+- Dzisiejsze globalne „Zapisz”, „Przywróć”, „Przywróć z brakującymi”: na wybrany układ.
+
+**Menu w pasku menu:** lista układów obecnego zestawu, ptaszek przy wybranym; klik = przywróć
+(jak skrót).
+
+**Poza zakresem:** automatyczne przełączanie układów, karty przeglądarek
+([docs/improvements.md](docs/improvements.md)); składanie układu z osobnych monitorów.
 
 ## Strzałki w oknie apki: zestawy monitorów i układy (2026-11-24)
 
@@ -129,8 +172,7 @@ Gdy okno SpaceDock jest na wierzchu (nie globalnie):
 - **← / →**: poprzedni / następny układ apek w wybranym zestawie.
 
 **Do ustalenia:**
-- Strzałka tylko zmienia to, co widać w oknie, czy od razu przywraca układ (raczej tylko widok,
-  przywrócenie dalej przyciskiem / skrótem).
+- ✅ (2026-11-24, z ustaleń „kilka układów”) ← / → zmieniają podgląd, nie przywracają.
 - Kolizja z zaznaczaniem kafelka (klik = zaznaczenie): czy strzałki mają też przesuwać zaznaczenie.
 - Na końcu listy: zatrzymać się czy zawijać.
 - To samo w panelu (easter egg).

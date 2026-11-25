@@ -193,11 +193,12 @@ struct PanelData {
     let hasSave: Bool
     let monitors: [PanelMonitor]
 
-    init(_ model: Model, key: String) {
+    /// `layout`: the one to compare with the screen (a previewed one); default the selected one.
+    init(_ model: Model, key: String, layout: Layout? = nil) {
         self.key = key
         let connected = key == model.current
         self.connected = connected
-        let layout = model.saved[key]
+        let layout = layout ?? model.saved[key]
         hasSave = layout != nil
         // A connected set with no save yet: everything on the bars shows as "not saved".
         let tiles: [String: [Tile]] = connected
@@ -1984,16 +1985,22 @@ struct PanelRail: View {
 
 /// `panel-shot <png> [width height [set]]`: the panel look drawn off screen from the real saves
 /// and bars, to check it without a screen recording permission. Theme and language come from
-/// the usual arguments (`-panelTheme 2 -AppleLanguages '(en)'`).
+/// the usual arguments (`-panelTheme 2 -AppleLanguages '(en)'`). `-shotNormal YES`: the normal look;
+/// `-shotLayout N`: look at layout N of the set (a preview when it is not the selected one).
 func panelShot(_ args: [String]) {
     guard let out = args.first else { print("panel-shot <png> [width height [set]]"); return }
     let number = { (i: Int) in args.count > i ? Double(args[i]) : nil }
     NSApplication.shared.setActivationPolicy(.accessory)
     let model = Model()
     if let i = number(3).map({ Int($0) - 1 }), model.profiles.indices.contains(i) { model.selection = model.profiles[i] }
+    let n = UserDefaults.standard.integer(forKey: "shotLayout"), ls = model.layouts(model.selection ?? model.current)
+    if ls.indices.contains(n - 1) { model.viewedID = ls[n - 1].id }
+    model.expanded = Set(model.profiles)
     let size = NSSize(width: number(1) ?? 1100, height: number(2) ?? 700)
     let window = NSWindow(contentRect: NSRect(origin: CGPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
-    let host = NSHostingView(rootView: PanelView().environmentObject(model).environment(\.colorScheme, .dark))
+    let normal = UserDefaults.standard.bool(forKey: "shotNormal")
+    let host = NSHostingView(rootView: Group { if normal { ContentView() } else { PanelView() } }
+        .environmentObject(model).environment(\.colorScheme, normal ? .light : .dark))
     window.contentView = host
     window.orderFrontRegardless()
     RunLoop.main.run(until: Date().addingTimeInterval(2))   // past the opening reveal

@@ -351,7 +351,9 @@ struct LayoutSet: Codable, Equatable {
 
 /// Several layouts per set. The old `layouts.json` (one layout per set) stays as it was, so an
 /// older app version still finds its saves; it is read once to build this file.
-let setsStore = store.deletingLastPathComponent().appendingPathComponent("layout-sets.json")
+/// `-setsFile <path>` (launch argument) points it elsewhere, for `panel-shot` checks on a copy.
+let setsStore = UserDefaults.standard.string(forKey: "setsFile").map { URL(fileURLWithPath: $0) }
+    ?? store.deletingLastPathComponent().appendingPathComponent("layout-sets.json")
 
 func loadSets() -> [String: LayoutSet] {
     if let data = try? Data(contentsOf: setsStore) { return (try? JSONDecoder().decode([String: LayoutSet].self, from: data)) ?? [:] }

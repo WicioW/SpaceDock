@@ -130,3 +130,37 @@
 "Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca" = "Opens the saved apps that are closed first, then arranges the Spaces. Apps start as usual: SpaceDock does not bring back their state from before they were closed (such as browser tabs)";
 "Skrót: przywróć z brakującymi" = "Restore with missing apps shortcut";
 "Kliknij dwa razy, żeby przejść do tej przestrzeni" = "Double-click to go to this Space";
+
+/* Several layouts per monitor set (2026-11-25) */
+"Zapisz jako nowy…" = "Save as New…";
+"Układy: %lld · " = "Layouts: %lld · ";
+"Nadpisać układ „%@”?" = "Replace layout “%@”?";
+"Układ „%@” zestawu „%@” zostanie zastąpiony obecnym układem przestrzeni." = "Layout “%1$@” of “%2$@” will be replaced with the current Spaces layout.";
+"Bez nazwy" = "Untitled";
+"Usunąć układ „%@”?" = "Delete layout “%@”?";
+"Tego nie da się cofnąć." = "This cannot be undone.";
+"„%@” przejdzie z pozycji %lld na %lld." = "“%@” will move from position %lld to %lld.";
+"Usuń" = "Delete";
+"Zapisz" = "Save";
+"Zapis działa tylko na układ na ekranie" = "Saving works only on the layout on screen";
+"Zapisuje obecne przestrzenie do tego układu" = "Saves the current Spaces into this layout";
+"Kliknij układ na liście, żeby zobaczyć go tutaj." = "Click a layout in the list to see it here.";
+"Ten zestaw nie ma jeszcze żadnego układu. Ułóż przestrzenie i kliknij „Zapisz”." = "This set has no layouts yet. Arrange your Spaces and click “Save”.";
+"NA EKRANIE" = "ON SCREEN";
+"Ten układ jest teraz na ekranie" = "This layout is on screen now";
+"PODGLĄD" = "PREVIEW";
+"Oglądasz zapisany układ, nie to, co jest na ekranie" = "You are viewing a saved layout, not what is on screen";
+"Oglądasz zapisany układ **„%@”**. Na ekranie jest **„%@”**. Kolory pokazują, czym różni się od ekranu." = "You are viewing the saved layout **“%@”**. **“%@”** is on screen. Colors show how it differs from the screen.";
+"Oglądasz zapisany układ **„%@”**. Kolory pokazują, czym różni się od ekranu." = "You are viewing the saved layout **“%@”**. Colors show how it differs from the screen.";
+"Wróć do „%@”" = "Back to “%@”";
+"Na ekranie" = "On screen";
+"Zmień nazwę…" = "Rename…";
+"Usuń układ…" = "Delete Layout…";
+"Nadaj nazwę" = "Name it";
+"Nazwij pierwszy układ tego zestawu" = "Name this set's first layout";
+"Zapisz obecny układ jako nowy" = "Save the current layout as new";
+"%@ nie ma jeszcze żadnego układu." = "%@ has no layouts yet.";
+"np. Praca" = "e.g. Work";
+"Ten zestaw ma już układ „%@”." = "This set already has a layout “%@”.";
+"Układy" = "Layouts";
+"Zapisz „%@”" = "Save “%@”";

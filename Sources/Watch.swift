@@ -130,7 +130,9 @@ func startWatch(autoSave: @escaping () -> Bool, autoRestore: @escaping () -> Boo
         guard autoSave(), !pending else { return }
         let current = liveAppOrder()
         if current != seen { seen = current; seenSince = now; return }
-        let saved = (loadAll()[key] ?? [:]).mapValues { $0.map(\.key) }
+        // No selected layout: nothing to save into (a set's first layout gets its name by hand).
+        guard let stored = loadAll()[key] else { return }
+        let saved = stored.mapValues { $0.map(\.key) }
         if autoSaveDue(now: now, lastDisplayChange: lastChange, lastRestore: lastRestoreAt,
                        stableSince: seenSince, current: current, saved: saved) {
             do {

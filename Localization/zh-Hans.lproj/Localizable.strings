@@ -130,3 +130,37 @@
 "Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca" = "先打开已保存但关闭的应用，再排列空间。应用会像平常一样启动：SpaceDock 不会恢复它们关闭前的状态（例如浏览器标签页）";
 "Skrót: przywróć z brakującymi" = "恢复（含缺失的应用）快捷键";
 "Kliknij dwa razy, żeby przejść do tej przestrzeni" = "双击可前往此空间";
+
+/* Several layouts per monitor set (2026-11-25) */
+"Zapisz jako nowy…" = "另存为新布局…";
+"Układy: %lld · " = "布局：%lld · ";
+"Nadpisać układ „%@”?" = "替换布局“%@”？";
+"Układ „%@” zestawu „%@” zostanie zastąpiony obecnym układem przestrzeni." = "“%2$@”的布局“%1$@”将被当前空间布局替换。";
+"Bez nazwy" = "未命名";
+"Usunąć układ „%@”?" = "删除布局“%@”？";
+"Tego nie da się cofnąć." = "此操作无法撤销。";
+"„%@” przejdzie z pozycji %lld na %lld." = "“%@”将从位置 %lld 移到 %lld。";
+"Usuń" = "删除";
+"Zapisz" = "保存";
+"Zapis działa tylko na układ na ekranie" = "只能保存当前屏幕上的布局";
+"Zapisuje obecne przestrzenie do tego układu" = "将当前空间保存到此布局";
+"Kliknij układ na liście, żeby zobaczyć go tutaj." = "点击列表中的布局即可在此查看。";
+"Ten zestaw nie ma jeszcze żadnego układu. Ułóż przestrzenie i kliknij „Zapisz”." = "此组合还没有布局。排好空间后点击“保存”。";
+"NA EKRANIE" = "当前";
+"Ten układ jest teraz na ekranie" = "此布局当前在屏幕上";
+"PODGLĄD" = "预览";
+"Oglądasz zapisany układ, nie to, co jest na ekranie" = "你正在查看已保存的布局，而不是屏幕上的内容";
+"Oglądasz zapisany układ **„%@”**. Na ekranie jest **„%@”**. Kolory pokazują, czym różni się od ekranu." = "正在查看已保存的布局 **“%@”**。屏幕上是 **“%@”**。颜色表示它与屏幕的差异。";
+"Oglądasz zapisany układ **„%@”**. Kolory pokazują, czym różni się od ekranu." = "正在查看已保存的布局 **“%@”**。颜色表示它与屏幕的差异。";
+"Wróć do „%@”" = "返回“%@”";
+"Na ekranie" = "当前";
+"Zmień nazwę…" = "重命名…";
+"Usuń układ…" = "删除布局…";
+"Nadaj nazwę" = "命名";
+"Nazwij pierwszy układ tego zestawu" = "为此组合的第一个布局命名";
+"Zapisz obecny układ jako nowy" = "将当前布局另存为新布局";
+"%@ nie ma jeszcze żadnego układu." = "%@ 还没有布局。";
+"np. Praca" = "例如：工作";
+"Ten zestaw ma już układ „%@”." = "此组合已有布局“%@”。";
+"Układy" = "布局";
+"Zapisz „%@”" = "保存“%@”";

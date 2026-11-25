@@ -130,3 +130,37 @@
 "Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca" = "Primero abre las apps guardadas que están cerradas y luego coloca los espacios. Las apps se inician como siempre: SpaceDock no recupera su estado anterior al cierre (por ejemplo, las pestañas del navegador)";
 "Skrót: przywróć z brakującymi" = "Atajo: restaurar con apps faltantes";
 "Kliknij dwa razy, żeby przejść do tej przestrzeni" = "Haz doble clic para ir a este espacio";
+
+/* Several layouts per monitor set (2026-11-25) */
+"Zapisz jako nowy…" = "Guardar como nuevo…";
+"Układy: %lld · " = "Diseños: %lld · ";
+"Nadpisać układ „%@”?" = "¿Reemplazar el diseño «%@»?";
+"Układ „%@” zestawu „%@” zostanie zastąpiony obecnym układem przestrzeni." = "El diseño «%1$@» de «%2$@» se reemplazará por la disposición actual de los espacios.";
+"Bez nazwy" = "Sin nombre";
+"Usunąć układ „%@”?" = "¿Eliminar el diseño «%@»?";
+"Tego nie da się cofnąć." = "Esto no se puede deshacer.";
+"„%@” przejdzie z pozycji %lld na %lld." = "«%@» pasará de la posición %lld a la %lld.";
+"Usuń" = "Eliminar";
+"Zapisz" = "Guardar";
+"Zapis działa tylko na układ na ekranie" = "Solo se puede guardar el diseño que está en pantalla";
+"Zapisuje obecne przestrzenie do tego układu" = "Guarda los espacios actuales en este diseño";
+"Kliknij układ na liście, żeby zobaczyć go tutaj." = "Haz clic en un diseño de la lista para verlo aquí.";
+"Ten zestaw nie ma jeszcze żadnego układu. Ułóż przestrzenie i kliknij „Zapisz”." = "Este conjunto aún no tiene diseños. Coloca los espacios y haz clic en «Guardar».";
+"NA EKRANIE" = "EN PANTALLA";
+"Ten układ jest teraz na ekranie" = "Este diseño está ahora en pantalla";
+"PODGLĄD" = "VISTA PREVIA";
+"Oglądasz zapisany układ, nie to, co jest na ekranie" = "Estás viendo un diseño guardado, no lo que hay en pantalla";
+"Oglądasz zapisany układ **„%@”**. Na ekranie jest **„%@”**. Kolory pokazują, czym różni się od ekranu." = "Estás viendo el diseño guardado **«%@»**. En pantalla está **«%@»**. Los colores muestran en qué se diferencia de la pantalla.";
+"Oglądasz zapisany układ **„%@”**. Kolory pokazują, czym różni się od ekranu." = "Estás viendo el diseño guardado **«%@»**. Los colores muestran en qué se diferencia de la pantalla.";
+"Wróć do „%@”" = "Volver a «%@»";
+"Na ekranie" = "En pantalla";
+"Zmień nazwę…" = "Renombrar…";
+"Usuń układ…" = "Eliminar diseño…";
+"Nadaj nazwę" = "Ponle nombre";
+"Nazwij pierwszy układ tego zestawu" = "Pon nombre al primer diseño de este conjunto";
+"Zapisz obecny układ jako nowy" = "Guardar el diseño actual como nuevo";
+"%@ nie ma jeszcze żadnego układu." = "%@ aún no tiene diseños.";
+"np. Praca" = "p. ej. Trabajo";
+"Ten zestaw ma już układ „%@”." = "Este conjunto ya tiene un diseño «%@».";
+"Układy" = "Diseños";
+"Zapisz „%@”" = "Guardar «%@»";

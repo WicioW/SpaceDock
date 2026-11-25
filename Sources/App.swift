@@ -53,8 +53,20 @@ struct ScreenInfo: Codable, Equatable {
 /// Names and positions of monitors seen so far, so a disconnected monitor still has a name.
 private let screensFile = store.deletingLastPathComponent().appendingPathComponent("screens.json")
 
+struct Naming: Identifiable {
+    let id = UUID()
+    let first: Bool   // the set has no layout yet
+}
+
 final class Model: ObservableObject {
-    @Published var saved: [String: Layout] = [:]
+    @Published var saved: [String: Layout] = [:]   // selected layout of each set
+    @Published var sets: [String: LayoutSet] = [:]
+    @Published var viewedID: String?   // layout clicked in the sidebar for `selection`; nil = its selected one
+    @Published var expanded: Set<String> = []   // sets opened in the sidebar tree
+    @Published var naming: Naming?   // "save as new" / first save sheet
+    @Published var newName = ""
+    @Published var renaming: String?   // layout being renamed in its sidebar row
+    @Published var drafts: [String: String] = [:]   // text typed into a layout's name field
     @Published var current = ""
     @Published var live: [String: [String]] = [:]
     @Published var liveSpaces: [String: [LiveSpace]] = [:]   // bars now, for the saved-vs-live tiles
@@ -71,6 +83,7 @@ final class Model: ObservableObject {
     init() {
         refresh()
         selection = current
+        expanded = [current]
         timer = .scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.refresh() }
         // Global shortcuts: save asks before replacing a save (as the button does); restore beeps
         // when there is nothing to restore.
@@ -78,7 +91,9 @@ final class Model: ObservableObject {
             guard let self, self.saved[self.current] != nil, self.trusted, !self.busy else { NSSound.beep(); return }
             self.restoreNow(openApps: openApps)
         }
-        Hotkeys.shared.start([.save: { [weak self] in self?.save() },
+        Hotkeys.shared.start([.save: { [weak self] in
+                                  guard let self, self.saved[self.current] != nil else { NSSound.beep(); return }   // naming needs the window
+                                  self.save() },
                               .restore: { restore(false) }, .restoreOpen: { restore(true) }])
     }
 
@@ -90,9 +105,11 @@ final class Model: ObservableObject {
                                  autoRestore: { UserDefaults.standard.object(forKey: "autoRestore") as? Bool ?? true },
                                  restore: { [weak self] in self?.restoreNow(openApps: false) })
         }
-        let all = loadAll(), key = profileKey(), order = liveAppOrder()
-        if all != saved { saved = all }
-        if key != current { current = key }
+        let all = loadSets(), key = profileKey(), order = liveAppOrder()
+        if all != sets { sets = all }
+        let selected = all.compactMapValues { $0.current?.layout }
+        if selected != saved { saved = selected }
+        if key != current { current = key; expanded.insert(key) }
         if order != live { live = order }
         // ponytail: no AX titles here (polled every 2 s), so the diff matches by window and app
         // only; a restore also uses titles, which matters only for two windows of one app after a restart.
@@ -114,7 +131,7 @@ final class Model: ObservableObject {
     }
 
     var profiles: [String] {
-        Set(saved.keys).union([current]).sorted { ($0.split(separator: "+").count, $0) < ($1.split(separator: "+").count, $1) }
+        Set(sets.keys).union([current]).sorted { ($0.split(separator: "+").count, $0) < ($1.split(separator: "+").count, $1) }
     }
 
     // ponytail: monitors drawn left to right by x only; a monitor above or below the laptop
@@ -159,16 +176,98 @@ final class Model: ObservableObject {
     /// does not come through here (it calls `storeLayout` itself). The panel look has its own
     /// two-step cover instead of the question (`ask: false`).
     func save(ask: Bool = true) {
-        if ask, saved[current] != nil {
+        guard let l = sets[current]?.current else { askNew(); return }   // no selected layout: it gets a name first
+        if ask {
             NSApp.activate(ignoringOtherApps: true)   // from the menu bar the app is not frontmost
             let alert = NSAlert()
-            alert.messageText = String(localized: "Nadpisać zapisany układ?")
-            alert.informativeText = String(localized: "Zapis dla zestawu „\(title(current))” zostanie zastąpiony obecnym układem przestrzeni.")
+            alert.messageText = String(localized: "Nadpisać układ „\(name(of: l))”?")
+            alert.informativeText = String(localized: "Układ „\(name(of: l))” zestawu „\(title(current))” zostanie zastąpiony obecnym układem przestrzeni.")
             alert.addButton(withTitle: String(localized: "Nadpisz"))
             alert.addButton(withTitle: String(localized: "Anuluj")).keyEquivalent = "\u{1b}"
             guard alert.runModal() == .alertFirstButtonReturn else { return }
         }
         try? storeLayout(currentLayout()); refresh()
+    }
+
+    // MARK: Layouts of a set (TODO.md, "Kilka układów na jeden zestaw monitorów")
+
+    func layouts(_ key: String) -> [NamedLayout] { sets[key]?.layouts ?? [] }
+
+    func name(of l: NamedLayout) -> String { l.name ?? String(localized: "Bez nazwy") }
+
+    /// The layout the window shows for `key`: the one clicked in the sidebar, else the selected one.
+    func viewed(_ key: String) -> NamedLayout? {
+        if key == selection, let id = viewedID, let l = layouts(key).first(where: { $0.id == id }) { return l }
+        return sets[key]?.current
+    }
+
+    /// Looking at a layout that is not the one on screen (or at a set that is not connected).
+    func isPreview(_ key: String) -> Bool { key != current || viewed(key)?.id != sets[key]?.selected }
+
+    /// Another layout of `key` already has this name (case ignored).
+    func nameTaken(_ name: String, in key: String, except id: String? = nil) -> Bool {
+        let n = name.trimmingCharacters(in: .whitespaces).lowercased()
+        return layouts(key).contains { $0.id != id && $0.name?.lowercased() == n }
+    }
+
+    private func edit(_ key: String, _ change: (inout LayoutSet) -> Void) {
+        var all = loadSets()
+        guard var s = all[key] else { return }
+        change(&s)
+        all[key] = s.layouts.isEmpty ? nil : s
+        try? writeSets(all)
+        refresh()
+    }
+
+    func askNew() {
+        newName = ""
+        naming = Naming(first: layouts(current).isEmpty)
+    }
+
+    /// The screen now as a new layout of the connected set, selected from now on.
+    func saveAsNew(_ name: String) {
+        let n = NamedLayout(name: name.trimmingCharacters(in: .whitespaces), layout: currentLayout())
+        var all = loadSets()
+        all[current, default: LayoutSet(layouts: [], selected: n.id)].layouts.append(n)
+        all[current]?.selected = n.id
+        try? writeSets(all)
+        selection = current; viewedID = nil; expanded.insert(current)
+        refresh()
+    }
+
+    func rename(_ key: String, _ id: String, to name: String) {
+        edit(key) { s in if let i = s.layouts.firstIndex(where: { $0.id == id }) { s.layouts[i].name = name.trimmingCharacters(in: .whitespaces) } }
+    }
+
+    func move(_ key: String, _ from: IndexSet, _ to: Int) { edit(key) { $0.layouts.move(fromOffsets: from, toOffset: to) } }
+
+    /// Asks first. Deleting the layout on screen leaves the set with none selected (not the next
+    /// one): auto-save would otherwise write this screen into a layout that is not on it.
+    func deleteLayout(_ key: String, _ id: String) {
+        let ls = layouts(key)
+        guard let i = ls.firstIndex(where: { $0.id == id }) else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Usunąć układ „\(name(of: ls[i]))”?")
+        alert.informativeText = i + 1 < ls.count
+            ? String(localized: "Tego nie da się cofnąć.") + " " + String(localized: "„\(name(of: ls[i + 1]))” przejdzie z pozycji \(i + 2) na \(i + 1).")
+            : String(localized: "Tego nie da się cofnąć.")
+        alert.addButton(withTitle: String(localized: "Usuń")).hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Anuluj")).keyEquivalent = "\u{1b}"
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        if key == selection, viewedID == id { viewedID = ls.indices.contains(i + 1) ? ls[i + 1].id : i > 0 ? ls[i - 1].id : nil }
+        edit(key) { s in
+            s.layouts.removeAll { $0.id == id }
+            if s.selected == id { s.selected = "" }
+        }
+    }
+
+    /// Restores layout `id` of the connected set; it is the selected one from now on.
+    func restore(_ key: String, _ id: String, openApps: Bool = false) {
+        guard key == current, !busy, trusted else { NSSound.beep(); return }
+        if sets[key]?.selected != id { edit(key) { $0.selected = id } }
+        if key == selection { viewedID = nil }
+        restoreNow(openApps: openApps)
     }
 
     func delete(_ key: String) {
@@ -323,6 +422,19 @@ struct MenuContent: View {
         }
         if !model.trusted { Text("Automat wyłączony: brak uprawnienia Dostępność") }
         Divider()
+        let layouts = model.layouts(model.current)
+        if !layouts.isEmpty {
+            Section("Układy") {
+                ForEach(Array(layouts.enumerated()), id: \.element.id) { i, l in
+                    // A tick on the layout on screen; a click restores it (and selects it).
+                    Toggle(isOn: Binding(get: { model.sets[model.current]?.selected == l.id },
+                                         set: { _ in model.restore(model.current, l.id) })) {
+                        Text(verbatim: "\(i + 1). \(model.name(of: l))")
+                    }
+                    .disabled(model.busy || !model.trusted)
+                }
+            }
+        }
         Button("Pokaż okno") {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
@@ -332,7 +444,14 @@ struct MenuContent: View {
         Button("Przywróć z brakującymi") { model.restoreNow(openApps: true) }
             .disabled(model.saved[model.current] == nil || model.busy || !model.trusted)
             .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca")
-        Button("Zapisz obecny układ") { model.save() }
+        if let l = model.sets[model.current]?.current {
+            Button("Zapisz „\(model.name(of: l))”") { model.save() }
+        }
+        Button("Zapisz jako nowy…") {
+            openWindow(id: "main")
+            NSApp.activate(ignoringOtherApps: true)
+            model.askNew()
+        }
         Toggle("Przywracaj automatycznie", isOn: $autoRestore)
         Toggle("Zapisuj automatycznie", isOn: $autoSave)
         Button("Pokaż log") { NSWorkspace.shared.open(logFile) }
@@ -348,6 +467,7 @@ struct MenuContent: View {
 
 /// The normal look, or the hidden panel look (Panel.swift) once the easter egg has unlocked it.
 struct RootView: View {
+    @EnvironmentObject var model: Model
     @AppStorage(PanelKey.on) private var panelOn = false
 
     var body: some View {
@@ -355,6 +475,7 @@ struct RootView: View {
             if panelOn { PanelView() } else { ContentView() }
         }
         .preferredColorScheme(panelOn ? .dark : nil)
+        .sheet(item: $model.naming) { n in NameSheet(first: n.first).environmentObject(model) }
         // While the window is open the app is a regular one: Dock icon and its own menu bar
         // (SpaceDock → Settings…). Closed, it goes back to the menu bar icon only.
         .onAppear {
@@ -380,6 +501,20 @@ struct ContentView: View {
         .accessibilityLabel(model.columns == .detailOnly ? "Pokaż listę zestawów" : "Schowaj listę zestawów")
     }
 
+    /// One list selection for set rows (`key`) and layout rows (`key` + newline + layout id).
+    private var listSelection: Binding<String?> {
+        Binding(get: {
+            guard let k = model.selection else { return nil }
+            return model.viewed(k).map { k + "\n" + $0.id } ?? k
+        }, set: { v in
+            guard let v else { return }
+            let parts = v.split(separator: "\n", maxSplits: 1).map(String.init)
+            model.selection = parts[0]
+            model.viewedID = parts.count > 1 ? parts[1] : nil
+            if model.renaming != nil, parts.count < 2 || parts[1] != model.renaming { model.renaming = nil }
+        })
+    }
+
     var body: some View {
         // Title row of our own (the system title bar is hidden): "SpaceDock" right after the
         // window buttons, like foobar2000, then the sidebar toggle the hidden toolbar no longer has.
@@ -395,13 +530,26 @@ struct ContentView: View {
         .frame(height: 30)
         Divider()
         NavigationSplitView(columnVisibility: $model.columns) {
-            List(model.profiles, id: \.self, selection: $model.selection) { key in
+            List(selection: listSelection) { ForEach(model.profiles, id: \.self) { key in
+                DisclosureGroup(isExpanded: Binding(get: { model.expanded.contains(key) },
+                                                    set: { if $0 { model.expanded.insert(key) } else { model.expanded.remove(key) } })) {
+                    ForEach(Array(model.layouts(key).enumerated()), id: \.element.id) { i, l in
+                        LayoutRow(key: key, layout: l, position: i + 1).tag(key + "\n" + l.id)
+                    }
+                    .onMove { model.move(key, $0, $1) }
+                    if key == model.current {
+                        Button { model.askNew() } label: { Label("Zapisz jako nowy…", systemImage: "plus").lineLimit(1) }
+                            .buttonStyle(.borderless)
+                            .foregroundStyle(.secondary)
+                            .disabled(!model.trusted)
+                    }
+                } label: {
                 HStack(spacing: 10) {
                     Image(systemName: key.contains("+") ? "display.2" : "laptopcomputer")
                         .frame(width: 22)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.title(key))
-                        Text("\(model.spaceCount(key)) przestrzeni")
+                        (Text("Układy: \(model.layouts(key).count) · ") + Text("\(model.spaceCount(key)) przestrzeni"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -424,12 +572,9 @@ struct ContentView: View {
                     }
                 }
                 .padding(.vertical, 2)
-                .contextMenu {
-                    if model.saved[key] != nil {
-                        Button("Usuń zapis", role: .destructive) { model.delete(key) }
-                    }
+                .tag(key)
                 }
-            }
+            } }
             .safeAreaInset(edge: .top) {
                 // The toggle belongs to the sidebar: its own header row, at the column's right edge.
                 HStack {
@@ -643,11 +788,19 @@ struct ProfileView: View {
     let key: String
 
     var body: some View {
+        let viewed = model.viewed(key)
+        let preview = viewed != nil && model.isPreview(key)
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(model.title(key)).font(.title2.bold())
-                    if model.differs(key) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(viewed.map(model.name(of:)) ?? model.title(key)).font(.title2.bold())
+                            .foregroundStyle(viewed != nil && viewed?.name == nil ? .secondary : .primary)
+                        if viewed != nil { preview ? AnyView(previewCapsule) : AnyView(onScreenCapsule) }
+                    }
+                    if preview || viewed == nil && model.sets[key] != nil {
+                        Text(model.title(key)).foregroundStyle(.secondary)
+                    } else if model.differs(key) {
                         // Orange, not yellow: yellow text is unreadable on the light background.
                         Label(model.status(key), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
@@ -657,31 +810,173 @@ struct ProfileView: View {
                 }
                 Spacer()
                 if key == model.current {
-                    Button("Zapisz obecny układ") { model.save() }
-                    Button(model.busy ? "Przywracam…" : "Przywróć") { model.restoreNow() }
-                        .disabled(model.saved[key] == nil || model.busy || !model.trusted)
+                    Button("Zapisz") { model.save() }
+                        .disabled(preview)
+                        .help(preview ? "Zapis działa tylko na układ na ekranie" : "Zapisuje obecne przestrzenie do tego układu")
+                    let restore = { (open: Bool) in
+                        if preview, let viewed { model.restore(key, viewed.id, openApps: open) } else { model.restoreNow(openApps: open) }
+                    }
+                    let restoreButton = Button(model.busy ? "Przywracam…" : "Przywróć") { restore(false) }
+                        .disabled(viewed == nil || model.busy || !model.trusted)
                         .help(model.trusted ? "Ustaw przestrzenie jak w zapisie" : "Wymaga uprawnienia Dostępność dla tej apki")
-                    Button("Przywróć z brakującymi") { model.restoreNow(openApps: true) }
-                        .disabled(model.saved[key] == nil || model.busy || !model.trusted)
+                    if preview { restoreButton.buttonStyle(.borderedProminent) } else { restoreButton }
+                    Button("Przywróć z brakującymi") { restore(true) }
+                        .disabled(viewed == nil || model.busy || !model.trusted)
                         .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca")
                 }
             }
-            if model.saved[key] != nil {
+            if preview, key == model.current, let viewed { banner(viewed) }
+            if let viewed {
                 // The panel look's states (ok, moved, missing, …): one computation for both looks.
                 HStack(alignment: .top, spacing: 16) {
-                    ForEach(PanelData(model, key: key).monitors, id: \.uuid) { m in
+                    ForEach(PanelData(model, key: key, layout: viewed.layout).monitors, id: \.uuid) { m in
                         MonitorView(name: model.name(m.uuid), tiles: m.tiles)
                     }
                 }
-            } else if model.saved.isEmpty {
+            } else if model.sets.isEmpty {
                 FirstSteps()
+            } else if model.sets[key] != nil {
+                Text("Kliknij układ na liście, żeby zobaczyć go tutaj.").foregroundStyle(.secondary)
             } else {
-                Text("Ten zestaw nie ma zapisu. Ułóż przestrzenie i kliknij „Zapisz obecny układ”.")
+                Text("Ten zestaw nie ma jeszcze żadnego układu. Ułóż przestrzenie i kliknij „Zapisz”.")
                     .foregroundStyle(.secondary)
             }
             Spacer()
         }
         .padding(24)
+    }
+
+    private var onScreenCapsule: some View {
+        Text("NA EKRANIE")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(Color.green))
+            .help("Ten układ jest teraz na ekranie")
+    }
+
+    private var previewCapsule: some View {
+        Text("PODGLĄD")
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(Color.accentColor)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .overlay(Capsule().strokeBorder(Color.accentColor, lineWidth: 1))
+            .help("Oglądasz zapisany układ, nie to, co jest na ekranie")
+    }
+
+    /// Preview of a layout that is not on screen: what you look at, what is on screen, the way back.
+    private func banner(_ viewed: NamedLayout) -> some View {
+        let onScreen = model.sets[key]?.current
+        return HStack(spacing: 10) {
+            Image(systemName: "eye")
+            if let onScreen {
+                Text("Oglądasz zapisany układ **„\(model.name(of: viewed))”**. Na ekranie jest **„\(model.name(of: onScreen))”**. Kolory pokazują, czym różni się od ekranu.")
+            } else {
+                Text("Oglądasz zapisany układ **„\(model.name(of: viewed))”**. Kolory pokazują, czym różni się od ekranu.")
+            }
+            Spacer(minLength: 8)
+            if let onScreen {
+                Button("Wróć do „\(model.name(of: onScreen))”") { model.viewedID = nil }.buttonStyle(.link)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.18)))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.55), lineWidth: 1))
+    }
+}
+
+/// A layout in the sidebar tree: position, name (a field when unnamed or being renamed), a green
+/// tick on the one on screen. Right click: restore, rename, delete; drag to reorder.
+struct LayoutRow: View {
+    @EnvironmentObject var model: Model
+    let key: String
+    let layout: NamedLayout
+    let position: Int
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(verbatim: "\(position)").monospacedDigit().foregroundStyle(.secondary).frame(width: 14, alignment: .trailing)
+            if layout.name == nil || model.renaming == layout.id { field } else {
+                Text(verbatim: layout.name ?? "").lineLimit(1).truncationMode(.tail)
+            }
+            Spacer(minLength: 4)
+            if key == model.current, model.sets[key]?.selected == layout.id {
+                Image(systemName: "checkmark.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .green)
+                    .font(.system(size: 14))
+                    .help("Ten układ jest teraz na ekranie")
+                    .accessibilityLabel("Na ekranie")
+            }
+        }
+        .frame(minHeight: 28)
+        .contextMenu {
+            Button("Przywróć") { model.restore(key, layout.id) }
+                .disabled(key != model.current || model.busy || !model.trusted)
+            Button("Przywróć z brakującymi") { model.restore(key, layout.id, openApps: true) }
+                .disabled(key != model.current || model.busy || !model.trusted)
+            Divider()
+            Button("Zmień nazwę…") { model.drafts[layout.id] = layout.name ?? ""; model.renaming = layout.id }
+            Button("Usuń układ…", role: .destructive) { model.deleteLayout(key, layout.id) }
+        }
+    }
+
+    private var draft: String { model.drafts[layout.id] ?? layout.name ?? "" }
+
+    /// Empty while renaming, or the name of another layout of this set: red frame, Enter does nothing.
+    private var invalid: Bool {
+        let t = draft.trimmingCharacters(in: .whitespaces)
+        return (model.renaming == layout.id && t.isEmpty) || (!t.isEmpty && model.nameTaken(t, in: key, except: layout.id))
+    }
+
+    private var field: some View {
+        // Leaving the field saves too (no Enter needed); leaving it with a bad name drops the edit.
+        TextField("Nadaj nazwę", text: Binding(get: { draft }, set: { model.drafts[layout.id] = $0 }),
+                  onEditingChanged: { editing in if !editing { commit(keepIfBad: false) } },
+                  onCommit: { commit(keepIfBad: true) })
+            .textFieldStyle(.roundedBorder)
+            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(Color.red, lineWidth: invalid ? 1.5 : 0))
+            .onExitCommand { model.renaming = nil; model.drafts[layout.id] = nil }
+    }
+
+    /// Enter on a bad name keeps the field open (`keepIfBad`); anything else ends the edit.
+    private func commit(keepIfBad: Bool) {
+        let t = draft.trimmingCharacters(in: .whitespaces)
+        if invalid || t.isEmpty, keepIfBad { return }
+        if !invalid, !t.isEmpty, t != layout.name { model.rename(key, layout.id, to: t) }
+        model.renaming = nil
+        model.drafts[layout.id] = nil
+    }
+}
+
+/// "Save as new" and the first save of a set: the name is required and unique in the set.
+struct NameSheet: View {
+    @EnvironmentObject var model: Model
+    let first: Bool
+
+    var body: some View {
+        let t = model.newName.trimmingCharacters(in: .whitespaces)
+        let taken = model.nameTaken(t, in: model.current)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(first ? "Nazwij pierwszy układ tego zestawu" : "Zapisz obecny układ jako nowy").font(.headline)
+            if first { Text("\(model.title(model.current)) nie ma jeszcze żadnego układu.").foregroundStyle(.secondary) }
+            TextField("np. Praca", text: $model.newName)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit { if !t.isEmpty, !taken { model.saveAsNew(t); model.naming = nil } }
+            if taken { Text("Ten zestaw ma już układ „\(t)”.").font(.caption).foregroundStyle(.red) }
+            HStack {
+                Spacer()
+                Button("Anuluj") { model.naming = nil }.keyboardShortcut(.cancelAction)
+                Button("Zapisz") { model.saveAsNew(t); model.naming = nil }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(t.isEmpty || taken)
+            }
+        }
+        .padding(20)
+        .frame(width: 380)
     }
 }
 
@@ -801,7 +1096,8 @@ struct SpaceTile: View {
         }
         .overlay(alignment: .topTrailing) {
             // A red app tile: open the app (if closed), full screen, and the restore puts it in place.
-            if !entry.isDesktop, tile.state == .missing || tile.state == .noFullScreen {
+            // Not in a preview: it restores the layout on screen, not the one looked at.
+            if !entry.isDesktop, tile.state == .missing || tile.state == .noFullScreen, !model.isPreview(model.selection ?? model.current) {
                 Button { model.restoreNow(openApps: true, only: entry.bundleID) } label: {
                     Image(systemName: "arrow.up.forward.app").font(.system(size: 15))
                 }

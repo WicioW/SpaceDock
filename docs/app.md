@@ -65,7 +65,7 @@ przy logowaniu, aktualizacje. Kafelek obecnego zestawu: klik zaznacza go pierśc
 tę przestrzeń (podniesienie okna przez SkyLight + AX, `goTo`), ↗ na czerwonym kafelku otwiera zamkniętą apkę.
 „Przywróć z brakującymi” najpierw otwiera zamknięte apki z zapisu i zostaje na nich (bez powrotu). Apka startuje jak po zwykłym uruchomieniu: stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca. Podczas układania na
 każdym ekranie jest czerwony komunikat „Układam przestrzenie… nie ruszaj myszy”. Log:
-`~/Library/Logs/SpaceDock.log` (menu: „Pokaż log”), bez tytułów okien (tylko numery), więc można go dołączyć do zgłoszenia. Zapisy: `~/Library/Application Support/SpaceDock/` (do 2026-11-21 folder `spaces-layout` i log `spaces-layout.log`; apka przenosi je sama przy pierwszym starcie).
+`~/Library/Logs/SpaceDock.log` (menu: „Pokaż log”), bez tytułów okien (tylko numery), więc można go dołączyć do zgłoszenia. Zapisy: `~/Library/Application Support/SpaceDock/layout-sets.json` (od 2026-11-25: lista układów i wybrany dla każdego zestawu; przy pierwszym starcie budowany z `layouts.json`, który zostaje nietknięty dla starszych wersji apki), folder `~/Library/Application Support/SpaceDock/` (do 2026-11-21 folder `spaces-layout` i log `spaces-layout.log`; apka przenosi je sama przy pierwszym starcie).
 Zapis obejmuje też biurka (wpis `desktop`), więc ich miejsce na pasku wraca razem z resztą; zapis
 sprzed tej zmiany nie ma biurek i wtedy biurka idą na początek paska (trzeba zapisać jeszcze raz).
 Dwa okna tej samej apki (np. dwa Brave) rozróżnia numer okna zapisany przy przestrzeni: nie zmienia

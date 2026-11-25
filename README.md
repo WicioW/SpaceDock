@@ -57,7 +57,7 @@ If Direct fails, SpaceDock tries Drag, then Full Screen.
 ## Privacy
 
 Everything stays on your Mac. Layouts are in
-`~/Library/Application Support/SpaceDock/layouts.json`, the log in
+`~/Library/Application Support/SpaceDock/layout-sets.json` (`layouts.json` from versions before 0.3), the log in
 `~/Library/Logs/SpaceDock.log`. Saved layouts contain app names and window titles (a
 browser window's title is its open tab). The log has app names and window numbers, no titles,
 so it is safe to attach to a bug report. The only network request is the daily update check: it

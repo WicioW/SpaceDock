@@ -333,8 +333,45 @@ func movedFromOldName(_ old: String, _ new: String, in dir: String) -> URL {
 
 let store = movedFromOldName("spaces-layout", "SpaceDock", in: "Library/Application Support").appendingPathComponent("layouts.json")
 
+/// One saved layout of a monitor set. `name` is nil only for a save from before named layouts
+/// (2026-11-25), until the user names it.
+struct NamedLayout: Codable, Equatable {
+    var id = UUID().uuidString
+    var name: String?
+    var layout: Layout
+}
+
+/// A monitor set's layouts in list order, and the selected one: the one last restored or created,
+/// which saving, restoring, auto-save and the monitor watcher act on.
+struct LayoutSet: Codable, Equatable {
+    var layouts: [NamedLayout]
+    var selected: String
+    var current: NamedLayout? { layouts.first { $0.id == selected } }
+}
+
+/// Several layouts per set. The old `layouts.json` (one layout per set) stays as it was, so an
+/// older app version still finds its saves; it is read once to build this file.
+let setsStore = store.deletingLastPathComponent().appendingPathComponent("layout-sets.json")
+
+func loadSets() -> [String: LayoutSet] {
+    if let data = try? Data(contentsOf: setsStore) { return (try? JSONDecoder().decode([String: LayoutSet].self, from: data)) ?? [:] }
+    let legacy = (try? JSONDecoder().decode([String: Layout].self, from: Data(contentsOf: store))) ?? [:]
+    let sets = migrate(legacy)
+    if !sets.isEmpty { try? writeSets(sets) }   // written once, so the new ids stay the same from now on
+    return sets
+}
+
+/// Each old save becomes the one, unnamed, selected layout of its set.
+func migrate(_ legacy: [String: Layout]) -> [String: LayoutSet] {
+    legacy.mapValues { l in
+        let n = NamedLayout(name: nil, layout: l)
+        return LayoutSet(layouts: [n], selected: n.id)
+    }
+}
+
+/// The selected layout of every set: what everything that restores or compares reads.
 func loadAll() -> [String: Layout] {
-    (try? JSONDecoder().decode([String: Layout].self, from: Data(contentsOf: store))) ?? [:]
+    loadSets().compactMapValues { $0.current?.layout }
 }
 
 /// Saves every Space per display in bar order: app, window title, window number (desktops as
@@ -350,22 +387,34 @@ func currentLayout() -> Layout {
 }
 
 func storeLayout(_ layout: Layout) throws {
-    var all = loadAll()
-    all[profileKey()] = layout
-    try writeAll(all)
+    try writeSets(storing(layout, in: loadSets(), key: profileKey()))
 }
 
-func writeAll(_ all: [String: Layout]) throws {
-    try FileManager.default.createDirectory(at: store.deletingLastPathComponent(), withIntermediateDirectories: true)
+/// `layout` replaces the selected layout of set `key`; a set with none gets it as a new,
+/// unnamed, selected layout.
+func storing(_ layout: Layout, in sets: [String: LayoutSet], key: String) -> [String: LayoutSet] {
+    var sets = sets
+    if var s = sets[key], let i = s.layouts.firstIndex(where: { $0.id == s.selected }) {
+        s.layouts[i].layout = layout
+        sets[key] = s
+    } else {
+        let n = NamedLayout(name: nil, layout: layout)
+        sets[key] = LayoutSet(layouts: (sets[key]?.layouts ?? []) + [n], selected: n.id)
+    }
+    return sets
+}
+
+func writeSets(_ sets: [String: LayoutSet]) throws {
+    try FileManager.default.createDirectory(at: setsStore.deletingLastPathComponent(), withIntermediateDirectories: true)
     let enc = JSONEncoder()
     enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try enc.encode(all).write(to: store)
+    try enc.encode(sets).write(to: setsStore, options: .atomic)
 }
 
 func save() throws {
     let layout = currentLayout()
     try storeLayout(layout)
-    print("Zapisano profil \(profileKey()) do \(store.path)")
+    print("Zapisano profil \(profileKey()) do \(setsStore.path)")
     for (d, entries) in layout {
         print("  \(d):")
         entries.enumerated().forEach { print("    \($0.offset + 1). \($0.element.app) — \($0.element.title)") }
@@ -536,6 +585,19 @@ func selftest() {
     assert(Hotkeys.parse("1 4352 ⌃⌥⌘S")! == (1, 4352, "⌃⌥⌘S"))
     assert(Hotkeys.parse("49 256 ⌘Space")?.label == "⌘Space")
     assert(Hotkeys.parse("") == nil && Hotkeys.parse("x 256 ⌘S") == nil && Hotkeys.parse("1 256") == nil)
+    // layouts per set: migration and saving into the selected one
+    let l1: Layout = ["d": [Entry(bundleID: "a", app: "A", title: "")]], l2: Layout = ["d": [Entry(bundleID: "b", app: "B", title: "")]]
+    let m = migrate(["k": l1])
+    assert(m["k"]!.layouts.count == 1 && m["k"]!.layouts[0].name == nil && m["k"]!.current?.layout == l1)
+    var two = m["k"]!
+    two.layouts.append(NamedLayout(name: "Praca", layout: l1))
+    two.selected = two.layouts[1].id
+    let after = storing(l2, in: ["k": two], key: "k")["k"]!
+    assert(after.layouts.map(\.layout) == [l1, l2] && after.selected == two.selected)   // only the selected one changes
+    let fresh = storing(l2, in: [:], key: "new")["new"]!
+    assert(fresh.layouts.count == 1 && fresh.current?.layout == l2 && fresh.current?.name == nil)
+    let round = try! JSONDecoder().decode([String: LayoutSet].self, from: JSONEncoder().encode(["k": after]))
+    assert(round["k"] == after)
     print("selftest OK")
 }
 

@@ -172,9 +172,9 @@ final class Model: ObservableObject {
     }
 
     func delete(_ key: String) {
-        var all = loadAll()
-        all[key] = nil
-        try? writeAll(all)
+        var sets = loadSets()
+        sets[key] = nil
+        try? writeSets(sets)
         refresh()
     }
 

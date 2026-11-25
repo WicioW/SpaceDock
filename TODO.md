@@ -113,7 +113,9 @@ Dziś jest jeden zapis na zestaw monitorów. Pomysł: kilka nazwanych układów 
 zwykły wygląd **LA** (drzewko w pasku bocznym: zestaw rozwija się w swoje układy, „+ Zapisz jako
 nowy…” na końcu), panel **QA** (to samo drzewko w szynie pod wybranym zestawem; krawędzie heksu
 zestawu = liczba układów, do 6; dziennik w szynie skrócony do 1 wiersza). Specyfikacja:
-[docs/design-handoff-layouts.md](docs/design-handoff-layouts.md) (prototypy w `docs/design/layouts/`). Dalej: kod. Odrzucone i odłożone pomysły:
+[docs/design-handoff-layouts.md](docs/design-handoff-layouts.md) (prototypy w `docs/design/layouts/`). Kod w etapach: ✅ 1. dane (`layout-sets.json`, migracja,
+wybrany układ wszędzie, 2026-11-25); 2. zwykły wygląd LA + menu; 3. „Zostaw / Schowaj”;
+4. skróty układów; 5. panel QA; 6. dokumentacja i tłumaczenia. Odrzucone i odłożone pomysły:
 [docs/improvements.md](docs/improvements.md).
 
 **Pojęcia:**

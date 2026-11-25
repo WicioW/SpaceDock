@@ -625,6 +625,7 @@ struct SettingsPanel: View {
     @AppStorage("autoSave") private var autoSave = false
     @AppStorage("autoRestore") private var autoRestore = true
     @AppStorage("restoreMethod") private var restoreMethod = "bridge"
+    @AppStorage("outsideApps") private var outsideApps = "leave"
     @AppStorage(PanelKey.unlocked) private var panelUnlocked = false
     @AppStorage(PanelKey.on) private var panelOn = false
     @AppStorage(PanelKey.theme) private var panelTheme = 1
@@ -664,6 +665,21 @@ struct SettingsPanel: View {
                             Text("Przeciąganie wymaga Karabiner-Elements")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
+                    }
+                    GridRow {
+                        Text("Apki spoza układu")
+                        Picker("", selection: $outsideApps) {
+                            Text("Zostaw").tag("leave")
+                            Text("Schowaj").tag("hide")
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                    }
+                    GridRow {
+                        Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
+                        Text("Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy.")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }

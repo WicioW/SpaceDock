@@ -55,7 +55,10 @@ func runRestore(openApps: Bool = false, only: String? = nil) {
     let front = NSWorkspace.shared.frontmostApplication
     var opened = false   // apps just opened: stay on them, the Space shown before was only the way in
     defer {
-        if profileKey() == key, !opened { returnTo(shown, front) }
+        if profileKey() == key {
+            if UserDefaults.standard.string(forKey: "outsideApps") == "hide", let saved = loadAll()[key] { hideOutside(saved) }
+            if !opened { returnTo(shown, front) }
+        }
         restoring = false; lastRestoreAt = Date()
     }
     if openApps, let saved = loadAll()[key] { opened = launchMissingApps(saved, only: only) }
@@ -82,6 +85,33 @@ func runRestore(openApps: Bool = false, only: String? = nil) {
     case .failed: log("Przeciąganie nie dokończyło, używam restore (pełny ekran)")
     }
     restore()
+}
+
+/// Setting "Apki spoza układu: Schowaj": every full-screen Space no place of the layout took
+/// leaves full screen and its window is minimized, so the bar holds only the layout. Nothing is
+/// closed (unsaved work stays), desktops stay; "restore with missing apps" brings such a window
+/// back (`normalWindow` un-minimizes it).
+func hideOutside(_ saved: Layout) {
+    let titles = liveTitles()
+    let live = Dictionary(uniqueKeysWithValues: liveDisplays().map { d in
+        (d.uuid, d.spaces.compactMap { s in
+            s.isFullScreen && !s.isSplitView ? bundleID(s.pid).map { LiveSpace(id: s.id, bundle: $0, window: s.windowID, title: s.windowID.flatMap { titles[$0] } ?? "") } : nil   // Split View: two windows, left alone
+        })
+    })
+    let outside = matchSpaces(current: live, saved: saved).rest.map(\.space)
+    guard !outside.isEmpty else { return }
+    log("Apki spoza układu: chowam \(outside.count)")
+    slowRestoreStarts()
+    for s in outside {
+        guard let id = s.window, let pid = liveDisplays().flatMap(\.spaces).first(where: { $0.id == s.id })?.pid,
+              let w = axWindow(pid: pid, id: id), setFullScreen(w, false, timeout: 3) else {
+            print("  ✗ \(s.bundle) \(windowLabel(s.window)): nie wyszło z pełnego ekranu"); continue
+        }
+        waitUntil(timeout: 2) { !liveDisplays().flatMap(\.spaces).contains { $0.id == s.id } }
+        Thread.sleep(forTimeInterval: 0.3)   // the leave-full-screen animation ends after the Space is gone
+        AXUIElementSetAttributeValue(w, kAXMinimizedAttribute as CFString, true as CFBoolean)
+        print("  ⤓ \(s.bundle) \(windowLabel(id))")
+    }
 }
 
 /// Back to the Spaces that were shown before a restore (a re-entered full-screen window has a

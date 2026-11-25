@@ -164,3 +164,7 @@
 "Ten zestaw ma już układ „%@”." = "This set already has a layout “%@”.";
 "Układy" = "Layouts";
 "Zapisz „%@”" = "Save “%@”";
+"Apki spoza układu" = "Apps outside the layout";
+"Zostaw" = "Leave";
+"Schowaj" = "Hide";
+"Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy." = "Hide: on every restore, full-screen apps outside the layout leave full screen and are minimized. Automatic restore also hides a just-opened app you have not saved. Apps are never quit.";

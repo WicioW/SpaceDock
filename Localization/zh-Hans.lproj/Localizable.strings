@@ -164,3 +164,7 @@
 "Ten zestaw ma już układ „%@”." = "此组合已有布局“%@”。";
 "Układy" = "布局";
 "Zapisz „%@”" = "保存“%@”";
+"Apki spoza układu" = "布局之外的应用";
+"Zostaw" = "保留";
+"Schowaj" = "隐藏";
+"Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy." = "隐藏：每次恢复时，布局之外的全屏应用会退出全屏并最小化。自动恢复也会隐藏刚打开、尚未保存的应用。应用永远不会被退出。";

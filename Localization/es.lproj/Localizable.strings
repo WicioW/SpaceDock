@@ -164,3 +164,7 @@
 "Ten zestaw ma już układ „%@”." = "Este conjunto ya tiene un diseño «%@».";
 "Układy" = "Diseños";
 "Zapisz „%@”" = "Guardar «%@»";
+"Apki spoza układu" = "Apps fuera del diseño";
+"Zostaw" = "Dejar";
+"Schowaj" = "Ocultar";
+"Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy." = "Ocultar: en cada restauración, las apps a pantalla completa fuera del diseño salen de la pantalla completa y se minimizan. La restauración automática también oculta una app recién abierta y sin guardar. Nunca cerramos apps.";

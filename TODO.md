@@ -109,8 +109,11 @@ otwierać apki (raczej nie, tylko ręczne).
 Dziś jest jeden zapis na zestaw monitorów. Pomysł: kilka nazwanych układów na ten sam zestaw
 (np. „Praca”, „Wieczór”) i wybór, który przywrócić.
 
-**Stan (2026-11-24):** ustalenia gotowe (niżej, sesja pytań + research w sieci). Dalej:
-**designy** dla zwykłego wyglądu i panelu (easter egg), potem kod. Odrzucone i odłożone pomysły:
+**Stan (2026-11-25):** ustalenia gotowe (niżej, sesja pytań + research w sieci). Designy wybrane:
+zwykły wygląd **LA** (drzewko w pasku bocznym: zestaw rozwija się w swoje układy, „+ Zapisz jako
+nowy…” na końcu), panel **QA** (to samo drzewko w szynie pod wybranym zestawem; krawędzie heksu
+zestawu = liczba układów, do 6; dziennik w szynie skrócony do 1 wiersza). Specyfikacja:
+[docs/design-handoff-layouts.md](docs/design-handoff-layouts.md) (prototypy w `docs/design/layouts/`). Dalej: kod. Odrzucone i odłożone pomysły:
 [docs/improvements.md](docs/improvements.md).
 
 **Pojęcia:**
@@ -173,6 +176,8 @@ Gdy okno SpaceDock jest na wierzchu (nie globalnie):
 
 **Do ustalenia:**
 - ✅ (2026-11-24, z ustaleń „kilka układów”) ← / → zmieniają podgląd, nie przywracają.
+- Wybrany design LA (drzewko): w drzewku ← / → systemowo zwija i rozwija, a ↑ / ↓ i tak chodzi
+  po zestawach i ich układach. Czy osobne ← / → dla układów jest jeszcze potrzebne?
 - Kolizja z zaznaczaniem kafelka (klik = zaznaczenie): czy strzałki mają też przesuwać zaznaczenie.
 - Na końcu listy: zatrzymać się czy zawijać.
 - To samo w panelu (easter egg).

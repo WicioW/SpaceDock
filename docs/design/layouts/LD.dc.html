@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>SpaceDock — układy, okna dialogowe</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.w{width:1100px;height:700px;box-sizing:border-box;background:#1E1E1F;color:#F2F2F3;font:13px/1.25 -apple-system,"SF Pro Text",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.w *{box-sizing:border-box}
+.s{color:rgba(235,235,245,.6)}.t3{color:rgba(235,235,245,.34)}
+.tb{height:30px;flex:none;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.1);position:relative;font-weight:600}
+.dots{position:absolute;left:12px;display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:50%;display:block}
+.side{background:#28282A;border-right:1px solid rgba(0,0,0,.5);display:flex;flex-direction:column;flex:none}
+.sh{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:12px;font-weight:600}
+.row{display:flex;align-items:center;gap:8px;margin:0 8px;padding:5px 8px;border-radius:6px;min-height:28px;white-space:nowrap}
+.row.set{padding:6px 8px;gap:10px}
+.row.on{background:#0A64D8;color:#FFFFFF}.row.on .s,.row.on .t3{color:rgba(255,255,255,.8)}
+.row.cur{background:rgba(255,255,255,.09)}
+.nm{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1}
+.num{width:14px;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.kb{font-size:11px;flex:none;letter-spacing:.02em}
+.cap{font-size:10px;font-weight:700;color:#FFFFFF;background:#30D158;border-radius:99px;padding:2px 7px;flex:none}
+.sub{font-size:11px}
+.foot{margin-top:auto;padding:12px;display:flex;justify-content:space-between;align-items:center;color:#30D158;font-size:12px}
+.det{flex:1;min-width:0;padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.h{display:flex;align-items:flex-start;gap:8px}
+.ttl{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.btn{height:22px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,.16);display:inline-flex;align-items:center;font-size:13px;white-space:nowrap;flex:none;box-shadow:0 .5px 0 rgba(255,255,255,.12) inset}
+.btn.off{opacity:.35}.btn.pri{background:#0A84FF;color:#FFFFFF}.btn.red{background:#FF453A;color:#FFFFFF}
+.mons{display:flex;gap:16px;align-items:flex-start}
+.mon{flex:1;min-width:140px;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:600}
+.box{align-self:stretch;min-height:112px;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.2);display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.tile{width:120px;height:96px;border-radius:8px;background:#1E1E1F;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0 6px;font-weight:400;border:2px solid transparent}
+.tile .ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#FFFFFF}
+.tile .n{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .x{font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .i{position:absolute;left:5px;top:4px;font-size:10px;font-weight:700}
+.tile .go{position:absolute;right:5px;top:4px;color:#FF453A}
+.ban{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(10,132,255,.18);border:1px solid rgba(10,132,255,.55)}
+.lnk{color:#4DA3FF;margin-left:auto;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 10px;border-radius:7px;background:rgba(255,255,255,.08);white-space:nowrap;flex:none}
+.pill.on{background:#0A64D8;color:#FFFFFF}.pill.on .t3{color:rgba(255,255,255,.8)}
+.fld{height:22px;border-radius:5px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);padding:0 7px;display:flex;align-items:center;flex:1;min-width:0}
+.fld.foc{box-shadow:0 0 0 3px rgba(10,132,255,.5);border-color:#0A84FF}
+.col2{width:210px;flex:none;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;background:#232325}
+.dlg{width:300px;border-radius:12px;background:#2C2C2E;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 50px rgba(0,0,0,.6);padding:18px;display:flex;flex-direction:column;gap:10px}
+.dlg b{font-size:13px}.dlg .r{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.lab{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:rgba(235,235,245,.6);margin-bottom:8px}
+.menu{width:270px;border-radius:8px;background:#2C2C2E;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(0,0,0,.6);padding:5px}
+.mi{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:5px;height:22px}.mi.hi{background:#0A64D8}
+.mi .ck{width:14px;flex:none;text-align:center}.sep{height:1px;background:rgba(255,255,255,.12);margin:5px 8px}
+.seg{display:inline-flex;border-radius:6px;background:rgba(255,255,255,.1);padding:1px}.seg span{padding:2px 12px;border-radius:5px}.seg .a{background:rgba(255,255,255,.26)}
+.gr{display:grid;grid-template-columns:150px 1fr;gap:10px 10px;align-items:center}.gr>span:nth-child(odd){text-align:right}
+.tabs{display:flex;justify-content:center;gap:4px;padding:8px;border-bottom:1px solid rgba(255,255,255,.1)}.tabs span{padding:3px 12px;border-radius:6px}.tabs .a{background:rgba(255,255,255,.14)}
+</style>
+</helmet>
+<div class="w" style="padding:30px 34px;display:grid;grid-template-columns:repeat(3,1fr);gap:26px 30px;align-content:start"><div><div class="lab">Zapisz jako nowy… · puste pole</div><div class="dlg"><b>Zapisz obecny układ jako nowy</b><span class="s" style="font-size:12px">Nazwa musi być inna niż pozostałe w tym zestawie.</span><span class="fld foc" style="flex:none;color:rgba(235,235,245,.34)">np. Praca</span><div class="r"><span class="btn">Anuluj</span><span class="btn pri off">Zapisz</span></div></div></div><div><div class="lab">Nazwa zajęta</div><div class="dlg"><b>Zapisz obecny układ jako nowy</b><span class="fld foc" style="flex:none;">Praca</span><span style="font-size:11px;color:#FF453A">Ten zestaw ma już układ „Praca”.</span><div class="r"><span class="btn">Anuluj</span><span class="btn pri off">Zapisz</span></div></div></div><div><div class="lab">Nazwa poprawna</div><div class="dlg"><b>Zapisz obecny układ jako nowy</b><span class="fld foc" style="flex:none;">Wieczór</span><div class="r"><span class="btn">Anuluj</span><span class="btn pri">Zapisz</span></div></div></div><div><div class="lab">Pierwszy zapis na nowym zestawie</div><div class="dlg"><b>Nazwij pierwszy układ tego zestawu</b><span class="s" style="font-size:12px">Laptop + PL2779Q nie ma jeszcze żadnego układu.</span><span class="fld foc" style="flex:none;color:rgba(235,235,245,.34)">np. Praca</span><div class="r"><span class="btn">Anuluj</span><span class="btn pri off">Zapisz</span></div></div></div><div><div class="lab">Usuwanie · potwierdzenie</div><div class="dlg"><b>Usunąć układ „Wieczór”?</b><span class="s" style="font-size:12px">Tego nie da się cofnąć. „Prezentacja” przejdzie z pozycji 3 na 2 i dostanie skrót ⌃⌥2.</span><div class="r"><span class="btn">Anuluj</span><span class="btn red">Usuń</span></div></div></div><div><div class="lab">Menu pod prawym przyciskiem · zmiana nazwy w wierszu</div><div class="menu"><div class="mi"><span class="ck"></span><span style="flex:1;">Przywróć</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Przywróć z brakującymi</span><span class="t3" style="font-size:12px"></span></div><div class="sep"></div><div class="mi hi"><span class="ck"></span><span style="flex:1;">Zmień nazwę…</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;color:#FF6961">Usuń układ…</span><span class="t3" style="font-size:12px"></span></div></div><div class="row cur" style="margin:14px 0 0;width:270px"><span class="num s">2</span><span class="fld foc">Wieczór</span><span class="kb t3">⌃⌥2</span></div><div class="s" style="font-size:11px;margin-top:6px;width:270px">Enter zatwierdza, Esc anuluje. Pusta albo zajęta nazwa: pole w czerwonej ramce, Enter nie działa.</div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

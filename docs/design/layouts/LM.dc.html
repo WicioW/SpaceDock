@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>SpaceDock — układy, menu w pasku menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.w{width:1100px;height:700px;box-sizing:border-box;background:#1E1E1F;color:#F2F2F3;font:13px/1.25 -apple-system,"SF Pro Text",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.w *{box-sizing:border-box}
+.s{color:rgba(235,235,245,.6)}.t3{color:rgba(235,235,245,.34)}
+.tb{height:30px;flex:none;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.1);position:relative;font-weight:600}
+.dots{position:absolute;left:12px;display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:50%;display:block}
+.side{background:#28282A;border-right:1px solid rgba(0,0,0,.5);display:flex;flex-direction:column;flex:none}
+.sh{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:12px;font-weight:600}
+.row{display:flex;align-items:center;gap:8px;margin:0 8px;padding:5px 8px;border-radius:6px;min-height:28px;white-space:nowrap}
+.row.set{padding:6px 8px;gap:10px}
+.row.on{background:#0A64D8;color:#FFFFFF}.row.on .s,.row.on .t3{color:rgba(255,255,255,.8)}
+.row.cur{background:rgba(255,255,255,.09)}
+.nm{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1}
+.num{width:14px;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.kb{font-size:11px;flex:none;letter-spacing:.02em}
+.cap{font-size:10px;font-weight:700;color:#FFFFFF;background:#30D158;border-radius:99px;padding:2px 7px;flex:none}
+.sub{font-size:11px}
+.foot{margin-top:auto;padding:12px;display:flex;justify-content:space-between;align-items:center;color:#30D158;font-size:12px}
+.det{flex:1;min-width:0;padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.h{display:flex;align-items:flex-start;gap:8px}
+.ttl{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.btn{height:22px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,.16);display:inline-flex;align-items:center;font-size:13px;white-space:nowrap;flex:none;box-shadow:0 .5px 0 rgba(255,255,255,.12) inset}
+.btn.off{opacity:.35}.btn.pri{background:#0A84FF;color:#FFFFFF}.btn.red{background:#FF453A;color:#FFFFFF}
+.mons{display:flex;gap:16px;align-items:flex-start}
+.mon{flex:1;min-width:140px;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:600}
+.box{align-self:stretch;min-height:112px;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.2);display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.tile{width:120px;height:96px;border-radius:8px;background:#1E1E1F;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0 6px;font-weight:400;border:2px solid transparent}
+.tile .ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#FFFFFF}
+.tile .n{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .x{font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .i{position:absolute;left:5px;top:4px;font-size:10px;font-weight:700}
+.tile .go{position:absolute;right:5px;top:4px;color:#FF453A}
+.ban{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(10,132,255,.18);border:1px solid rgba(10,132,255,.55)}
+.lnk{color:#4DA3FF;margin-left:auto;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 10px;border-radius:7px;background:rgba(255,255,255,.08);white-space:nowrap;flex:none}
+.pill.on{background:#0A64D8;color:#FFFFFF}.pill.on .t3{color:rgba(255,255,255,.8)}
+.fld{height:22px;border-radius:5px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);padding:0 7px;display:flex;align-items:center;flex:1;min-width:0}
+.fld.foc{box-shadow:0 0 0 3px rgba(10,132,255,.5);border-color:#0A84FF}
+.col2{width:210px;flex:none;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;background:#232325}
+.dlg{width:300px;border-radius:12px;background:#2C2C2E;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 50px rgba(0,0,0,.6);padding:18px;display:flex;flex-direction:column;gap:10px}
+.dlg b{font-size:13px}.dlg .r{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.lab{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:rgba(235,235,245,.6);margin-bottom:8px}
+.menu{width:270px;border-radius:8px;background:#2C2C2E;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(0,0,0,.6);padding:5px}
+.mi{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:5px;height:22px}.mi.hi{background:#0A64D8}
+.mi .ck{width:14px;flex:none;text-align:center}.sep{height:1px;background:rgba(255,255,255,.12);margin:5px 8px}
+.seg{display:inline-flex;border-radius:6px;background:rgba(255,255,255,.1);padding:1px}.seg span{padding:2px 12px;border-radius:5px}.seg .a{background:rgba(255,255,255,.26)}
+.gr{display:grid;grid-template-columns:150px 1fr;gap:10px 10px;align-items:center}.gr>span:nth-child(odd){text-align:right}
+.tabs{display:flex;justify-content:center;gap:4px;padding:8px;border-bottom:1px solid rgba(255,255,255,.1)}.tabs span{padding:3px 12px;border-radius:6px}.tabs .a{background:rgba(255,255,255,.14)}
+</style>
+</helmet>
+<div class="w" style="padding:30px 34px;display:flex;flex-direction:row;gap:40px;align-items:flex-start"><div><div class="lab">Menu w pasku menu · klik w układ = przywróć</div><div class="menu"><div class="mi"><span class="ck"></span><span style="flex:1;"><span class="s">Teraz: Laptop + DELL G3223Q</span></span><span class="t3" style="font-size:12px"></span></div><div class="sep"></div><div class="mi"><span class="ck"></span><span style="flex:1;"><span class="s" style="font-size:11px;font-weight:600">Układy</span></span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck">✓</span><span style="flex:1;">Praca</span><span class="t3" style="font-size:12px">⌃⌥1</span></div><div class="mi hi"><span class="ck"></span><span style="flex:1;">Wieczór</span><span class="t3" style="font-size:12px">⌃⌥2</span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Prezentacja</span><span class="t3" style="font-size:12px">⌃⌥3</span></div><div class="sep"></div><div class="mi"><span class="ck"></span><span style="flex:1;">Pokaż okno</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Przywróć</span><span class="t3" style="font-size:12px">⌃⌥R</span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Przywróć z brakującymi</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Zapisz „Praca”</span><span class="t3" style="font-size:12px">⌃⌥S</span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Zapisz jako nowy…</span><span class="t3" style="font-size:12px"></span></div><div class="sep"></div><div class="mi"><span class="ck"></span><span style="flex:1;">Pokaż log</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Sprawdź aktualizacje…</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Ustawienia…</span><span class="t3" style="font-size:12px"></span></div><div class="mi"><span class="ck"></span><span style="flex:1;">Zakończ</span><span class="t3" style="font-size:12px"></span></div></div></div><div class="s" style="max-width:420px;padding-top:26px;line-height:1.5">Lista pokazuje układy obecnego zestawu monitorów. Ptaszek stoi przy wybranym układzie. Klik w układ przywraca go tak samo jak skrót z numerem.<br><br>„Zapisz” nazywa układ, który nadpisze. Gdy zestaw nie ma jeszcze układu, zamiast listy jest jeden wiersz „Zapisz jako nowy…”.</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

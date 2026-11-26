@@ -185,3 +185,33 @@ Gdy okno SpaceDock jest na wierzchu (nie globalnie):
 - Kolizja z zaznaczaniem kafelka (klik = zaznaczenie): czy strzałki mają też przesuwać zaznaczenie.
 - Na końcu listy: zatrzymać się czy zawijać.
 - To samo w panelu (easter egg).
+
+## README na GitHubie: zrzuty, GIF-y, lepszy opis (2026-11-26)
+
+**Cel:** README, które w kilka sekund pokazuje, co SpaceDock robi i po co. Dziś jest sam tekst.
+
+**Najpierw research:** jak wyglądają porządne README apek na macOS z paska menu (np. Rectangle,
+Ice, AltTab, Raycast, Hammerspoon, Stats, MonitorControl): co mają na górze, ile obrazków, jak
+pokazują działanie, jakie sekcje, co ludzie chwalą w takich README (artykuły, „awesome-readme”,
+dyskusje). Wynik zapisać w `docs/` (co bierzemy, co odrzucamy) przed pisaniem.
+
+**Obrazki i GIF-y do zrobienia:**
+- główny GIF na górze: odłączenie / podłączenie monitora, macOS miesza przestrzenie, SpaceDock
+  układa je z powrotem;
+- różne zestawy monitorów (sam laptop, laptop + jeden monitor, laptop + dwa) i ich zapisane
+  układy w oknie apki;
+- różne układy apek na tym samym zestawie (np. „Praca” / „Wieczór”) i przełączanie skrótem
+  ⌃⌥1–9 z komunikatem „Zmieniono układ na …”;
+- pasek menu z listą układów; podgląd układu z kolorami różnic;
+- wygląd Neon (easter egg) — może tylko krótko, żeby nie zdradzić całej niespodzianki.
+- Do ustalenia: czym nagrywać (np. wbudowane ⌘⇧5 + konwersja do GIF, Kap, Gifski), rozmiar
+  plików (GitHub: GIF do ~10 MB, lepiej krótkie pętle), jasny i ciemny motyw, dane bez prywatnych
+  tytułów okien.
+
+**Tekst:** krótkie zdanie „co robi” na górze, problem (macOS miesza przestrzenie po zmianie
+monitorów) i rozwiązanie, lista funkcji ze zrzutami, instalacja (DMG / Homebrew) bez zmian.
+
+**Co jeszcze można dodać (sprawdzić w researchu):** ikona apki i odznaki (wersja, pobrania,
+licencja, macOS 15+), FAQ (uprawnienie Dostępność, czemu brak notaryzacji, prywatne API),
+porównanie z innymi apkami, skróty klawiszowe w tabeli, znane ograniczenia, jak zgłosić błąd
+(log bez tytułów), roadmapa, tłumaczenia README (pl / es / zh).

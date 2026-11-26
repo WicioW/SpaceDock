@@ -4,11 +4,13 @@ SpaceDock remembers the order of your Spaces (full-screen apps and desktops) for
 monitors, and puts them back after you plug or unplug a display.
 
 macOS shuffles Spaces when monitors come and go: full-screen apps end up on the wrong display or
-at the end of the bar. SpaceDock keeps one saved layout per monitor set ("Laptop only",
-"Laptop + DELL", …) and restores it automatically, or when you click **Restore**.
+at the end of the bar. SpaceDock keeps saved layouts per monitor set ("Laptop only",
+"Laptop + DELL", …) and restores the selected one automatically, or when you click **Restore**.
 
 - Menu bar app with a window that shows the saved layouts, monitor by monitor
-- One saved layout per monitor set, restored automatically or by hand
+- Several named layouts per monitor set ("Work", "Evening", …): pick one in the window, the menu
+  bar or with a shortcut (e.g. ⌃⌥1–9), and SpaceDock rearranges your Spaces to match
+- Optionally hides full-screen apps that are not in the layout (minimized, never quit)
 - Tells two windows of the same app apart (e.g. two browser windows) by window and title
 - English, Polish, Spanish, Simplified Chinese
 
@@ -29,7 +31,8 @@ at the end of the bar. SpaceDock keeps one saved layout per monitor set ("Laptop
    ```
 3. Click **Grant Permission…** in SpaceDock's window and turn SpaceDock on in
    System Settings → Privacy & Security → Accessibility.
-4. Arrange your Spaces and click **Save Current Layout**. Do this once for every monitor set.
+4. Arrange your Spaces, click **Save Current Layout** and name the layout. Do this once for every monitor set;
+   add more layouts with **Save as New…**.
 
 Or with [Homebrew](https://brew.sh) (step 2 still applies):
 ```bash

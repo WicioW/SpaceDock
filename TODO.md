@@ -117,7 +117,7 @@ zestawu = liczba układów, do 6; dziennik w szynie skrócony do 1 wiersza). Spe
 wybrany układ wszędzie, 2026-11-25); ✅ 2. zwykły wygląd LA + menu (2026-11-26); ✅ 3. „Zostaw / Schowaj”
 (2026-11-26);
 ✅ 4. skróty układów + komunikat „Zmieniono układ na …” przy
-każdym przywróceniu (zwykły / czerwony / neon RV-C, 2026-11-26); ✅ 5. panel QA + ustawienia neon w okienku RU-B z wyglądem i motywem (2026-11-26); 6. dokumentacja i tłumaczenia. Odrzucone i odłożone pomysły:
+każdym przywróceniu (zwykły / czerwony / neon RV-C, 2026-11-26); ✅ 5. panel QA + ustawienia neon w okienku RU-B z wyglądem i motywem (2026-11-26); ✅ 6. dokumentacja i tłumaczenia (docs/app.md, README, 2026-11-26). Odrzucone i odłożone pomysły:
 [docs/improvements.md](docs/improvements.md).
 
 **Pojęcia:**

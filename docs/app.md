@@ -83,6 +83,42 @@ okna wychodzą z pełnego ekranu bez przechodzenia na ich przestrzenie i wracaj�
 biurek nie przestawia; CLI `restore-fast`, experiments.md P8) albo „Bezpośrednio” (**domyślna**; gdy zawiedzie, apka próbuje przeciąganiem, potem pełnym ekranem; prywatna operacja
 SkyLight z macOS 26+, każda przestrzeń od razu na swoim miejscu i monitorze, ~0,1 s na ruch, bez
 myszy i Karabinera; CLI `restore-bridge`, experiments.md P9).
+
+### Kilka układów na zestaw (od 2026-11-26)
+
+Zestaw monitorów ma listę nazwanych układów (np. „Praca”, „Wieczór”); jeden z nich jest
+**wybrany** i to on jest „na ekranie”. Zapis, przywracanie, automat i porównanie z ekranem
+działają tylko na wybranym układzie. Ustalenia: TODO.md (sekcja „kilka układów”), design:
+[design-handoff-layouts.md](design-handoff-layouts.md).
+- **Lista:** zwykły wygląd ma drzewko w pasku bocznym (zestaw rozwija się w swoje układy,
+  „+ Zapisz jako nowy…” na końcu), Neon to samo drzewko w szynie pod wybranym zestawem; krawędzie
+  heksu zestawu = liczba układów (do 6). Menu kontekstowe układu: Zmień nazwę…, Usuń układ….
+  Kolejność zmienia się przeciąganiem wiersza (kolejność = numer skrótu). Nazwa jest wymagana i inna niż pozostałe
+  w zestawie; pole zapisuje się po wyjściu z niego, bez Entera.
+- **Podgląd:** klik w inny układ pokazuje go bez ruszania ekranu (pasek „Oglądasz zapisany
+  układ…”, kolory = różnica z ekranem). „Wczytaj „…”” przywraca go i robi wybranym, „Wróć do
+  „…”” wraca do układu na ekranie. W podglądzie zapis jest wyłączony.
+- **Pasek menu:** sekcja „Układy” z numerami i skrótami; klik przywraca układ.
+- **Skróty układów** (Ustawienia → Skróty): same modyfikatory (np. ⌃⌥) + cyfra 1–9 = pozycja
+  układu na liście podłączonego zestawu. Cyfra bez układu daje sygnał. Tryb: „tylko przestawia
+  przestrzenie” (domyślnie) albo „przywraca z brakującymi apkami”. Same ⌘ ostrzega (⌘1–9 to karty
+  w przeglądarkach). Zapis: `hotkeyLayouts` w ustawieniach (`"modyfikatory etykieta"`), cyfry
+  rejestrowane jako skróty 101–109.
+- **Komunikat:** każde przywrócenie pokazuje okienko „Zmieniono układ na „…”” (przy przełączeniu)
+  albo „Przywrócono układ „…””, z dopiskiem „otwieram brakujące apki”, gdy otwiera apki. Widoczne
+  przez całe układanie, co najmniej 0,3 s, potem znika w 0,2 s. Wygląd: zwykły, czerwony
+  (ostrzeżenie „nie ruszaj myszy”) albo neonowy (RV-C) przy wyglądzie Neon. Test bez układania:
+  `open ~/Applications/SpaceDock.app --args -bannerTest warn` (apka musi być wcześniej zamknięta).
+- **Apki spoza układu** (Ustawienia → Ogólne): „Zostaw” (domyślnie) albo „Schowaj”: po każdym
+  przywróceniu apki pełnoekranowe spoza wybranego układu wychodzą z pełnego ekranu i są
+  minimalizowane. Apek SpaceDock nigdy nie zamyka.
+- **Wygląd Neon:** ustawienia nie siedzą w szynie, tylko w neonowym okienku nad panelem
+  (przycisk w szynie, na czerwono z migającym „!”, gdy brak uprawnienia; design RU-B). Okienko ma
+  też Wygląd i Motyw 1–3. ⌘, i „Ustawienia…” w menu otwierają ustawienia aktualnego wyglądu;
+  zmiana wyglądu przełącza okno ustawień (Neon: okienko w panelu, Zwykły: systemowe na karcie
+  Apka).
+- **Test na kopii zapisów:** `--args -setsFile /ścieżka/kopia.json` (apka pisze tylko do kopii).
+
 Testy z uprawnieniem apki: `tools/run-in-app.sh <komenda>` (np. `restore-drag`, `mcbars`, `mcmove`).
 Języki: polski (tekst w kodzie jest kluczem), angielski, hiszpański, chiński uproszczony, w
 `Localization/<język>.lproj` (`Localizable.strings` + `.stringsdict` z odmianą „N przestrzeni”).

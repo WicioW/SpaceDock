@@ -2282,8 +2282,54 @@ struct PanelLayoutRow: View {
     let layout: NamedLayout
     let position: Int
     @AppStorage(Hotkeys.layoutsKey) private var layoutKeys = ""   // redraws the shortcut when it changes
+    @FocusState private var focused: Bool
 
     var body: some View {
+        let open = model.rowMenu == layout.id
+        VStack(spacing: 2) {
+            HStack(spacing: 2) {
+                row
+                // ⋯ opens rename / delete under the row (no right click needed).
+                Button { model.rowMenu = open ? nil : layout.id } label: { PanelHot { hot in
+                    Text(verbatim: "⋯").font(.system(size: 15, weight: .heavy))
+                        .foregroundStyle(open || hot ? .black : th.t)
+                        .frame(width: 19, height: 19)
+                        .background(PanelScanned(color: open || hot ? th.s : .black))
+                        .overlay(Rectangle().strokeBorder(th.s, lineWidth: 1))
+                        .contentShape(Rectangle())
+                } }
+                .buttonStyle(.plain)
+                .help("Zmień nazwę albo usuń")
+                .accessibilityLabel("Zmień nazwę albo usuń")
+            }
+            if open {
+                HStack(spacing: 4) {
+                    action(U("Zmień nazwę") + " " + J("改名"), color: th.s) {
+                        model.rowMenu = nil; model.commitRenaming(); model.drafts[layout.id] = layout.name ?? ""; model.renaming = layout.id
+                    }
+                    action(U("Usuń") + " " + J("削除"), color: th.e) { model.rowMenu = nil; model.deleteLayout(key, layout.id) }
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 12)
+            }
+        }
+    }
+
+    /// A rename / delete button under the row: framed in its color, filled under the pointer.
+    private func action(_ label: String, color: Color, _ run: @escaping () -> Void) -> some View {
+        Button(action: run) { PanelHot { hot in
+            Text(verbatim: label).font(PanelFont.ui(10, .bold)).tracking(0.3).lineLimit(1).fixedSize()
+                .foregroundStyle(hot ? .black : color)
+                .padding(.horizontal, 8)
+                .frame(minHeight: 18)
+                .background(PanelScanned(color: hot ? color : .black))
+                .overlay(Rectangle().strokeBorder(color, lineWidth: 1))
+                .contentShape(Rectangle())
+        } }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder private var row: some View {
         let viewed = model.viewed(key)?.id == layout.id
         let onScreen = key == model.current && model.sets[key]?.selected == layout.id
         let editing = layout.name == nil || model.renaming == layout.id
@@ -2313,15 +2359,6 @@ struct PanelLayoutRow: View {
             .contentShape(Rectangle())
         }
         .onTapGesture { if !editing { model.viewedID = layout.id } }
-        .contextMenu {
-            Button("Przywróć") { model.restore(key, layout.id) }
-                .disabled(key != model.current || model.busy || !model.trusted)
-            Button("Przywróć z brakującymi") { model.restore(key, layout.id, openApps: true) }
-                .disabled(key != model.current || model.busy || !model.trusted)
-            Divider()
-            Button("Zmień nazwę…") { model.drafts[layout.id] = layout.name ?? ""; model.renaming = layout.id }
-            Button("Usuń układ…", role: .destructive) { model.deleteLayout(key, layout.id) }
-        }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(viewed ? .isSelected : [])
     }
@@ -2337,6 +2374,8 @@ struct PanelLayoutRow: View {
             .frame(height: 15)
             .overlay(Rectangle().strokeBorder(model.draftInvalid(key, layout) ? th.e : color, style: StrokeStyle(lineWidth: 1, dash: [2, 2])))
             .onExitCommand { model.renaming = nil; model.drafts[layout.id] = nil }
+            .focused($focused)
+            .onAppear { focusAtEnd($focused) }
     }
 }
 
@@ -2461,7 +2500,8 @@ struct PanelDeleteSheet: View {
 /// `panel-shot <png> [width height [set]]`: the panel look drawn off screen from the real saves
 /// and bars, to check it without a screen recording permission. Theme and language come from
 /// the usual arguments (`-panelTheme 2 -AppleLanguages '(en)'`). `-shotNormal YES`: the normal look;
-/// `-shotLayout N`: look at layout N of the set (a preview when it is not the selected one).
+/// `-shotLayout N`: look at layout N of the set (a preview when it is not the selected one);
+/// `-shotRowMenu YES`: with its ⋯ open.
 func panelShot(_ args: [String]) {
     guard let out = args.first else { print("panel-shot <png> [width height [set]]"); return }
     let number = { (i: Int) in args.count > i ? Double(args[i]) : nil }
@@ -2470,6 +2510,7 @@ func panelShot(_ args: [String]) {
     if let i = number(3).map({ Int($0) - 1 }), model.profiles.indices.contains(i) { model.selection = model.profiles[i] }
     let n = UserDefaults.standard.integer(forKey: "shotLayout"), ls = model.layouts(model.selection ?? model.current)
     if ls.indices.contains(n - 1) { model.viewedID = ls[n - 1].id }
+    if UserDefaults.standard.bool(forKey: "shotRowMenu"), ls.indices.contains(n - 1) { model.rowMenu = ls[n - 1].id }   // its ⋯ open
     model.expanded = Set(model.profiles)
     let size = NSSize(width: number(1) ?? 1100, height: number(2) ?? 700)
     let window = NSWindow(contentRect: NSRect(origin: CGPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)

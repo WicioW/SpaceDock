@@ -67,11 +67,14 @@ struct Naming: Identifiable {
 final class Model: ObservableObject {
     @Published var saved: [String: Layout] = [:]   // selected layout of each set
     @Published var sets: [String: LayoutSet] = [:]
-    @Published var viewedID: String?   // layout clicked in the sidebar for `selection`; nil = its selected one
+    @Published var viewedID: String? {   // layout clicked in the sidebar for `selection`; nil = its selected one
+        didSet { if renaming != nil, renaming != viewedID { commitRenaming() } }   // clicking elsewhere saves a rename
+    }
     @Published var expanded: Set<String> = []   // sets opened in the sidebar tree
     @Published var naming: Naming?   // "save as new" / first save sheet
     @Published var newName = ""
     @Published var renaming: String?   // layout being renamed in its sidebar row
+    @Published var rowMenu: String?    // layout whose ⋯ actions are open under its rail row (neon)
     @Published var drafts: [String: String] = [:]   // text typed into a layout's name field
     @Published var deleting: DeleteRequest?   // the neon look's own "delete layout?" sheet
     @Published var panelSettingsOpen = UserDefaults.standard.bool(forKey: "shotSettings")   // the neon look's settings window (design RU); `-shotSettings YES` for panel-shot
@@ -271,10 +274,12 @@ final class Model: ObservableObject {
     func performDelete(_ key: String, _ id: String) {
         let ls = layouts(key)
         guard let i = ls.firstIndex(where: { $0.id == id }) else { return }
-        if key == selection, viewedID == id { viewedID = ls.indices.contains(i + 1) ? ls[i + 1].id : i > 0 ? ls[i - 1].id : nil }
+        // The layout taking its place on the list (or the one before) becomes viewed / selected.
+        let neighbor = ls.indices.contains(i + 1) ? ls[i + 1].id : i > 0 ? ls[i - 1].id : nil
+        if key == selection, viewedID == id { viewedID = neighbor }
         edit(key) { s in
             s.layouts.removeAll { $0.id == id }
-            if s.selected == id { s.selected = "" }
+            if s.selected == id { s.selected = neighbor ?? "" }
         }
     }
 
@@ -299,6 +304,13 @@ final class Model: ObservableObject {
 
     /// Enter on a bad name keeps the field open (`keepIfBad`); leaving the field saves a good name
     /// and drops a bad one.
+    /// The rename in progress, saved as if its field were left (a bad name drops it).
+    func commitRenaming() {
+        guard let id = renaming else { return }
+        for (k, s) in sets { if let l = s.layouts.first(where: { $0.id == id }) { commitDraft(k, l, keepIfBad: false); return } }
+        renaming = nil
+    }
+
     func commitDraft(_ key: String, _ l: NamedLayout, keepIfBad: Bool) {
         let t = draft(l).trimmingCharacters(in: .whitespaces), bad = draftInvalid(key, l)
         if bad || t.isEmpty, keepIfBad { return }
@@ -663,7 +675,6 @@ struct ContentView: View {
             let parts = v.split(separator: "\n", maxSplits: 1).map(String.init)
             model.selection = parts[0]
             model.viewedID = parts.count > 1 ? parts[1] : nil
-            if model.renaming != nil, parts.count < 2 || parts[1] != model.renaming { model.renaming = nil }
         })
     }
 
@@ -696,7 +707,8 @@ struct ContentView: View {
                             .disabled(!model.trusted)
                     }
                 } label: {
-                HStack(spacing: 10) {
+                // On the title's line, like the disclosure arrow before it.
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Image(systemName: key.contains("+") ? "display.2" : "laptopcomputer")
                         .frame(width: 22)
                     VStack(alignment: .leading, spacing: 2) {
@@ -1093,10 +1105,11 @@ struct ProfileView: View {
 }
 
 /// A layout in the sidebar tree: position, name (a field when unnamed or being renamed), a green
-/// tick on the one on screen. Right click: restore, rename, delete; drag to reorder.
+/// tick on the one on screen, ⋯ with rename and delete; drag to reorder.
 struct LayoutRow: View {
     @EnvironmentObject var model: Model
     @AppStorage(Hotkeys.layoutsKey) private var layoutKeys = ""   // redraws the shortcut label when it changes
+    @FocusState private var focused: Bool
     let key: String
     let layout: NamedLayout
     let position: Int
@@ -1119,17 +1132,19 @@ struct LayoutRow: View {
                     .help("Ten układ jest teraz na ekranie")
                     .accessibilityLabel("Na ekranie")
             }
+            Menu {
+                Button("Zmień nazwę…") { model.commitRenaming(); model.drafts[layout.id] = layout.name ?? ""; model.renaming = layout.id }
+                Button("Usuń układ…", role: .destructive) { model.deleteLayout(key, layout.id) }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .foregroundStyle(.secondary)
+            .help("Zmień nazwę albo usuń")
         }
         .frame(minHeight: 28)
-        .contextMenu {
-            Button("Przywróć") { model.restore(key, layout.id) }
-                .disabled(key != model.current || model.busy || !model.trusted)
-            Button("Przywróć z brakującymi") { model.restore(key, layout.id, openApps: true) }
-                .disabled(key != model.current || model.busy || !model.trusted)
-            Divider()
-            Button("Zmień nazwę…") { model.drafts[layout.id] = layout.name ?? ""; model.renaming = layout.id }
-            Button("Usuń układ…", role: .destructive) { model.deleteLayout(key, layout.id) }
-        }
     }
 
     private var invalid: Bool { model.draftInvalid(key, layout) }
@@ -1142,8 +1157,19 @@ struct LayoutRow: View {
             .textFieldStyle(.roundedBorder)
             .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(Color.red, lineWidth: invalid ? 1.5 : 0))
             .onExitCommand { model.renaming = nil; model.drafts[layout.id] = nil }
+            .focused($focused)
+            .onAppear { focusAtEnd($focused) }
     }
 
+}
+
+/// Puts the caret in a name field that just appeared, at the end of the text (macOS selects it
+/// all when a field gets focus).
+@MainActor func focusAtEnd(_ focus: FocusState<Bool>.Binding) {
+    DispatchQueue.main.async {
+        focus.wrappedValue = true
+        DispatchQueue.main.async { (NSApp.keyWindow?.firstResponder as? NSTextView)?.moveToEndOfDocument(nil) }
+    }
 }
 
 /// "Save as new" and the first save of a set: the name is required and unique in the set.

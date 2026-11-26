@@ -92,7 +92,7 @@ działają tylko na wybranym układzie. Ustalenia: TODO.md (sekcja „kilka ukł
 [design-handoff-layouts.md](design-handoff-layouts.md).
 - **Lista:** zwykły wygląd ma drzewko w pasku bocznym (zestaw rozwija się w swoje układy,
   „+ Zapisz jako nowy…” na końcu), Neon to samo drzewko w szynie pod wybranym zestawem; krawędzie
-  heksu zestawu = liczba układów (do 6). Menu kontekstowe układu: Zmień nazwę…, Usuń układ….
+  heksu zestawu = liczba układów (do 6). ⋯ przy układzie: Zmień nazwę…, Usuń układ… (zwykły: menu, Neon: przyciski pod wierszem; bez menu pod prawym przyciskiem).
   Kolejność zmienia się przeciąganiem wiersza (kolejność = numer skrótu). Nazwa jest wymagana i inna niż pozostałe
   w zestawie; pole zapisuje się po wyjściu z niego, bez Entera.
 - **Podgląd:** klik w inny układ pokazuje go bez ruszania ekranu (pasek „Oglądasz zapisany

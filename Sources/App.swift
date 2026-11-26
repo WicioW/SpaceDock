@@ -53,6 +53,12 @@ struct ScreenInfo: Codable, Equatable {
 /// Names and positions of monitors seen so far, so a disconnected monitor still has a name.
 private let screensFile = store.deletingLastPathComponent().appendingPathComponent("screens.json")
 
+struct DeleteRequest: Identifiable {
+    let id = UUID()
+    let key: String
+    let layout: String
+}
+
 struct Naming: Identifiable {
     let id = UUID()
     let first: Bool   // the set has no layout yet
@@ -67,6 +73,8 @@ final class Model: ObservableObject {
     @Published var newName = ""
     @Published var renaming: String?   // layout being renamed in its sidebar row
     @Published var drafts: [String: String] = [:]   // text typed into a layout's name field
+    @Published var deleting: DeleteRequest?   // the neon look's own "delete layout?" sheet
+    @Published var panelSettingsOpen = UserDefaults.standard.bool(forKey: "shotSettings")   // the neon look's settings window (design RU); `-shotSettings YES` for panel-shot
     @Published var current = ""
     @Published var live: [String: [String]] = [:]
     @Published var liveSpaces: [String: [LiveSpace]] = [:]   // bars now, for the saved-vs-live tiles
@@ -247,6 +255,7 @@ final class Model: ObservableObject {
     func deleteLayout(_ key: String, _ id: String) {
         let ls = layouts(key)
         guard let i = ls.firstIndex(where: { $0.id == id }) else { return }
+        if UserDefaults.standard.bool(forKey: PanelKey.on) { deleting = DeleteRequest(key: key, layout: id); return }
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
         alert.messageText = String(localized: "Usunąć układ „\(name(of: ls[i]))”?")
@@ -256,6 +265,12 @@ final class Model: ObservableObject {
         alert.addButton(withTitle: String(localized: "Usuń")).hasDestructiveAction = true
         alert.addButton(withTitle: String(localized: "Anuluj")).keyEquivalent = "\u{1b}"
         guard alert.runModal() == .alertFirstButtonReturn else { return }
+        performDelete(key, id)
+    }
+
+    func performDelete(_ key: String, _ id: String) {
+        let ls = layouts(key)
+        guard let i = ls.firstIndex(where: { $0.id == id }) else { return }
         if key == selection, viewedID == id { viewedID = ls.indices.contains(i + 1) ? ls[i + 1].id : i > 0 ? ls[i - 1].id : nil }
         edit(key) { s in
             s.layouts.removeAll { $0.id == id }
@@ -270,6 +285,26 @@ final class Model: ObservableObject {
         let ls = layouts(current)
         guard ls.indices.contains(n - 1) else { NSSound.beep(); return }
         restore(current, ls[n - 1].id, openApps: UserDefaults.standard.string(forKey: "layoutHotkeyMode") == "open")
+    }
+
+    // A layout's name field (sidebar row, rail row): the text typed so far, whether it may be
+    // saved, and saving it.
+    func draft(_ l: NamedLayout) -> String { drafts[l.id] ?? l.name ?? "" }
+
+    /// Empty while renaming, or the name of another layout of the set.
+    func draftInvalid(_ key: String, _ l: NamedLayout) -> Bool {
+        let t = draft(l).trimmingCharacters(in: .whitespaces)
+        return (renaming == l.id && t.isEmpty) || (!t.isEmpty && nameTaken(t, in: key, except: l.id))
+    }
+
+    /// Enter on a bad name keeps the field open (`keepIfBad`); leaving the field saves a good name
+    /// and drops a bad one.
+    func commitDraft(_ key: String, _ l: NamedLayout, keepIfBad: Bool) {
+        let t = draft(l).trimmingCharacters(in: .whitespaces), bad = draftInvalid(key, l)
+        if bad || t.isEmpty, keepIfBad { return }
+        if !bad, !t.isEmpty, t != l.name { rename(key, l.id, to: t) }
+        renaming = nil
+        drafts[l.id] = nil
     }
 
     /// Restores layout `id` of the connected set; it is the selected one from now on.
@@ -464,7 +499,10 @@ struct SpacesApp: App {
             RootView().environmentObject(model)
         }
         .windowStyle(.hiddenTitleBar)   // ContentView draws the title itself, next to the window buttons
-        .commands { CommandGroup(after: .appInfo) { CheckForUpdatesButton() } }
+        .commands {
+            CommandGroup(after: .appInfo) { CheckForUpdatesButton() }
+            CommandGroup(replacing: .appSettings) { SettingsCommand().environmentObject(model) }
+        }
         Settings {   // app menu → Settings… (⌘,), also from the menu bar icon
             SettingsPanel().environmentObject(model)
         }
@@ -494,6 +532,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+}
+
+/// App menu → Settings… (⌘,), in the look that is on.
+struct SettingsCommand: View {
+    @EnvironmentObject var model: Model
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
+
+    var body: some View {
+        Button("Ustawienia…") { showSettings(model, openWindow: openWindow, openSettings: openSettings) }
+            .keyboardShortcut(",")
+    }
 }
 
 struct MenuContent: View {
@@ -546,12 +596,21 @@ struct MenuContent: View {
         Toggle("Zapisuj automatycznie", isOn: $autoSave)
         Button("Pokaż log") { NSWorkspace.shared.open(logFile) }
         CheckForUpdatesButton()
-        Button("Ustawienia…") {
-            NSApp.activate(ignoringOtherApps: true)
-            openSettings()
-        }
+        Button("Ustawienia…") { showSettings(model, openWindow: openWindow, openSettings: openSettings) }
         Divider()
         Button("Zakończ") { NSApp.terminate(nil) }
+    }
+}
+
+/// Settings in the look that is on: the settings window, or in the neon look its own window
+/// inside the main one. Used by ⌘, and the menu bar's "Settings…".
+@MainActor func showSettings(_ model: Model, openWindow: OpenWindowAction, openSettings: OpenSettingsAction) {
+    NSApp.activate(ignoringOtherApps: true)
+    if UserDefaults.standard.bool(forKey: PanelKey.on) {
+        openWindow(id: "main")
+        model.panelSettingsOpen = true
+    } else {
+        openSettings()
     }
 }
 
@@ -565,7 +624,10 @@ struct RootView: View {
             if panelOn { PanelView() } else { ContentView() }
         }
         .preferredColorScheme(panelOn ? .dark : nil)
-        .sheet(item: $model.naming) { n in NameSheet(first: n.first).environmentObject(model) }
+        .sheet(item: $model.naming) { n in
+            Group { if panelOn { PanelNameSheet(first: n.first) } else { NameSheet(first: n.first) } }.environmentObject(model)
+        }
+        .sheet(item: $model.deleting) { d in PanelDeleteSheet(request: d).environmentObject(model) }
         // While the window is open the app is a regular one: Dock icon and its own menu bar
         // (SpaceDock → Settings…). Closed, it goes back to the menu bar icon only.
         .onAppear {
@@ -723,6 +785,7 @@ struct SettingsPanel: View {
     @AppStorage(PanelKey.on) private var panelOn = false
     @AppStorage(PanelKey.theme) private var panelTheme = 1
     @AppStorage("settingsTab") private var settingsTab = "general"   // the panel look opens "shortcuts" directly
+    @Environment(\.openWindow) private var openWindow
 
     /// Settings window (⌘, or the gear under the sets): three tabs, the sidebar keeps only the
     /// watcher's state. Grids keep labels in one column, so the switches line up.
@@ -844,7 +907,13 @@ struct SettingsPanel: View {
                     if panelUnlocked {   // the hidden look, once the shuttle has been clicked 10 times
                         GridRow {
                             Text("Wygląd")
-                            Picker("", selection: $panelOn) {
+                            Picker("", selection: Binding(get: { panelOn }, set: { on in
+                                panelOn = on
+                                guard on else { return }   // the settings follow the look: the neon window in the main one
+                                NSApp.windows.first { $0.identifier?.rawValue.contains("Settings") == true }?.close()
+                                openWindow(id: "main")
+                                model.panelSettingsOpen = true
+                            })) {
                                 Text("Zwykły").tag(false)
                                 Text("Neon").tag(true)
                             }
@@ -1063,32 +1132,18 @@ struct LayoutRow: View {
         }
     }
 
-    private var draft: String { model.drafts[layout.id] ?? layout.name ?? "" }
-
-    /// Empty while renaming, or the name of another layout of this set: red frame, Enter does nothing.
-    private var invalid: Bool {
-        let t = draft.trimmingCharacters(in: .whitespaces)
-        return (model.renaming == layout.id && t.isEmpty) || (!t.isEmpty && model.nameTaken(t, in: key, except: layout.id))
-    }
+    private var invalid: Bool { model.draftInvalid(key, layout) }
 
     private var field: some View {
         // Leaving the field saves too (no Enter needed); leaving it with a bad name drops the edit.
-        TextField("Nadaj nazwę", text: Binding(get: { draft }, set: { model.drafts[layout.id] = $0 }),
-                  onEditingChanged: { editing in if !editing { commit(keepIfBad: false) } },
-                  onCommit: { commit(keepIfBad: true) })
+        TextField("Nadaj nazwę", text: Binding(get: { model.draft(layout) }, set: { model.drafts[layout.id] = $0 }),
+                  onEditingChanged: { editing in if !editing { model.commitDraft(key, layout, keepIfBad: false) } },
+                  onCommit: { model.commitDraft(key, layout, keepIfBad: true) })
             .textFieldStyle(.roundedBorder)
             .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(Color.red, lineWidth: invalid ? 1.5 : 0))
             .onExitCommand { model.renaming = nil; model.drafts[layout.id] = nil }
     }
 
-    /// Enter on a bad name keeps the field open (`keepIfBad`); anything else ends the edit.
-    private func commit(keepIfBad: Bool) {
-        let t = draft.trimmingCharacters(in: .whitespaces)
-        if invalid || t.isEmpty, keepIfBad { return }
-        if !invalid, !t.isEmpty, t != layout.name { model.rename(key, layout.id, to: t) }
-        model.renaming = nil
-        model.drafts[layout.id] = nil
-    }
 }
 
 /// "Save as new" and the first save of a set: the name is required and unique in the set.

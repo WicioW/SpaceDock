@@ -25,6 +25,11 @@ https://claude.ai/artifact/HijQ8vWRWEvwQM1QqY5ALy, rzędy „L”, „RL”, „
 | `RVA.dc.html` | panel, komunikat przy przywracaniu: blok stanu (polecany) |
 | `RVB.dc.html` | panel, komunikat przy przywracaniu: taśma |
 | `RVC.dc.html` | panel, komunikat przy przywracaniu: wiersz konsoli |
+| `RUA1.dc.html` | panel, szyna bez ustawień, przycisk w górnym pasku (polecany) |
+| `RUB1.dc.html` | panel, szyna bez ustawień, wiersz ustawień nad akcjami |
+| `RUC1.dc.html` | panel, szyna bez ustawień, przycisk w nagłówku „ZESTAWY” |
+| `RUW1.dc.html` | panel, okno ustawień otwarte, wszystko w porządku |
+| `RUW2.dc.html` | panel, okno ustawień otwarte, brak uprawnienia i Karabinera |
 
 Pliki `L*.dc.html` i `RLD.dc.html` to statyczny HTML (wymiary i kolory w `<style>` i w atrybutach
 `style`). Pliki `RQA*.dc.html` to pełny prototyp panelu z logiką w klasie `Component`; nowe rzeczy
@@ -296,6 +301,88 @@ wypełniony `th.e` z przewijanym czarnym napisem „操作禁止 · NIE RUSZAJ M
 POTRWA KILKA SEKUND ·” (pełny obrót 9 s). Najcichszy; nazwa układu nie jest wyróżniona,
 a zakaz ruszania myszy jest drobny i w ruchu, czyli najtrudniejszy do przeczytania.
 
+## Ustawienia panelu w osobnym oknie (RU)
+
+Stan (2026-11-26): **wybrany RU-B** (wiersz „設定 USTAWIENIA” nad akcjami), wdrożony jako
+`PanelSettingsWindow` i `PanelRail.settingsButton` (Sources/Panel.swift). Płótno: rząd
+„RU”. Pliki `RU*.dc.html` to pełne kopie prototypu QA; zmiany znajdziesz po `aria-label="Ustawienia"`
+i `role="dialog"`.
+
+Zastępuje z sekcji „Panel (QA)”: blok USTAWIENIA w szynie, stałą wysokość listy ZESTAWY
+(≈149 pt) i dziennik w jednym wierszu.
+
+### Szyna bez ustawień (wszystkie warianty)
+
+Kolejność od góry, odstęp między blokami 10 pt:
+
+1. **ZESTAWY 配置** z drzewkiem układów: bierze całą wolną wysokość (`flex: 1`, minimum 0)
+   i przewija się w pionie, gdy się nie mieści. Wiersze bez zmian (19 pt, odstęp 2 pt).
+2. **ODCHYLENIE 偏差**: bez zmian, stała wysokość.
+3. **Dziennik:** wraca do 3 wierszy (15 pt każdy).
+4. **Akcje**, stała wysokość, zawsze widoczne: Zapisz (70 pt), Przywróć (56 pt), Przywróć
+   z brakującymi (30 pt), odstęp 8 pt.
+
+Przy oknie 1100 × 700 i 7 zestawach z 3 układami zostaje około 90 pt wolnego miejsca w liście.
+Kurczy się tylko lista: górny pasek i akcje nigdy nie znikają.
+
+### Przycisk ustawień: trzy miejsca
+
+- **RU-A, górny pasek (polecany, `RUA1.dc.html`).** Na prawym końcu paska „SPACEDOCK”,
+  12 pt od krawędzi: wysokość 20 pt, dopełnienie 0 × 8 pt, ramka 1 pt `th.s`, tło czarne,
+  napis „設定 USTAWIENIA” Chakra Petch 700, 11 pt, odstęp liter 0,1 em, kolor `th.s`.
+  Pod kursorem i przy otwartym oknie: wypełniony `th.s`, napis czarny.
+  Nie zabiera szynie ani punktu i leży tam, gdzie w zwykłym wyglądzie są sprawy całej apki.
+- **RU-B, wiersz nad akcjami (`RUB1.dc.html`).** Wiersz 24 pt na całą szerokość szyny, nad
+  przyciskiem Zapisz: z lewej „設定 USTAWIENIA”, z prawej skrót stanu mono 10 pt w `th.t`
+  („AUTO · BEZPOŚR. ▸”). Widać tryb bez otwierania okna, ale kosztuje 32 pt szyny i dokłada
+  czwarty przycisk do grupy akcji.
+- **RU-C, nagłówek listy (`RUC1.dc.html`).** Mały przycisk „設定 UST.” (17 pt, 10 pt) po
+  prawej w nagłówku „ZESTAWY 配置”. Nic nie kosztuje, ale jest mały, skrócony i wygląda jak
+  ustawienie samej listy zestawów.
+
+**Stan błędu (każdy wariant):** gdy brakuje uprawnienia Dostępność, przycisk ma ramkę i napis
+w `th.e` oraz migający „!” przed znakiem (1,2 s, jak plakietka 現). Samo „Brak Karabinera”
+nie zmienia przycisku. Plansza `RUW2.dc.html`.
+
+### Okno ustawień (`RUW1.dc.html`, `RUW2.dc.html`)
+
+- **Rama** jak okna RLD: zewnętrzna 2 pt `th.s`, promień 10 pt, poświata; wewnętrzna 1 pt,
+  promień 6 pt; tło `#000000`. Szerokość 560 pt, wysokość z treści (około 470 pt). Wyśrodkowane
+  w poziomie w oknie apki, góra 92 pt od góry okna. Panel pod spodem nie jest przyciemniany.
+- **Pasek tytułu** 22 pt wypełniony `th.s`: „設定 USTAWIENIA” (czarny, 700, odstęp 0,14 em),
+  po prawej przycisk „✕” 26 × 22 pt oddzielony czarną kreską 1,5 pt.
+- **Zamykanie:** Esc, „✕”, przycisk [ZAMKNIJ], kliknięcie poza oknem, ponowne kliknięcie
+  przycisku ustawień. Zmiany działają od razu, bez „Zapisz”.
+- **Treść:** dopełnienie 2 / 14 / 10 pt. Trzy grupy; nagłówek grupy 20 pt, mono 11 pt, `th.s`,
+  kreska 1 pt pod spodem, 8 pt odstępu nad nim.
+- **Wiersz:** 32 pt, etykieta z lewej (Chakra Petch 600, 13 pt, `th.t`), przełącznik z prawej.
+  Segment przełącznika 22 pt, dopełnienie 0 × 9 pt, 12 pt: wybrany wypełniony `th.k` z czarnym
+  napisem (700), pozostałe ramka 1 pt `th.k` i napis `th.k` (600), niedostępny ramka przerywana
+  `th.t` i napis przekreślony.
+
+| Grupa | Wiersz | Sterowanie |
+|---|---|---|
+| 自動 AUTOMAT I PRZYWRACANIE | PRZYWRACANIE 復元 | [RĘCZNIE 手動] [AUTO 自動] |
+| | ZAPIS 保存 | [RĘCZNIE 手動] [AUTO 自動] |
+| | APKI SPOZA UKŁADU 外 | [ZOSTAW 残] [SCHOWAJ 隠] |
+| | (opis, mono 11 pt, `th.t`, zawsze widoczny) | SCHOWAJ: PRZY PRZYWRÓCENIU APKI PEŁNOEKRANOWE SPOZA UKŁADU WYCHODZĄ Z PEŁNEGO EKRANU I SĄ MINIMALIZOWANE. APEK NIGDY NIE ZAMYKAMY. |
+| | METODA 方式 | [PRZECIĄGANIE] [PEŁNY EKRAN] [BEZPOŚREDNIO] |
+| | (tylko bez Karabinera, mono 11 pt) | PRZECIĄGANIE WYMAGA KARABINER-ELEMENTS · BRAK KARABINERA |
+| 鍵 SKRÓTY | jeden wiersz 36 pt | plakietki nazwa + skrót, po prawej [USTAW ↗] |
+| 系 SYSTEM | JĘZYK 言語 | [PL] [EN] [ES] [ZH], segmenty 38 pt |
+| | URUCHAMIAJ PRZY LOGOWANIU 起動 | [WYŁ] [WŁ], segmenty 44 pt |
+| | AUTOMAT PILNUJE MONITORÓW 監視 (26 pt) | „OK” w `th.k` albo „--” w `th.e` |
+| | UPRAWNIENIE DOSTĘPNOŚĆ (26 pt) | „OK” w `th.k` albo „BRAK” + [NADAJ ↗] wypełniony `th.e`, migający |
+
+- **Plakietka skrótu:** 20 pt, ramka 1 pt `th.s`; nazwa (600, 11 pt, `th.t`) i pole skrótu
+  wypełnione `th.s` (mono 11 pt, czarny). Cztery: ZAPIS, PRZYWRÓĆ, Z BRAKUJĄCYMI, UKŁADY
+  (modyfikator + „1–9”). Skróty na planszy są przykładowe; skrót nieustawiony pokazuje „--”.
+  [USTAW ↗] otwiera systemowe okno Ustawień na karcie Skróty, jak dziś.
+- **Stopka:** z lewej mono 11 pt `th.s` „ESC · ZAMYKA · ZMIANY DZIAŁAJĄ OD RAZU”, z prawej
+  [ZAMKNIJ] 24 pt, ramka 1 pt `th.t`.
+- W szynie etykieta brzmiała „INNE APKI 外”, bo pełna się nie mieściła. W oknie jest pełna:
+  „APKI SPOZA UKŁADU 外”.
+
 ## Teksty
 
 Polskie są z prototypów. Angielskie, hiszpańskie i chińskie to propozycje Claude'a, nie
@@ -335,9 +422,14 @@ sprawdzone przez rodzimych użytkowników języka.
 | Układam przestrzenie… „%@” | Arranging spaces… “%@” | Organizando espacios… «%@» | 正在排列空间…“%@” |
 | Nie ruszaj myszy ani klawiatury | Don't touch the mouse or keyboard | No toques el ratón ni el teclado | 请勿操作鼠标或键盘 |
 | potrwa kilka sekund | this takes a few seconds | tardará unos segundos | 需要几秒钟 |
+| Automat i przywracanie | Automation and restore | Automatización y restauración | 自动与恢复 |
+| System | System | Sistema | 系统 |
+| Zamknij | Close | Cerrar | 关闭 |
+| Esc zamyka · zmiany działają od razu | Esc closes · changes apply immediately | Esc cierra · los cambios se aplican al instante | 按 Esc 关闭 · 更改立即生效 |
+| Brak | Missing | Falta | 缺少 |
 
 Panel: napisy wielkimi literami w języku apki; znaki japońskie (現, 閲覧, 新規, 初回, 削除, 改名,
-外, 残, 隠, 切替, 復元, 起動, 配置中, 操作禁止) zostają we wszystkich językach poza chińskim, gdzie panel pokazuje angielskie
+外, 残, 隠, 切替, 復元, 起動, 配置中, 操作禁止, 鍵, 系) zostają we wszystkich językach poza chińskim, gdzie panel pokazuje angielskie
 oznaczenia zamiast japońskich (jak dotąd).
 
 ## Otwarte kwestie

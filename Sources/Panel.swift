@@ -89,7 +89,9 @@ private let panelChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("
 private let panelMarks = ["配置": "LAYOUT", "接続中": "ONLINE", "保存": "SAVE", "復元": "RESTORE", "相違": "DIFF", "一致": "MATCH",
                           "未保存": "UNSAVED", "未起動": "NOT OPEN", "画面": "SCREEN", "一致率": "RATIO", "手動": "MANUAL", "自動": "AUTO",
                           "設定": "SETTINGS", "方式": "METHOD", "言語": "LANGUAGE", "起動": "LOGIN", "監視": "WATCH", "偏差": "DEVIATION",
-                          "切替": "SWITCH", "配置中": "BUSY", "操作禁止": "HANDS OFF"]
+                          "切替": "SWITCH", "配置中": "BUSY", "操作禁止": "HANDS OFF",
+                          "閲覧": "PREVIEW", "現": "NOW", "新規": "NEW", "初回": "FIRST", "削除": "DELETE", "改名": "RENAME",
+                          "外": "OTHER", "残": "LEAVE", "隠": "HIDE", "鍵": "KEYS", "系": "SYSTEM"]
 private func J(_ mark: String) -> String { panelChinese ? panelMarks[mark] ?? mark : mark }
 
 /// The restore banner in the panel look (design RV-C, docs/design-handoff-layouts.md): a console
@@ -347,6 +349,13 @@ struct PanelData {
                                sub: U("Układ inny niż zapis"), active: true)
         }
         return PanelStatus(color: th.k, top: U("Stan"), kanji: J("一致"), word: U("Zgodny"), sub: U("Układ zgodny z zapisem"), active: false)
+    }
+
+    /// Looking at a layout that is not on screen: the save's color, still; the banner reads
+    /// "PREVIEW · EVENING · ON SCREEN: WORK · 閲覧".
+    func previewStatus(_ th: PanelTheme, viewed: String, onScreen: String?) -> PanelStatus {
+        PanelStatus(color: th.s, top: U("Podgląd"), kanji: J("閲覧"), word: viewed.uppercased(),
+                    sub: viewed.uppercased() + (onScreen.map { " · " + U("Na ekranie") + ": " + $0.uppercased() } ?? ""), active: false)
     }
 }
 
@@ -845,8 +854,12 @@ struct PanelView: View {
     private func content(_ scale: CGFloat) -> some View {
         let th = PanelTheme.number(themeNumber)
         let key = model.selection ?? model.current
-        let data = PanelData(model, key: key)
-        let status = data.status(th, busy: model.busy)
+        let viewed = model.viewed(key)
+        let data = PanelData(model, key: key, layout: viewed?.layout)
+        let preview = key == model.current && viewed != nil && model.isPreview(key) && !model.busy
+        let status = preview ? data.previewStatus(th, viewed: viewed.map { model.name(of: $0) } ?? "",
+                                                  onScreen: model.sets[key]?.current.map { model.name(of: $0) })
+            : data.status(th, busy: model.busy)
         let picked = state.monitorPick[key].flatMap { u in data.monitors.firstIndex { $0.uuid == u } } ?? data.defaultMonitor
         let monitor = data.monitors.indices.contains(picked) ? data.monitors[picked] : nil
         return VStack(spacing: 0) {
@@ -862,7 +875,7 @@ struct PanelView: View {
             .overlay(alignment: .bottom) { th.s.frame(height: 1) }
             HStack(alignment: .top, spacing: 14) {
                 VStack(spacing: 10) {
-                    PanelHeader(th: th, data: data, status: status)
+                    PanelHeader(th: th, data: data, status: status, preview: preview)
                         .frame(height: 96)
                         .panelBoot(state.boot, delay: 0)
                     PanelZone(th: th, data: data, picked: picked, state: state)
@@ -880,6 +893,14 @@ struct PanelView: View {
             .padding(.vertical, 12)
             .background(PanelGrid(th: th))
             .overlay(PanelSweep(th: th))
+        }
+        .overlay(alignment: .top) {
+            if model.panelSettingsOpen {
+                ZStack(alignment: .top) {
+                    Color.black.opacity(0.001).onTapGesture { model.panelSettingsOpen = false }   // a click outside closes
+                    PanelSettingsWindow(th: th).padding(.top, 92)
+                }
+            }
         }
         .foregroundStyle(th.t)
         .font(PanelFont.ui())
@@ -933,11 +954,34 @@ struct PanelHex: Shape {
     }
 }
 
+/// The set's layout count on its hexagon: the first `count` edges (from the top one, clockwise)
+/// thickened inwards to about 4 pt; 6 or more = the whole outline.
+struct PanelHexEdges: View {
+    let count: Int
+    let color: Color
+
+    var body: some View {
+        Canvas { c, size in
+            guard count > 0 else { return }
+            let hex = PanelHex().path(in: CGRect(origin: .zero, size: size))
+            let w = size.width, h = size.height
+            let corners = [CGPoint(x: w * 0.25, y: 0), CGPoint(x: w * 0.75, y: 0), CGPoint(x: w, y: h / 2),
+                           CGPoint(x: w * 0.75, y: h), CGPoint(x: w * 0.25, y: h), CGPoint(x: 0, y: h / 2)]
+            var edges = Path()
+            for i in 0..<min(count, 6) { edges.move(to: corners[i]); edges.addLine(to: corners[(i + 1) % 6]) }
+            c.clip(to: hex)   // an 8 pt line on the edge, cut by the hexagon: 4 pt inside show
+            c.stroke(edges, with: .color(color), style: StrokeStyle(lineWidth: 8, lineCap: .square))
+        }
+        .allowsHitTesting(false)
+    }
+}
+
 struct PanelHeader: View {
     @EnvironmentObject var model: Model
     let th: PanelTheme
     let data: PanelData
     let status: PanelStatus
+    var preview = false
 
     private var number: String {
         model.profiles.firstIndex(of: data.key).map { String(format: "%02d", $0 + 1) } ?? "--"
@@ -964,7 +1008,12 @@ struct PanelHeader: View {
                         .panelGlow(th.s, panelGlowStrong)
                     PanelTape(color: th.s, stripe: 6, moving: status.active).frame(width: 30)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(verbatim: "\(U("Zestaw")): \(number)")
+                        let ls = model.layouts(data.key)
+                        if let v = model.viewed(data.key), let i = ls.firstIndex(where: { $0.id == v.id }) {
+                            Text(verbatim: "\(U("Układ")) \(i + 1)/\(ls.count) " + J(preview ? "閲覧" : "現"))
+                        } else {
+                            Text(verbatim: "\(U("Zestaw")): \(number)")
+                        }
                         Text(verbatim: "\(U("Monitory")): \(data.monitors.count)")
                         if data.connected { Text(verbatim: J("接続中")) }
                     }
@@ -986,7 +1035,18 @@ struct PanelHeader: View {
                         .frame(width: 66)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(verbatim: status.word).font(PanelFont.ui(20, .bold)).tracking(0.8)
-                        Text(verbatim: status.sub).font(PanelFont.mono())
+                        if preview, let onScreen = model.sets[data.key]?.current {
+                            Button { model.viewedID = nil } label: { PanelHot { hot in
+                                Text(verbatim: "↩ " + U("Wróć do „\(model.name(of: onScreen))”")).font(PanelFont.mono())
+                                    .foregroundStyle(hot ? .black : status.color)
+                                    .padding(.horizontal, 5)
+                                    .background(PanelScanned(color: hot ? status.color : .black))
+                                    .overlay(Rectangle().strokeBorder(status.color, lineWidth: 1))
+                            } }
+                            .buttonStyle(.plain)
+                        } else {
+                            Text(verbatim: status.sub).font(PanelFont.mono())
+                        }
                     }
                     .lineLimit(1).minimumScaleFactor(0.6)
                     .panelGlow(status.color, panelGlowSoft)   // the word and the line under it
@@ -1027,12 +1087,13 @@ struct PanelHeader: View {
                                 .panelBlink(connected && !hot)   // stands still, fully shown, under the pointer
                                 .frame(width: 40, height: 32)
                                 .background(PanelHex().fill(connected && !selected ? th.k : th.s))
+                                .overlay(PanelHexEdges(count: model.layouts(key).count, color: th.s))
                                 .overlay(PanelGlow(on: hot && selected, shape: PanelHex()))
                                 .contentShape(PanelHex())
                         }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(model.title(key))
+                    .accessibilityLabel(model.title(key) + ", " + U("Układy").lowercased() + ": \(model.layouts(key).count)")
                     .offset(x: CGFloat(i % 5) * 31 + 4, y: CGFloat(i / 5) * 34 + ((i % 5) % 2 == 1 ? 16 : 0))
                 }
             }
@@ -1724,6 +1785,7 @@ struct PanelRail: View {
     @AppStorage("autoSave") private var autoSave = false
     @AppStorage("autoRestore") private var autoRestore = true
     @AppStorage("restoreMethod") private var restoreMethod = "bridge"
+    @AppStorage("outsideApps") private var outsideApps = "leave"
     @AppStorage("settingsTab") private var settingsTab = "general"
     @Environment(\.panelStill) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
@@ -1731,11 +1793,10 @@ struct PanelRail: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sets
-            settings
+            sets   // takes the free height and scrolls: the actions always stay in the window
             deviation
             log
-            Spacer(minLength: 0)
+            settingsButton
             actions
         }
     }
@@ -1755,7 +1816,7 @@ struct PanelRail: View {
     private var sets: some View {
         VStack(spacing: 0) {
             heading(U("Zestawy"), J("配置"), kanji: true)
-            ScrollView(.vertical) {
+            ScrollViewReader { scroll in ScrollView(.vertical) {
                 VStack(spacing: 2) {
                     ForEach(Array(model.profiles.enumerated()), id: \.element) { i, key in
                         let selected = key == data.key, connected = key == model.current
@@ -1775,128 +1836,49 @@ struct PanelRail: View {
                             .contentShape(Rectangle())
                         } }
                         .buttonStyle(.plain)
-                        .contextMenu {
-                            if model.saved[key] != nil { Button("Usuń zapis", role: .destructive) { model.delete(key) } }
-                        }
+                        .id(key)
+                        if selected { layoutBlock(key) }
                     }
                 }
                 .padding(.top, 2)
             }
-            .frame(height: CGFloat(min(model.profiles.count, 7)) * 21 + 2)
-        }
-    }
-
-    private func segment(_ label: String, on: Bool, enabled: Bool = true, size: CGFloat = 12, width: CGFloat? = nil,
-                         height: CGFloat = 20, action: @escaping () -> Void) -> some View {
-        Button(action: action) { PanelHot(enabled: enabled) { hot in
-            Text(verbatim: label).font(PanelFont.ui(size, on ? .bold : .semibold)).strikethrough(!enabled)
-                .lineLimit(1).minimumScaleFactor(0.6)
-                .foregroundStyle(on || hot ? .black : enabled ? th.k : th.t)
-                .padding(.horizontal, width == nil ? 6 : 2)
-                .frame(width: width, height: height)
-                .frame(maxWidth: width == nil ? nil : .infinity)
-                .background(PanelScanned(color: on || hot ? th.k : .black))
-                .overlay(Rectangle().strokeBorder(enabled ? th.k : th.t, style: StrokeStyle(lineWidth: 1, dash: enabled ? [] : [3, 2])))
-                .overlay(PanelGlow(on: hot && on, shape: Rectangle()))
-                .contentShape(Rectangle())
-        } }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
-        .accessibilityAddTraits(on ? .isSelected : [])
-    }
-
-    private func row<Trailing: View>(_ label: String, @ViewBuilder _ trailing: () -> Trailing) -> some View {
-        HStack(spacing: 4) {
-            Text(verbatim: label).font(PanelFont.ui(13, .semibold)).lineLimit(1).minimumScaleFactor(0.6)
-            Spacer(minLength: 2)
-            trailing()
-        }
-        .frame(height: 28)
-    }
-
-    private func modeRow(_ label: String, _ auto: Binding<Bool>) -> some View {
-        row(label) {
-            HStack(spacing: 0) {
-                segment(U("Ręcznie") + (" " + J("手動")), on: !auto.wrappedValue) { auto.wrappedValue = false }
-                segment(U("Auto") + (" " + J("自動")), on: auto.wrappedValue) { auto.wrappedValue = true }
+            .frame(maxHeight: .infinity)
+            .onAppear { scroll.scrollTo(data.key, anchor: .top) }
+            .onChange(of: data.key) { _, k in withAnimation { scroll.scrollTo(k, anchor: .top) } }
             }
         }
     }
 
-    /// The same settings as the normal look, same keys.
-    private var settings: some View {
-        let language = appLanguage().isEmpty ? (Bundle.main.preferredLocalizations.first ?? "") : appLanguage()
-        return VStack(alignment: .leading, spacing: 0) {
-            heading(U("Ustawienia") + (" " + J("設定")))
-            modeRow(U("Przywracanie"), $autoRestore)
-            modeRow(U("Zapis") + (" " + J("保存")), $autoSave)
-            VStack(spacing: 4) {
-                HStack {
-                    Text(verbatim: U("Metoda") + (" " + J("方式"))).font(PanelFont.ui(13, .semibold))
-                    Spacer()
-                    if !dragAvailable { Text(verbatim: U("Brak Karabinera")).font(PanelFont.mono()) }
-                }
-                .lineLimit(1)
-                HStack(spacing: 0) {
-                    ForEach([("drag", "Przeciąganie"), ("fullscreen", "Pełny ekran"), ("bridge", "Bezpośrednio")], id: \.0) { tag, name in
-                        segment(String(localized: String.LocalizationValue(name)).uppercased(), on: restoreMethod == tag,
-                                enabled: tag != "drag" || dragAvailable, size: 11, width: 88, height: 22) { restoreMethod = tag }
+    /// The selected set's layouts under it (design QA): a 1.5 pt line on the left, a row each,
+    /// "+ save as new" last on the connected set.
+    private func layoutBlock(_ key: String) -> some View {
+        VStack(spacing: 2) {
+            ForEach(Array(model.layouts(key).enumerated()), id: \.element.id) { i, l in
+                PanelLayoutRow(th: th, key: key, layout: l, position: i + 1)
+                    .draggable(l.id)
+                    .dropDestination(for: String.self) { ids, _ in
+                        guard let id = ids.first, let from = model.layouts(key).firstIndex(where: { $0.id == id }) else { return false }
+                        model.move(key, IndexSet(integer: from), from < i ? i + 1 : i)
+                        return true
                     }
-                }
             }
-            .padding(.top, 3).padding(.bottom, 5)
-            row(U("Skróty")) {
-                Text(verbatim: Hotkeys.Action.allCases.compactMap(Hotkeys.label).joined(separator: " ")).font(PanelFont.mono()).lineLimit(1)
-                segment(U("Ustaw"), on: false, width: 60) {
-                    settingsTab = "shortcuts"
-                    NSApp.activate(ignoringOtherApps: true)
-                    openSettings()
-                }
+            if key == model.current {
+                Button { model.askNew() } label: { PanelHot { hot in
+                    Text(verbatim: "+ " + J("新規") + " " + U("Zapisz jako nowy"))
+                        .font(PanelFont.ui(11, .bold)).tracking(0.33).lineLimit(1)
+                        .foregroundStyle(hot ? .black : th.s)
+                        .padding(.horizontal, 6)
+                        .frame(maxWidth: .infinity, minHeight: 19, maxHeight: 19, alignment: .leading)
+                        .background(PanelScanned(color: hot ? th.s : .black))
+                        .overlay(Rectangle().strokeBorder(th.s, style: StrokeStyle(lineWidth: 1, dash: [3, 2])))
+                        .contentShape(Rectangle())
+                } }
+                .buttonStyle(.plain)
             }
-            row(U("Język") + (" " + J("言語"))) {
-                HStack(spacing: 0) {
-                    ForEach(["pl", "en", "es", "zh-Hans"], id: \.self) { lang in
-                        segment(String(lang.prefix(2)).uppercased(), on: language.hasPrefix(lang), enabled: !model.busy, width: 34) { setAppLanguage(lang) }
-                    }
-                }
-                .frame(width: 136)
-            }
-            VStack(spacing: 0) {
-                HStack {
-                    Text(verbatim: U("Uruchamiaj przy logowaniu") + (" " + J("起動")))
-                    Spacer(minLength: 2)
-                    Button { model.setLoginItem(!model.loginItem) } label: { PanelHot { hot in
-                        Text(verbatim: model.loginItem ? U("Wł") : U("Wył")).font(PanelFont.mono(11, .medium))
-                            .foregroundStyle(model.loginItem || hot ? .black : th.k).padding(.horizontal, 6)
-                            .background(PanelScanned(color: model.loginItem || hot ? th.k : .black))
-                            .overlay(Rectangle().strokeBorder(th.k, lineWidth: 1))
-                            .overlay(PanelGlow(on: hot && model.loginItem, shape: Rectangle()))
-                    } }
-                    .buttonStyle(.plain)
-                }
-                HStack {
-                    Text(verbatim: U("Automat pilnuje monitorów") + (" " + J("監視")))
-                    Spacer(minLength: 2)
-                    Text(verbatim: model.trusted ? "OK" : "--").foregroundStyle(model.trusted ? th.k : th.e)
-                }
-                .padding(.top, 3)
-                HStack {
-                    Text(verbatim: U("Uprawnienie Dostępność"))
-                    Spacer(minLength: 2)
-                    if model.trusted {
-                        Text(verbatim: "OK").foregroundStyle(th.k)
-                    } else {
-                        Button { model.requestAccess() } label: { PanelHot { hot in
-                            Text(verbatim: U("Nadaj")).foregroundStyle(.black).padding(.horizontal, 6).background(PanelScanned(color: th.e))
-                                .overlay(PanelGlow(on: hot, shape: Rectangle()))
-                        } }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            .font(PanelFont.mono()).lineLimit(1).minimumScaleFactor(0.6)
-            .frame(height: 51)
         }
+        .padding(.leading, 9)
+        .overlay(alignment: .leading) { th.s.frame(width: 1.5) }
+        .padding(EdgeInsets(top: 2, leading: 9, bottom: 3, trailing: 0))
     }
 
     private var deviation: some View {
@@ -1979,33 +1961,66 @@ struct PanelRail: View {
         .overlay(alignment: .top) { th.s.frame(height: 1) }
     }
 
+    /// Opens the settings window (design RU-B): with the restore mode and method on the right; red
+    /// with a blinking "!" while the Accessibility permission is missing.
+    private var settingsButton: some View {
+        let color = model.trusted ? th.s : th.e
+        let method = ["drag": "Przeciąganie", "fullscreen": "Pełny ekran"][UserDefaults.standard.string(forKey: "restoreMethod") ?? "bridge"] ?? "Bezpośrednio"
+        let summary = (autoRestore ? U("Auto") : U("Ręcznie")) + " · " + String(localized: String.LocalizationValue(method)).uppercased() + " ▸"
+        return Button { model.panelSettingsOpen.toggle() } label: { PanelHot { hot in
+            let on = hot || model.panelSettingsOpen
+            HStack(spacing: 6) {
+                if !model.trusted { Text(verbatim: "!").font(PanelFont.ui(12, .bold)).panelBlink(true) }
+                Text(verbatim: J("設定") + " " + U("Ustawienia")).font(PanelFont.ui(11, .bold)).tracking(1.1)
+                Spacer(minLength: 4)
+                Text(verbatim: summary).font(PanelFont.mono(10)).foregroundStyle(on ? .black : th.t)
+            }
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .foregroundStyle(on ? .black : color)
+            .padding(.horizontal, 8)
+            .frame(height: 24)
+            .background(PanelScanned(color: on ? color : .black))
+            .overlay(Rectangle().strokeBorder(color, lineWidth: 1))
+            .contentShape(Rectangle())
+        } }
+        .buttonStyle(.plain)
+    }
+
     /// Save sits under a cover: the first click lifts it, the second saves (and replaces the save,
     /// so no extra question as in the normal look). Both act on the connected set only.
     private var actions: some View {
         let here = data.connected
-        let canRestore = here && model.saved[model.current] != nil && !model.busy && model.trusted
-        let differs = here && data.differs && data.hasSave
+        let viewed = model.viewed(data.key)
+        let preview = here && viewed != nil && model.isPreview(data.key)
+        let selectedName = model.sets[data.key]?.current.map { model.name(of: $0) }
+        let canRestore = here && viewed != nil && !model.busy && model.trusted
+        let differs = here && data.differs && data.hasSave || preview
         let restoreColor = model.busy ? th.t : th.k
+        let restore = { (open: Bool) in
+            if preview, let viewed { model.restore(data.key, viewed.id, openApps: open) } else { model.restoreNow(openApps: open) }
+        }
         return VStack(spacing: 8) {
             Button {
                 if state.armed { state.armed = false; model.save(ask: false) } else { state.arm() }
-            } label: { PanelHot(enabled: here) { hot in
+            } label: { PanelHot(enabled: here && !preview) { hot in
                 VStack(alignment: .leading, spacing: 0) {
                     Spacer(minLength: 0)
                     Text(verbatim: U("Zapisz obecny układ")).font(PanelFont.ui(18, .bold)).tracking(1.4).lineLimit(1).minimumScaleFactor(0.6)
-                    Text(verbatim: J("保存") + (model.saved[model.current] != nil ? " · " + U("Nadpisuje zapis") : "")).font(PanelFont.mono())
+                        .strikethrough(preview).opacity(preview ? 0.4 : 1)
+                    Text(verbatim: J("保存") + (preview ? " · " + U("Tylko wybrany układ") : selectedName.map { " · " + U("Nadpisuje „\($0)”") } ?? ""))
+                        .font(PanelFont.mono())
                 }
                 .foregroundStyle(state.armed || hot ? .black : th.s)
                 .padding(.horizontal, 10).padding(.bottom, 8)
                 .frame(maxWidth: .infinity, minHeight: 70, maxHeight: 70, alignment: .leading)
                 .background(PanelScanned(color: state.armed || hot ? th.s : .black))
                 .overlay(PanelGlow(on: hot && state.armed, shape: Rectangle()))
-                .overlay(Rectangle().strokeBorder(th.s, lineWidth: 1.5))
+                .overlay(Rectangle().strokeBorder(th.s, style: StrokeStyle(lineWidth: 1.5, dash: preview ? [4, 3] : [])))
                 .overlay(alignment: .top) {
                     if !state.armed {
-                        PanelTape(color: th.s, stripe: 8, period: 0.9)
+                        PanelTape(color: th.s, stripe: 8, period: 0.9, moving: !preview)
                             .overlay {
-                                Text(verbatim: U("Osłona · podnieś")).font(PanelFont.ui(12, .bold)).tracking(1.2)
+                                Text(verbatim: preview ? U("Osłona · zablokowana") : U("Osłona · podnieś")).font(PanelFont.ui(12, .bold)).tracking(1.2)
                                     .foregroundStyle(th.s).padding(.horizontal, 8).background(Color.black)
                             }
                             .overlay(Rectangle().strokeBorder(th.s, lineWidth: 1.5))
@@ -2015,13 +2030,14 @@ struct PanelRail: View {
                 .contentShape(Rectangle())
             } }
             .buttonStyle(.plain)
-            .disabled(!here)
+            .disabled(!here || preview)
             .opacity(here ? 1 : 0.4)
             .accessibilityHint(state.armed ? "" : U("Osłona · podnieś"))
-            Button { model.restoreNow() } label: { PanelHot(enabled: canRestore) { hot in
+            Button { restore(false) } label: { PanelHot(enabled: canRestore) { hot in
                 VStack(alignment: .leading, spacing: 0) {
                     Text(verbatim: model.busy ? U("Przywracam…") : U("Przywróć")).font(PanelFont.ui(22, .bold)).tracking(1.8)
                     Text(verbatim: (J("復元") + " · ") + (!here ? U("Tylko podłączony zestaw") : !model.trusted ? U("Wymaga uprawnienia Dostępność dla tej apki")
+                                               : preview ? U("Wczytaj „\(viewed.map { model.name(of: $0) } ?? "")”")
                                                : differs ? U("Układ z zapisu") : data.hasSave ? U("Układ zgodny") : U("Brak zapisu")))
                         .font(PanelFont.mono())
                 }
@@ -2037,7 +2053,7 @@ struct PanelRail: View {
             .buttonStyle(.plain)
             .disabled(!canRestore)
             .opacity(here ? 1 : 0.4)
-            Button { model.restoreNow(openApps: true) } label: { PanelHot(enabled: canRestore) { hot in
+            Button { restore(true) } label: { PanelHot(enabled: canRestore) { hot in
                 Text(verbatim: U("Przywróć z brakującymi")).font(PanelFont.ui(15, .bold)).tracking(1.2)
                     .lineLimit(1).minimumScaleFactor(0.5)
                     .foregroundStyle(hot ? .black : restoreColor)
@@ -2051,6 +2067,391 @@ struct PanelRail: View {
             .disabled(!canRestore)
             .opacity(here ? 1 : 0.4)
             .help("Najpierw otwiera zamknięte apki z zapisu, potem ustawia przestrzenie. Apki startują jak zwykle: ich stanu sprzed zamknięcia (np. kart przeglądarki) SpaceDock nie przywraca")
+        }
+    }
+}
+
+// MARK: - Settings window (design RU)
+
+/// The panel's settings, out of the rail so the sets and layouts get its height: a window over
+/// the panel (the dialogs' frame), three groups, every change applies at once. Esc, ✕, CLOSE or a
+/// click outside close it.
+struct PanelSettingsWindow: View {
+    @EnvironmentObject var model: Model
+    let th: PanelTheme
+    @AppStorage("autoSave") private var autoSave = false
+    @AppStorage("autoRestore") private var autoRestore = true
+    @AppStorage("restoreMethod") private var restoreMethod = "bridge"
+    @AppStorage("outsideApps") private var outsideApps = "leave"
+    @AppStorage("settingsTab") private var settingsTab = "general"
+    @AppStorage(Hotkeys.layoutsKey) private var layoutKeys = ""
+    @Environment(\.openSettings) private var openSettings
+    @ObservedObject private var hotkeys = Hotkeys.shared
+    @AppStorage(PanelKey.theme) private var themeNumber = 1
+
+    var body: some View {
+        let language = appLanguage().isEmpty ? (Bundle.main.preferredLocalizations.first ?? "") : appLanguage()
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
+                Text(verbatim: J("設定") + " " + U("Ustawienia")).font(PanelFont.ui(12, .bold)).tracking(1.7)
+                    .padding(.horizontal, 10)
+                Spacer()
+                Button { model.panelSettingsOpen = false } label: {
+                    Text(verbatim: "✕").font(PanelFont.ui(12, .bold)).frame(width: 26, height: 22).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .overlay(alignment: .leading) { Color.black.frame(width: 1.5) }
+            }
+            .foregroundStyle(.black)
+            .frame(height: 22)
+            .background(th.s)
+            VStack(alignment: .leading, spacing: 0) {
+                group(J("自動") + " " + U("Automat i przywracanie"))
+                row(U("Przywracanie") + " " + J("復元")) { modes($autoRestore) }
+                row(U("Zapis") + " " + J("保存")) { modes($autoSave) }
+                row(U("Apki spoza układu") + " " + J("外")) {
+                    segment(U("Zostaw") + " " + J("残"), on: outsideApps != "hide") { outsideApps = "leave" }
+                    segment(U("Schowaj") + " " + J("隠"), on: outsideApps == "hide") { outsideApps = "hide" }
+                }
+                note(U("Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy."))
+                row(U("Metoda") + " " + J("方式")) {
+                    ForEach([("drag", "Przeciąganie"), ("fullscreen", "Pełny ekran"), ("bridge", "Bezpośrednio")], id: \.0) { tag, name in
+                        segment(String(localized: String.LocalizationValue(name)).uppercased(), on: restoreMethod == tag,
+                                enabled: tag != "drag" || dragAvailable) { restoreMethod = tag }
+                    }
+                }
+                if !dragAvailable { note(U("Przeciąganie wymaga Karabiner-Elements") + " · " + U("Brak Karabinera")) }
+                group(J("鍵") + " " + U("Skróty"))
+                HStack(spacing: 6) {
+                    plaque(U("Zapis"), Hotkeys.label(.save))
+                    plaque(U("Przywróć"), Hotkeys.label(.restore))
+                    plaque(U("Z brakującymi"), Hotkeys.label(.restoreOpen))
+                    plaque(U("Układy"), Hotkeys.layoutModifiers().map { $0.label + "1–9" })
+                    Spacer(minLength: 4)
+                    segment(U("Ustaw") + " ↗", on: false) {
+                        settingsTab = "shortcuts"
+                        NSApp.activate(ignoringOtherApps: true)
+                        openSettings()
+                    }
+                }
+                .frame(height: 36)
+                group(J("系") + " " + U("System"))
+                row(U("Język") + " " + J("言語")) {
+                    ForEach(["pl", "en", "es", "zh-Hans"], id: \.self) { lang in
+                        segment(String(lang.prefix(2)).uppercased(), on: language.hasPrefix(lang), enabled: !model.busy, width: 38) { setAppLanguage(lang) }
+                    }
+                }
+                row(U("Wygląd")) {
+                    segment(U("Zwykły"), on: false, width: 80) {   // the settings follow the look: the normal window, same tab
+                        model.panelSettingsOpen = false
+                        UserDefaults.standard.set(false, forKey: PanelKey.on)
+                        settingsTab = "app"
+                        NSApp.activate(ignoringOtherApps: true)
+                        openSettings()
+                    }
+                    segment(U("Neon"), on: true, width: 80) {}
+                }
+                row(U("Motyw")) {
+                    ForEach(1...3, id: \.self) { n in segment("\(n)", on: themeNumber == n, width: 38) { themeNumber = n } }
+                }
+                row(U("Uruchamiaj przy logowaniu") + " " + J("起動")) {
+                    segment(U("Wył"), on: !model.loginItem, width: 44) { model.setLoginItem(false) }
+                    segment(U("Wł"), on: model.loginItem, width: 44) { model.setLoginItem(true) }
+                }
+                status(U("Automat pilnuje monitorów") + " " + J("監視")) {
+                    Text(verbatim: model.trusted ? "OK" : "--").foregroundStyle(model.trusted ? th.k : th.e)
+                }
+                status(U("Uprawnienie Dostępność")) {
+                    if model.trusted {
+                        Text(verbatim: "OK").foregroundStyle(th.k)
+                    } else {
+                        Text(verbatim: U("Brak")).foregroundStyle(th.e)
+                        Button { model.requestAccess() } label: { PanelHot { hot in
+                            Text(verbatim: U("Nadaj") + " ↗").font(PanelFont.ui(12, .bold)).foregroundStyle(.black)
+                                .padding(.horizontal, 9).frame(height: 22)
+                                .background(PanelScanned(color: hot ? th.k : th.e))
+                                .panelBlink(!hot)
+                        } }
+                        .buttonStyle(.plain)
+                    }
+                }
+                HStack {
+                    Text(verbatim: U("Esc · zamyka · zmiany działają od razu")).font(PanelFont.mono()).foregroundStyle(th.s)
+                    Spacer()
+                    Button { model.panelSettingsOpen = false } label: { PanelHot { hot in
+                        Text(verbatim: U("Zamknij")).font(PanelFont.ui(12, .bold)).foregroundStyle(hot ? .black : th.t)
+                            .padding(.horizontal, 12).frame(height: 24)
+                            .background(PanelScanned(color: hot ? th.t : .black))
+                            .overlay(Rectangle().strokeBorder(th.t, lineWidth: 1))
+                    } }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.cancelAction)
+                }
+                .padding(.top, 12)
+            }
+            .padding(EdgeInsets(top: 2, leading: 14, bottom: 10, trailing: 14))
+        }
+        .frame(width: 560)
+        .background(Color.black)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(th.s, lineWidth: 1))
+        .padding(5)
+        .background(Color.black)
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(th.s, lineWidth: 2).shadow(color: th.s.opacity(0.6), radius: 5))
+        .contentShape(Rectangle())
+        .onTapGesture {}   // a click inside does not reach the "click outside closes" layer
+    }
+
+    private func group(_ title: String) -> some View {
+        Text(verbatim: title).font(PanelFont.mono()).foregroundStyle(th.s)
+            .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
+            .overlay(alignment: .bottom) { th.s.frame(height: 1) }
+            .padding(.top, 8)
+    }
+
+    private func row<Trailing: View>(_ label: String, @ViewBuilder _ trailing: () -> Trailing) -> some View {
+        HStack(spacing: 0) {
+            Text(verbatim: label).font(PanelFont.ui(13, .semibold)).foregroundStyle(th.t).lineLimit(1).minimumScaleFactor(0.7)
+            Spacer(minLength: 8)
+            trailing()
+        }
+        .frame(height: 32)
+    }
+
+    private func status<Trailing: View>(_ label: String, @ViewBuilder _ trailing: () -> Trailing) -> some View {
+        HStack(spacing: 8) {
+            Text(verbatim: label).foregroundStyle(th.t)
+            Spacer(minLength: 8)
+            trailing()
+        }
+        .font(PanelFont.mono()).lineLimit(1)
+        .frame(height: 26)
+    }
+
+    private func note(_ text: String) -> some View {
+        Text(verbatim: text).font(PanelFont.mono()).foregroundStyle(th.t)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 4)
+    }
+
+    private func modes(_ auto: Binding<Bool>) -> some View {
+        HStack(spacing: 0) {
+            segment(U("Ręcznie") + " " + J("手動"), on: !auto.wrappedValue) { auto.wrappedValue = false }
+            segment(U("Auto") + " " + J("自動"), on: auto.wrappedValue) { auto.wrappedValue = true }
+        }
+    }
+
+    /// Picked: filled in the match color; the others framed; unavailable: dashed, struck through.
+    private func segment(_ label: String, on: Bool, enabled: Bool = true, width: CGFloat? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) { PanelHot(enabled: enabled) { hot in
+            Text(verbatim: label).font(PanelFont.ui(12, on ? .bold : .semibold)).strikethrough(!enabled)
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .foregroundStyle(on || hot ? .black : enabled ? th.k : th.t)
+                .padding(.horizontal, width == nil ? 9 : 0)
+                .frame(width: width, height: 22)
+                .background(PanelScanned(color: on || hot ? th.k : .black))
+                .overlay(Rectangle().strokeBorder(enabled ? th.k : th.t, style: StrokeStyle(lineWidth: 1, dash: enabled ? [] : [3, 2])))
+                .contentShape(Rectangle())
+        } }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    /// A shortcut's name and the keys ("--" when none is set).
+    private func plaque(_ name: String, _ keys: String?) -> some View {
+        HStack(spacing: 0) {
+            Text(verbatim: name).font(PanelFont.ui(11, .semibold)).foregroundStyle(th.t).padding(.horizontal, 5)
+            Text(verbatim: keys ?? "--").font(PanelFont.mono()).foregroundStyle(.black).padding(.horizontal, 5)
+                .frame(maxHeight: .infinity).background(th.s)
+        }
+        .lineLimit(1)
+        .frame(height: 20)
+        .overlay(Rectangle().strokeBorder(th.s, lineWidth: 1))
+    }
+}
+
+// MARK: - Layouts (design QA)
+
+/// A layout in the rail's tree: number, name (a field when unnamed or being renamed), 現 on the
+/// one on screen, its shortcut. Looked at = filled in the save's color; under the pointer inverted.
+struct PanelLayoutRow: View {
+    @EnvironmentObject var model: Model
+    let th: PanelTheme
+    let key: String
+    let layout: NamedLayout
+    let position: Int
+    @AppStorage(Hotkeys.layoutsKey) private var layoutKeys = ""   // redraws the shortcut when it changes
+
+    var body: some View {
+        let viewed = model.viewed(key)?.id == layout.id
+        let onScreen = key == model.current && model.sets[key]?.selected == layout.id
+        let editing = layout.name == nil || model.renaming == layout.id
+        PanelHot { hot in
+            let fill: Color = viewed ? th.s : hot && !editing ? (onScreen ? th.k : th.s) : .black
+            let text: Color = fill != .black ? .black : onScreen ? th.k : th.t
+            HStack(spacing: 6) {
+                Text(verbatim: String(format: "%02d", position)).font(PanelFont.display(10))
+                if editing { field(text) } else {
+                    Text(verbatim: (layout.name ?? "").uppercased()).font(PanelFont.ui(11, .bold)).tracking(0.33)
+                        .lineLimit(1).truncationMode(.tail)
+                }
+                Spacer(minLength: 0)
+                if onScreen {
+                    Text(verbatim: J("現")).font(panelChinese ? PanelFont.mono(6) : PanelFont.kanji(10))
+                        .frame(width: 14, height: 14)
+                        .overlay(Rectangle().strokeBorder(text, lineWidth: 1))
+                        .panelBlink(true)
+                }
+                if key == model.current, let s = Hotkeys.layoutLabel(position) { Text(verbatim: s).font(PanelFont.mono(10, .medium)).fixedSize() }
+            }
+            .foregroundStyle(text)
+            .padding(.horizontal, 6)
+            .frame(height: 19)
+            .background(PanelScanned(color: fill))
+            .overlay(Rectangle().strokeBorder(onScreen && !viewed ? th.k : th.s, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .onTapGesture { if !editing { model.viewedID = layout.id } }
+        .contextMenu {
+            Button("Przywróć") { model.restore(key, layout.id) }
+                .disabled(key != model.current || model.busy || !model.trusted)
+            Button("Przywróć z brakującymi") { model.restore(key, layout.id, openApps: true) }
+                .disabled(key != model.current || model.busy || !model.trusted)
+            Divider()
+            Button("Zmień nazwę…") { model.drafts[layout.id] = layout.name ?? ""; model.renaming = layout.id }
+            Button("Usuń układ…", role: .destructive) { model.deleteLayout(key, layout.id) }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(viewed ? .isSelected : [])
+    }
+
+    /// Dashed field "NAME IT"; leaving it saves (shared rules: Model.commitDraft).
+    private func field(_ color: Color) -> some View {
+        TextField(U("Nadaj nazwę"), text: Binding(get: { model.draft(layout) }, set: { model.drafts[layout.id] = $0 }),
+                  onEditingChanged: { editing in if !editing { model.commitDraft(key, layout, keepIfBad: false) } },
+                  onCommit: { model.commitDraft(key, layout, keepIfBad: true) })
+            .textFieldStyle(.plain)
+            .font(PanelFont.ui(11, .bold))
+            .padding(.horizontal, 3)
+            .frame(height: 15)
+            .overlay(Rectangle().strokeBorder(model.draftInvalid(key, layout) ? th.e : color, style: StrokeStyle(lineWidth: 1, dash: [2, 2])))
+            .onExitCommand { model.renaming = nil; model.drafts[layout.id] = nil }
+    }
+}
+
+/// Window frame of the neon look's dialogs: the status block's double frame, a title bar in the
+/// frame's color, black inside.
+private struct PanelDialog<Content: View>: View {
+    let color: Color
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(verbatim: title).font(PanelFont.ui(12, .bold)).tracking(1.7).foregroundStyle(.black)
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity, minHeight: 22, maxHeight: 22, alignment: .leading)
+                .background(color)
+            VStack(alignment: .leading, spacing: 10) { content() }.padding(14)
+        }
+        .frame(width: 300)
+        .background(Color.black)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(color, lineWidth: 1))
+        .padding(5)
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(color, lineWidth: 2).shadow(color: color.opacity(0.6), radius: 5))
+        .padding(10)
+        .background(Color.black)
+    }
+}
+
+/// A dialog button: filled (the main action) or framed; off = dashed, struck through, 0.4.
+private func panelDialogButton(_ label: String, _ color: Color, filled: Bool, enabled: Bool = true, action: @escaping () -> Void) -> some View {
+    Button(action: action) { PanelHot(enabled: enabled) { hot in
+        Text(verbatim: label).font(PanelFont.ui(12, .bold)).tracking(1).strikethrough(!enabled)
+            .foregroundStyle(filled || hot ? .black : color)
+            .padding(.horizontal, 12)
+            .frame(height: 24)
+            .background(PanelScanned(color: filled || hot ? color : .black))
+            .overlay(Rectangle().strokeBorder(color, style: StrokeStyle(lineWidth: 1, dash: enabled ? [] : [3, 2])))
+            .contentShape(Rectangle())
+    } }
+    .buttonStyle(.plain)
+    .disabled(!enabled)
+    .opacity(enabled ? 1 : 0.4)
+}
+
+/// "Save as new" / first save in the neon look: the name is required and unique in the set.
+struct PanelNameSheet: View {
+    @EnvironmentObject var model: Model
+    let first: Bool
+    @AppStorage(PanelKey.theme) private var themeNumber = 1
+
+    var body: some View {
+        let th = PanelTheme.number(themeNumber)
+        let t = model.newName.trimmingCharacters(in: .whitespaces)
+        let taken = model.nameTaken(t, in: model.current), ok = !t.isEmpty && !taken
+        let save = { if ok { model.saveAsNew(t); model.naming = nil } }
+        PanelDialog(color: th.s, title: first ? J("初回") + " " + U("Pierwszy układ") : J("新規") + " " + U("Nowy układ")) {
+            VStack(alignment: .leading, spacing: 2) {
+                if first {
+                    Text(verbatim: U("\(model.title(model.current)) nie ma jeszcze żadnego układu."))
+                    Text(verbatim: U("Nadaj nazwę pierwszemu."))
+                } else {
+                    Text(verbatim: U("Nazwa układu · inna niż pozostałe"))
+                }
+            }
+            .font(PanelFont.mono()).foregroundStyle(th.t)
+            TextField(U("np. Praca"), text: $model.newName)
+                .textFieldStyle(.plain)
+                .font(PanelFont.ui(14, .bold)).foregroundStyle(th.k)
+                .padding(.horizontal, 6)
+                .frame(height: 26)
+                .overlay(Rectangle().strokeBorder(taken ? th.e : th.t, lineWidth: 1))
+                .onSubmit(save)
+            if taken { Text(verbatim: "✕ " + U("Ten zestaw ma już układ „\(t)”.")).font(PanelFont.mono()).foregroundStyle(th.e) }
+            HStack(spacing: 8) {
+                Spacer()
+                panelDialogButton(U("Anuluj"), th.t, filled: false) { model.naming = nil }.keyboardShortcut(.cancelAction)
+                panelDialogButton(U("Zapisz") + " " + J("保存"), th.k, filled: true, enabled: ok, action: save).keyboardShortcut(.defaultAction)
+            }
+        }
+    }
+}
+
+/// "Delete layout?" in the neon look; says which layout moves up and its new shortcut.
+struct PanelDeleteSheet: View {
+    @EnvironmentObject var model: Model
+    let request: DeleteRequest
+    @AppStorage(PanelKey.theme) private var themeNumber = 1
+
+    var body: some View {
+        let th = PanelTheme.number(themeNumber)
+        let ls = model.layouts(request.key)
+        let i = ls.firstIndex { $0.id == request.layout } ?? 0
+        PanelDialog(color: th.e, title: J("削除") + " " + U("Usunąć układ?")) {
+            if ls.indices.contains(i) {
+                Text(verbatim: String(format: "%02d ", i + 1) + model.name(of: ls[i]).uppercased())
+                    .font(PanelFont.ui(16, .bold)).foregroundStyle(th.e).lineLimit(1)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: U("Tego nie da się cofnąć."))
+                if ls.indices.contains(i + 1) {
+                    Text(verbatim: String(format: "%02d ", i + 2) + model.name(of: ls[i + 1]).uppercased() + " › " + U("poz.")
+                         + String(format: " %02d", i + 1) + (Hotkeys.layoutLabel(i + 1).map { " · " + U("skrót") + " " + $0 } ?? ""))
+                }
+            }
+            .font(PanelFont.mono()).foregroundStyle(th.t).lineLimit(1)
+            HStack(spacing: 8) {
+                Spacer()
+                panelDialogButton(U("Anuluj"), th.t, filled: false) { model.deleting = nil }.keyboardShortcut(.cancelAction)
+                panelDialogButton(U("Usuń") + " " + J("削除"), th.e, filled: true) {
+                    model.performDelete(request.key, request.layout)
+                    model.deleting = nil
+                }
+                .keyboardShortcut(.defaultAction)
+            }
         }
     }
 }

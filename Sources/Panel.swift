@@ -88,8 +88,82 @@ private func frac(_ x: Double) -> Double { x - x.rounded(.down) }
 private let panelChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") ?? false
 private let panelMarks = ["配置": "LAYOUT", "接続中": "ONLINE", "保存": "SAVE", "復元": "RESTORE", "相違": "DIFF", "一致": "MATCH",
                           "未保存": "UNSAVED", "未起動": "NOT OPEN", "画面": "SCREEN", "一致率": "RATIO", "手動": "MANUAL", "自動": "AUTO",
-                          "設定": "SETTINGS", "方式": "METHOD", "言語": "LANGUAGE", "起動": "LOGIN", "監視": "WATCH", "偏差": "DEVIATION"]
+                          "設定": "SETTINGS", "方式": "METHOD", "言語": "LANGUAGE", "起動": "LOGIN", "監視": "WATCH", "偏差": "DEVIATION",
+                          "切替": "SWITCH", "配置中": "BUSY", "操作禁止": "HANDS OFF"]
 private func J(_ mark: String) -> String { panelChinese ? panelMarks[mark] ?? mark : mark }
+
+/// The restore banner in the panel look (design RV-C, docs/design-handoff-layouts.md): a console
+/// line in a black field with corner marks, a blinking cursor; the warning (a slow method, hands
+/// off) adds a red strip with a scrolling "don't touch" line. Still with Reduce motion.
+struct PanelRestoreBanner: View {
+    let warning: Bool
+    let info: BannerInfo?
+    @AppStorage(PanelKey.theme) private var themeNumber = 1
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let th = PanelTheme.number(themeNumber)
+        let role = warning ? th.e : th.k
+        let name = info?.name.map { $0.uppercased() }
+        let mark = warning ? J("配置中") : J(info?.switched == true ? "切替" : "復元")
+        let line = warning ? U("Układam przestrzenie…") + (name.map { " „\($0)”" } ?? "")
+            : (info?.switched == true ? U("Zmieniono układ na") : U("Przywrócono układ")) + " „\(name ?? U("Bez nazwy"))”"
+        let tape = J("操作禁止") + " · " + U("Nie ruszaj myszy ani klawiatury") + " · " + U("potrwa kilka sekund") + " · "
+        let tapeWidth = NSAttributedString(string: tape, attributes: [.font: PanelFont.nsUI(11), .kern: 0.66]).size().width
+        TimelineView(.animation(paused: reduceMotion)) { t in
+            let time = t.date.timeIntervalSinceReferenceDate
+            VStack(alignment: .leading, spacing: 0) {
+                (Text(verbatim: "SPACEDOCK // ").font(PanelFont.mono(10))
+                    + Text(verbatim: mark).font(panelChinese ? PanelFont.mono(10) : .custom("Hiragino Mincho ProN", fixedSize: 10)))
+                    .tracking(0.8).foregroundStyle(th.s)
+                    .padding(.bottom, 5)
+                HStack(spacing: 8) {
+                    Text(verbatim: ">")
+                    Text(verbatim: line).lineLimit(1).truncationMode(.tail)
+                    Rectangle().fill(role).frame(width: 8, height: 15)
+                        .opacity(reduceMotion || time.truncatingRemainder(dividingBy: 1.2) < 0.6 ? 1 : 0)
+                }
+                .font(PanelFont.ui(warning ? 15 : 16, .bold)).tracking(0.64).foregroundStyle(role)
+                if !warning, info?.opening == true {
+                    HStack(spacing: 8) {
+                        Text(verbatim: ">")
+                        Text(verbatim: (panelChinese ? "OPEN" : "起動") + " " + U("otwieram brakujące apki") + "…").lineLimit(1)
+                    }
+                    .font(PanelFont.mono(11)).foregroundStyle(th.t)
+                    .padding(.top, 4)
+                }
+                if warning {
+                    // One copy of the line slides left per 9 s; three copies cover the strip.
+                    let shift = reduceMotion ? 0 : CGFloat(time.truncatingRemainder(dividingBy: 9) / 9) * tapeWidth
+                    ZStack(alignment: .leading) {
+                        PanelScanned(color: th.e)
+                        HStack(spacing: 0) { ForEach(0..<3, id: \.self) { _ in Text(verbatim: tape) } }
+                            .font(PanelFont.ui(11, .bold)).tracking(0.66).foregroundStyle(.black)
+                            .fixedSize()
+                            .offset(x: -shift)
+                    }
+                    .frame(height: 18)
+                    .clipped()
+                    .padding(.top, 7)
+                    .padding(.horizontal, -13)
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(width: 440, height: 76, alignment: .leading)
+            .background(Color.black)
+            .overlay(Canvas { c, size in
+                // Corner marks, 12 × 12 pt, 2 pt lines inside the edge.
+                let w = size.width, h = size.height, a: CGFloat = 12, i: CGFloat = 1
+                var p = Path()
+                p.addLines([CGPoint(x: i, y: a), CGPoint(x: i, y: i), CGPoint(x: a, y: i)])
+                p.addLines([CGPoint(x: w - a, y: i), CGPoint(x: w - i, y: i), CGPoint(x: w - i, y: a)])
+                p.addLines([CGPoint(x: i, y: h - a), CGPoint(x: i, y: h - i), CGPoint(x: a, y: h - i)])
+                p.addLines([CGPoint(x: w - a, y: h - i), CGPoint(x: w - i, y: h - i), CGPoint(x: w - i, y: h - a)])
+                c.stroke(p, with: .color(role), lineWidth: 2)
+            })
+        }
+    }
+}
 
 // MARK: - Data
 
@@ -1999,7 +2073,10 @@ func panelShot(_ args: [String]) {
     let size = NSSize(width: number(1) ?? 1100, height: number(2) ?? 700)
     let window = NSWindow(contentRect: NSRect(origin: CGPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
     let normal = UserDefaults.standard.bool(forKey: "shotNormal")
-    let host = NSHostingView(rootView: Group { if normal { ContentView() } else { PanelView() } }
+    let banner = UserDefaults.standard.string(forKey: "shotBanner")   // warn | info | open: the restore banner alone
+    let host = NSHostingView(rootView: Group {
+        if let banner { PanelRestoreBanner(warning: banner == "warn", info: BannerInfo(name: "Wieczór", switched: true, opening: banner == "open")) }
+        else if normal { ContentView() } else { PanelView() } }
         .environmentObject(model).environment(\.colorScheme, normal ? .light : .dark))
     window.contentView = host
     window.orderFrontRegardless()

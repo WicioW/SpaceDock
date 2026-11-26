@@ -685,7 +685,9 @@ func restore(fast: Bool = false) -> Bool {
 signal(SIGPIPE, SIG_IGN)   // a dead helper's pipe must fail a write, not kill the app
 
 // Launched from the .app bundle (tools/make-app.sh) without arguments = the window app.
-switch CommandLine.arguments.dropFirst().first ?? (Bundle.main.bundlePath.hasSuffix(".app") ? "app" : nil) {
+// A first argument starting with "-" is a setting for the app (`open SpaceDock.app --args
+// -bannerTest warn`, read through UserDefaults), not a command.
+switch CommandLine.arguments.dropFirst().first.flatMap({ $0.hasPrefix("-") ? nil : $0 }) ?? (Bundle.main.bundlePath.hasSuffix(".app") ? "app" : nil) {
 case "app": runApp()
 case "list": list()
 case "spmove": spmoveCommand(Array(CommandLine.arguments.dropFirst(2)))

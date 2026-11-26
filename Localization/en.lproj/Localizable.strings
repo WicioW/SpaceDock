@@ -91,7 +91,7 @@
 "Tylko podłączony zestaw" = "Connected set only";
 "Wygląd" = "Look";
 "Zwykły" = "Standard";
-"Panel" = "Panel";
+"Neon" = "Neon";
 "Motyw" = "Theme";
 "Przestawione" = "Moved";
 
@@ -168,3 +168,20 @@
 "Zostaw" = "Leave";
 "Schowaj" = "Hide";
 "Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy." = "Hide: on every restore, full-screen apps outside the layout leave full screen and are minimized. Automatic restore also hides a just-opened app you have not saved. Apps are never quit.";
+"Naciśnij modyfikatory…" = "Press modifiers…";
+"Kliknij, przytrzymaj modyfikatory (np. ⌃⌥) i puść. Esc: anuluj, Delete: usuń" = "Click, hold the modifiers (e.g. ⌃⌥) and let go. Esc: cancel, Delete: remove";
+"+ numer 1–9" = "+ number 1–9";
+"Skróty układów" = "Layout shortcuts";
+"Skrót układu" = "Layout shortcut";
+"tylko przestawia przestrzenie" = "only rearranges Spaces";
+"przywraca z brakującymi apkami" = "restores with missing apps";
+"Numer to pozycja układu na liście obecnego zestawu: ⌃⌥1 pierwszy, ⌃⌥2 drugi. Numer bez układu daje sygnał dźwiękowy." = "The number is the layout's position in the connected set's list: ⌃⌥1 the first, ⌃⌥2 the second. A number with no layout beeps.";
+"⌘1–9 przełącza karty w przeglądarkach i okna w IntelliJ. SpaceDock przejmie te skróty we wszystkich apkach. Dodaj ⌃ albo ⌥." = "⌘1–9 switches tabs in browsers and tool windows in IntelliJ. SpaceDock would take these shortcuts from every app. Add ⌃ or ⌥.";
+"Część tych skrótów zajmuje inna apka, wybierz inne modyfikatory." = "Another app uses some of these shortcuts, choose other modifiers.";
+"Zmieniono układ na „%@”" = "Switched to layout “%@”";
+"Przywrócono układ „%@”" = "Restored layout “%@”";
+"otwieram brakujące apki" = "opening missing apps";
+"Zmieniono układ na" = "Switched to layout";
+"Przywrócono układ" = "Restored layout";
+"Nie ruszaj myszy ani klawiatury" = "Don't touch the mouse or keyboard";
+"potrwa kilka sekund" = "this takes a few seconds";

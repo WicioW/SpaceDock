@@ -91,7 +91,7 @@
 "Tylko podłączony zestaw" = "仅限已连接的组合";
 "Wygląd" = "外观";
 "Zwykły" = "标准";
-"Panel" = "面板";
+"Neon" = "霓虹";
 "Motyw" = "主题";
 "Przestawione" = "已移动";
 
@@ -168,3 +168,20 @@
 "Zostaw" = "保留";
 "Schowaj" = "隐藏";
 "Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy." = "隐藏：每次恢复时，布局之外的全屏应用会退出全屏并最小化。自动恢复也会隐藏刚打开、尚未保存的应用。应用永远不会被退出。";
+"Naciśnij modyfikatory…" = "按下修饰键…";
+"Kliknij, przytrzymaj modyfikatory (np. ⌃⌥) i puść. Esc: anuluj, Delete: usuń" = "点击后按住修饰键（例如 ⌃⌥）再松开。Esc：取消，Delete：删除";
+"+ numer 1–9" = "+ 数字 1–9";
+"Skróty układów" = "布局快捷键";
+"Skrót układu" = "布局快捷键作用";
+"tylko przestawia przestrzenie" = "仅重新排列空间";
+"przywraca z brakującymi apkami" = "连同缺少的应用一起恢复";
+"Numer to pozycja układu na liście obecnego zestawu: ⌃⌥1 pierwszy, ⌃⌥2 drugi. Numer bez układu daje sygnał dźwiękowy." = "数字是布局在当前组合列表中的位置：⌃⌥1 为第一个，⌃⌥2 为第二个。没有布局的数字会发出提示音。";
+"⌘1–9 przełącza karty w przeglądarkach i okna w IntelliJ. SpaceDock przejmie te skróty we wszystkich apkach. Dodaj ⌃ albo ⌥." = "⌘1–9 在浏览器中切换标签页、在 IntelliJ 中切换窗口。SpaceDock 会在所有应用中占用这些快捷键。请加上 ⌃ 或 ⌥。";
+"Część tych skrótów zajmuje inna apka, wybierz inne modyfikatory." = "其他应用占用了部分快捷键，请选择其他修饰键。";
+"Zmieniono układ na „%@”" = "已切换到布局“%@”";
+"Przywrócono układ „%@”" = "已恢复布局“%@”";
+"otwieram brakujące apki" = "正在打开缺少的应用";
+"Zmieniono układ na" = "已切换到布局";
+"Przywrócono układ" = "已恢复布局";
+"Nie ruszaj myszy ani klawiatury" = "请勿触碰鼠标或键盘";
+"potrwa kilka sekund" = "需要几秒钟";

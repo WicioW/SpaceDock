@@ -16,3 +16,10 @@ przeglądarki dokładać tylko brakujące okna (porównanie po adresach, nie po 
 Koszt: uprawnienie Automatyzacja osobno dla każdej przeglądarki; Firefox bez AppleScript (nie da
 się); profile Chrome/Brave tylko przy starcie (`--profile-directory`, zawsze nowe okno); ryzyko
 duplikatów z „kontynuuj tam, gdzie skończyłeś”.
+
+## Komunikat o wyniku przywrócenia (2026-11-26, z ustaleń o komunikacie „Zmieniono układ”)
+
+Dziś komunikat mówi tylko, co SpaceDock robi („Zmieniono układ na …”), nie czy się udało. Pomysł:
+gdy po zakończeniu ekran dalej różni się od układu, komunikat zmienia się na „Nie wszystko się
+ułożyło” (pomarańczowy, dłużej, np. 2 s). Ryzyko fałszywego alarmu: różnica bywa chwilowa (apka
+jeszcze się otwiera, wraca na pełny ekran).

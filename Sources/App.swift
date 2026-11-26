@@ -94,7 +94,8 @@ final class Model: ObservableObject {
         Hotkeys.shared.start([.save: { [weak self] in
                                   guard let self, self.saved[self.current] != nil else { NSSound.beep(); return }   // naming needs the window
                                   self.save() },
-                              .restore: { restore(false) }, .restoreOpen: { restore(true) }])
+                              .restore: { restore(false) }, .restoreOpen: { restore(true) }],
+                             layouts: { [weak self] in self?.restorePosition($0) })
     }
 
     func refresh() {
@@ -262,12 +263,22 @@ final class Model: ObservableObject {
         }
     }
 
+    /// Layout shortcut (⌃⌥N) and a click on a layout in the menu bar: restores the layout at that
+    /// position of the connected set, opening missing apps when the setting says so; a position
+    /// with no layout beeps.
+    func restorePosition(_ n: Int) {
+        let ls = layouts(current)
+        guard ls.indices.contains(n - 1) else { NSSound.beep(); return }
+        restore(current, ls[n - 1].id, openApps: UserDefaults.standard.string(forKey: "layoutHotkeyMode") == "open")
+    }
+
     /// Restores layout `id` of the connected set; it is the selected one from now on.
     func restore(_ key: String, _ id: String, openApps: Bool = false) {
         guard key == current, !busy, trusted else { NSSound.beep(); return }
-        if sets[key]?.selected != id { edit(key) { $0.selected = id } }
+        let switched = sets[key]?.selected != id
+        if switched { edit(key) { $0.selected = id } }
         if key == selection { viewedID = nil }
-        restoreNow(openApps: openApps)
+        restoreNow(openApps: openApps, switched: switched)
     }
 
     func delete(_ key: String) {
@@ -290,27 +301,37 @@ final class Model: ObservableObject {
     /// (drag, full screen) starts, so the direct method runs without a red flash. `openApps`:
     /// launch the saved apps that are closed first ("Przywróć z brakującymi": its own button and
     /// shortcut; never the watcher's restore). `only`: open just that app (Open on a red tile).
-    func restoreNow(openApps: Bool = false, only: String? = nil) {
+    /// `switched`: another layout than the one on screen (its banner says "changed to").
+    func restoreNow(openApps: Bool = false, only: String? = nil, switched: Bool = false) {
         guard !busy else { return }
         busy = true
         restoring = true   // the watcher skips its ticks from now on, not only once runRestore starts
-        slowRestoreStarts = { DispatchQueue.main.async { if self.busy { Overlay.show() } } }
+        // One banner at a time: the quiet one says which layout; a slow method swaps in the red one.
+        let info = sets[current]?.current.map { BannerInfo(name: $0.name, switched: switched, opening: openApps) }
+        if let info { Overlay.show(red: false, info: info) }
+        slowRestoreStarts = { DispatchQueue.main.async { if self.busy { Overlay.show(info: info) } } }
         DispatchQueue.global().async {
             runRestore(openApps: openApps, only: only)
-            DispatchQueue.main.async { Overlay.hide(); self.busy = false; self.refresh() }
+            DispatchQueue.main.async { Overlay.finish(); self.busy = false; self.refresh() }
         }
     }
 }
 
-/// "Please wait" banner on every screen while Spaces are being moved. Click-through, on every
-/// Space, above full-screen apps.
+/// Banner on every screen during a restore. Click-through, on every Space, above full-screen
+/// apps. Red = Spaces are being moved, hands off (a slow method); quiet = which layout (the fast
+/// one, too quick to notice otherwise). Stays at least `minimum`, then fades out.
 enum Overlay {
+    static let minimum: TimeInterval = 0.3   // ponytail: first guess, tune once used for a while
     private static var panels: [NSPanel] = []
+    private static var shownAt = Date.distantPast
 
-    static func show() {
+    /// `info`: the layout being restored, under the red banner's text or as the quiet one's title.
+    /// With the panel look on, both are its banner (design RV-A).
+    static func show(red: Bool = true, info: BannerInfo? = nil) {
+        if panels.isEmpty { shownAt = Date() }   // red after the quiet one: the time counts from the first
         hide()
         panels = NSScreen.screens.map { screen in
-            let size = NSSize(width: 440, height: 76)
+            let size = NSSize(width: 440, height: 96)   // the tallest banner; each sits at the bottom of it
             let panel = NSPanel(contentRect: NSRect(x: screen.frame.midX - size.width / 2, y: screen.frame.minY + 90,
                                                     width: size.width, height: size.height),
                                 styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -319,7 +340,7 @@ enum Overlay {
             panel.ignoresMouseEvents = true
             panel.isOpaque = false
             panel.backgroundColor = .clear
-            panel.contentView = NSHostingView(rootView: OverlayView())
+            panel.contentView = NSHostingView(rootView: RestoreBanner(red: red, info: info))
             panel.orderFrontRegardless()
             return panel
         }
@@ -328,6 +349,67 @@ enum Overlay {
     static func hide() {
         panels.forEach { $0.orderOut(nil) }
         panels = []
+    }
+
+    /// End of a restore: after `minimum` from the first banner, a 0.2 s fade (none with Reduce motion).
+    static func finish() {
+        let fading = panels
+        panels = []   // a banner shown meanwhile is not taken down with these
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(0, minimum - Date().timeIntervalSince(shownAt))) {
+            guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { fading.forEach { $0.orderOut(nil) }; return }
+            NSAnimationContext.runAnimationGroup({ c in
+                c.duration = 0.2
+                fading.forEach { $0.animator().alphaValue = 0 }
+            }, completionHandler: { fading.forEach { $0.orderOut(nil) } })
+        }
+    }
+}
+
+/// What the restore banner says: which layout, whether it replaces another one, apps opening.
+struct BannerInfo {
+    var name: String?   // nil = unnamed
+    var switched: Bool
+    var opening: Bool
+}
+
+/// The banner in the look that is on now (it follows a change of the look while shown).
+struct RestoreBanner: View {
+    let red: Bool
+    let info: BannerInfo?
+    @AppStorage(PanelKey.on) private var panelLook = false
+
+    var body: some View {
+        let line = info.map { i in
+            let name = i.name ?? String(localized: "Bez nazwy")
+            return i.switched ? String(localized: "Zmieniono układ na „\(name)”") : String(localized: "Przywrócono układ „\(name)”")
+        }
+        let detail = info?.opening == true ? String(localized: "otwieram brakujące apki") : nil
+        Group {
+            if panelLook { PanelRestoreBanner(warning: red, info: info) }
+            else if red { OverlayView(line: line).frame(height: line == nil ? 76 : 96) }
+            else { LayoutBanner(title: line ?? "", detail: detail).frame(height: detail == nil ? 56 : 72) }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+    }
+}
+
+/// The quiet banner: which layout a restore puts on screen.
+struct LayoutBanner: View {
+    let title: String
+    let detail: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "rectangle.split.3x1").font(.system(size: 20))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: title).font(.headline).lineLimit(1)
+                if let detail { Text(verbatim: detail).font(.callout).opacity(0.8) }
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.72)))
     }
 }
 
@@ -344,12 +426,15 @@ func withOverlay(_ work: @escaping () -> Void) {
 }
 
 struct OverlayView: View {
+    var line: String? = nil   // which layout
+
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: "hand.raised.fill").font(.system(size: 26))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Układam przestrzenie…").font(.headline)
                 Text("Nie ruszaj myszy ani klawiatury, to potrwa kilka sekund.").font(.callout)
+                if let line { Text(verbatim: line).font(.callout.weight(.semibold)).opacity(0.9).lineLimit(1) }
             }
         }
         .foregroundStyle(.white)
@@ -401,6 +486,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.activate(ignoringOtherApps: true)   // LSUIElement: starts with no Dock icon or app menu
         _ = Updates.controller   // starts the daily update check
+        // `-bannerTest warn|info|open`: the restore banner at once and for good (until the app
+        // quits), to look at it and its animation; the look follows the panel setting.
+        if let test = UserDefaults.standard.string(forKey: "bannerTest") {
+            Overlay.show(red: test == "warn", info: BannerInfo(name: "Praca", switched: test != "restore", opening: test == "open"))
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -428,8 +518,8 @@ struct MenuContent: View {
                 ForEach(Array(layouts.enumerated()), id: \.element.id) { i, l in
                     // A tick on the layout on screen; a click restores it (and selects it).
                     Toggle(isOn: Binding(get: { model.sets[model.current]?.selected == l.id },
-                                         set: { _ in model.restore(model.current, l.id) })) {
-                        Text(verbatim: "\(i + 1). \(model.name(of: l))")
+                                         set: { _ in model.restorePosition(i + 1) })) {
+                        Text(verbatim: "\(i + 1). \(model.name(of: l))" + (Hotkeys.layoutLabel(i + 1).map { "    " + $0 } ?? ""))
                     }
                     .disabled(model.busy || !model.trusted)
                 }
@@ -626,6 +716,9 @@ struct SettingsPanel: View {
     @AppStorage("autoRestore") private var autoRestore = true
     @AppStorage("restoreMethod") private var restoreMethod = "bridge"
     @AppStorage("outsideApps") private var outsideApps = "leave"
+    @AppStorage("layoutHotkeyMode") private var layoutHotkeyMode = "move"
+    @AppStorage(Hotkeys.layoutsKey) private var layoutKeys = ""
+    @ObservedObject private var hotkeys = Hotkeys.shared
     @AppStorage(PanelKey.unlocked) private var panelUnlocked = false
     @AppStorage(PanelKey.on) private var panelOn = false
     @AppStorage(PanelKey.theme) private var panelTheme = 1
@@ -702,6 +795,32 @@ struct SettingsPanel: View {
                         ShortcutField(.restoreOpen)
                     }
                 }
+                Divider()
+                Text("Układy").font(.headline)
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 10) {
+                    GridRow {
+                        Text("Skróty układów")
+                        LayoutModifierField()
+                    }
+                    GridRow(alignment: .top) {
+                        Text("Skrót układu")
+                        Picker("", selection: $layoutHotkeyMode) {
+                            Text("tylko przestawia przestrzenie").tag("move")
+                            Text("przywraca z brakującymi apkami").tag("open")
+                        }
+                        .pickerStyle(.radioGroup)
+                        .labelsHidden()
+                    }
+                }
+                Text("Numer to pozycja układu na liście obecnego zestawu: ⌃⌥1 pierwszy, ⌃⌥2 drugi. Numer bez układu daje sygnał dźwiękowy.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !layoutKeys.isEmpty, Hotkeys.layoutsCommandOnly() {
+                    Label("⌘1–9 przełącza karty w przeglądarkach i okna w IntelliJ. SpaceDock przejmie te skróty we wszystkich apkach. Dodaj ⌃ albo ⌥.", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+                if hotkeys.layoutsTaken {
+                    Text("Część tych skrótów zajmuje inna apka, wybierz inne modyfikatory.").font(.caption).foregroundStyle(.orange)
+                }
             }
             .tabItem { Label("Skróty", systemImage: "keyboard") }
             .tag("shortcuts")
@@ -727,7 +846,7 @@ struct SettingsPanel: View {
                             Text("Wygląd")
                             Picker("", selection: $panelOn) {
                                 Text("Zwykły").tag(false)
-                                Text("Panel").tag(true)
+                                Text("Neon").tag(true)
                             }
                             .pickerStyle(.segmented)
                             .labelsHidden()
@@ -908,6 +1027,7 @@ struct ProfileView: View {
 /// tick on the one on screen. Right click: restore, rename, delete; drag to reorder.
 struct LayoutRow: View {
     @EnvironmentObject var model: Model
+    @AppStorage(Hotkeys.layoutsKey) private var layoutKeys = ""   // redraws the shortcut label when it changes
     let key: String
     let layout: NamedLayout
     let position: Int
@@ -916,9 +1036,12 @@ struct LayoutRow: View {
         HStack(spacing: 8) {
             Text(verbatim: "\(position)").monospacedDigit().foregroundStyle(.secondary).frame(width: 14, alignment: .trailing)
             if layout.name == nil || model.renaming == layout.id { field } else {
-                Text(verbatim: layout.name ?? "").lineLimit(1).truncationMode(.tail)
+                Text(verbatim: layout.name ?? "").lineLimit(1).truncationMode(.tail).layoutPriority(1)
             }
             Spacer(minLength: 4)
+            if key == model.current, let s = Hotkeys.layoutLabel(position) {
+                Text(verbatim: s).font(.system(size: 11)).foregroundStyle(.tertiary).fixedSize()
+            }
             if key == model.current, model.sets[key]?.selected == layout.id {
                 Image(systemName: "checkmark.circle.fill")
                     .symbolRenderingMode(.palette)

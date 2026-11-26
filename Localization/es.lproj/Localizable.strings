@@ -91,7 +91,7 @@
 "Tylko podłączony zestaw" = "Solo el conjunto conectado";
 "Wygląd" = "Aspecto";
 "Zwykły" = "Normal";
-"Panel" = "Panel";
+"Neon" = "Neón";
 "Motyw" = "Tema";
 "Przestawione" = "Movida";
 
@@ -168,3 +168,20 @@
 "Zostaw" = "Dejar";
 "Schowaj" = "Ocultar";
 "Schowaj: przy każdym przywróceniu apki pełnoekranowe spoza układu wychodzą z pełnego ekranu i są minimalizowane. Automat schowa też świeżo otwartą, niezapisaną apkę. Apek nigdy nie zamykamy." = "Ocultar: en cada restauración, las apps a pantalla completa fuera del diseño salen de la pantalla completa y se minimizan. La restauración automática también oculta una app recién abierta y sin guardar. Nunca cerramos apps.";
+"Naciśnij modyfikatory…" = "Pulsa los modificadores…";
+"Kliknij, przytrzymaj modyfikatory (np. ⌃⌥) i puść. Esc: anuluj, Delete: usuń" = "Haz clic, mantén los modificadores (p. ej. ⌃⌥) y suéltalos. Esc: cancelar, Supr: eliminar";
+"+ numer 1–9" = "+ número 1–9";
+"Skróty układów" = "Atajos de diseños";
+"Skrót układu" = "Atajo de diseño";
+"tylko przestawia przestrzenie" = "solo reordena los espacios";
+"przywraca z brakującymi apkami" = "restaura con las apps que faltan";
+"Numer to pozycja układu na liście obecnego zestawu: ⌃⌥1 pierwszy, ⌃⌥2 drugi. Numer bez układu daje sygnał dźwiękowy." = "El número es la posición del diseño en la lista del conjunto conectado: ⌃⌥1 el primero, ⌃⌥2 el segundo. Un número sin diseño emite un sonido.";
+"⌘1–9 przełącza karty w przeglądarkach i okna w IntelliJ. SpaceDock przejmie te skróty we wszystkich apkach. Dodaj ⌃ albo ⌥." = "⌘1–9 cambia de pestaña en los navegadores y de ventana en IntelliJ. SpaceDock se quedaría con estos atajos en todas las apps. Añade ⌃ o ⌥.";
+"Część tych skrótów zajmuje inna apka, wybierz inne modyfikatory." = "Otra app usa algunos de estos atajos, elige otros modificadores.";
+"Zmieniono układ na „%@”" = "Diseño cambiado a «%@»";
+"Przywrócono układ „%@”" = "Diseño «%@» restaurado";
+"otwieram brakujące apki" = "abriendo las apps que faltan";
+"Zmieniono układ na" = "Diseño cambiado a";
+"Przywrócono układ" = "Diseño restaurado";
+"Nie ruszaj myszy ani klawiatury" = "No toques el ratón ni el teclado";
+"potrwa kilka sekund" = "tardará unos segundos";

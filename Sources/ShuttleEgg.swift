@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Easter egg in the title row (TODO.md): the shuttle from the app icon seen from above, payload
+// Easter egg in the title row: the shuttle from the app icon seen from above, payload
 // bay doors open, three Space thumbnails ahead of its nose. It lights up while pressed;
 // 10 quick clicks and it flies forward, the thumbnails ending up in its bay. Drawn 1:1 with the
 // approved sketch, in units of 0.1 pt (shuttle 34 × 23 pt, thumbnails 4.6 × 3.4 pt everywhere).

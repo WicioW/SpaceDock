@@ -216,7 +216,7 @@ final class Model: ObservableObject {
         try? storeLayout(currentLayout()); refresh()
     }
 
-    // MARK: Layouts of a set (TODO.md, "Kilka układów na jeden zestaw monitorów")
+    // MARK: Layouts of a set (docs/design-handoff-layouts.md, "Zachowanie")
 
     func layouts(_ key: String) -> [NamedLayout] { sets[key]?.layouts ?? [] }
 

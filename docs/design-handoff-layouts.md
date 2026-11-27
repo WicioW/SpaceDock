@@ -2,8 +2,8 @@
 
 Decyzje użytkownika z 2026-11-25: zwykły wygląd = **LA** (drzewko w pasku bocznym), panel =
 **QA** (drzewko w szynie pod wybranym zestawem), dziennik w szynie skrócony do 1 wiersza.
-Zachowanie (co robi Zapisz, Przywróć, podgląd, skróty): `TODO.md`, sekcja „Kilka układów na jeden
-zestaw monitorów”. Ten plik opisuje tylko wygląd.
+Zachowanie (co robi Zapisz, Przywróć, podgląd, skróty): sekcja „Zachowanie” na końcu pliku
+(do 2026-11-27 w `TODO.md`). Reszta pliku opisuje wygląd.
 
 ## Źródło prawdy
 
@@ -440,3 +440,54 @@ oznaczenia zamiast japońskich (jak dotąd).
   zwijaniu.
 - Panel przy oknie mniejszym niż 1100 × 700: blok układów skaluje się razem z całą szyną;
   nie było to osobno rysowane.
+
+## Zachowanie (ustalenia z 2026-11-25, przeniesione z TODO.md 2026-11-27)
+
+**Pojęcia:**
+- **Zestaw monitorów:** podłączone ekrany; nie wybiera się go, wynika z kabli.
+- **Układ** (w rozmowie „zestaw aplikacji”): pełny zapis kolejności przestrzeni na wszystkich
+  monitorach zestawu, jak dzisiejszy zapis. Zestaw ma listę układów.
+- **Wybrany układ:** ostatnio przywrócony albo utworzony; pamiętany po restarcie apki.
+- **Podgląd:** klik w inny układ w oknie tylko go pokazuje (kafelki z różnicami), nic nie przestawia.
+
+**Lista układów:**
+- Nazwę wpisuje użytkownik (niepusta, unikalna w zestawie); żadnych domyślnych „Układ 1”.
+- Kolejność przeciąganiem; numery ciągłe 1, 2, 3… (usunięcie nr 4 przesuwa nr 5 na 4).
+- Usuwanie z potwierdzeniem; po usunięciu ostatniego zestaw jest bez zapisu.
+- Pierwszy zapis na nowym zestawie pyta o nazwę („Zapisz” nieaktywny przy pustym polu).
+- Migracja: dzisiejszy zapis zestawu staje się układem bez nazwy, wiersz ma pole „Nadaj nazwę”,
+  nic nie blokuje. `layouts.json`: klucz = zestaw monitorów, wartość = lista układów
+  (nazwa + zapis) i wybrany.
+- Układy innych zestawów: podgląd tak, przywrócenie nie.
+
+**Akcje:**
+- „Przywróć” / „Przywróć z brakującymi” (dwa przyciski jak dziś): na wybranym naprawiają
+  rozjechanie; w podglądzie ładują oglądany układ, który od tej chwili jest wybrany.
+- „Zapisz”: nadpisuje wybrany; w podglądzie niedostępny.
+- „Zapisz jako nowy…”: pyta o nazwę, tworzy układ z obecnego ekranu i od razu go wybiera.
+- „Zapisuj automatycznie”: zawsze do wybranego (nigdy do podglądanego).
+- Po zmianie monitorów („Przywracaj automatycznie”): ostatnio wybrany układ tego zestawu
+  (po aktualizacji: jedyny istniejący). Bez układu domyślnego.
+- Otwieranie apek nie przywraca ich stanu (np. kart przeglądarki); przeglądarki dalej po bundle
+  + tytule.
+
+**Apki spoza układu** (globalne ustawienie, dwie wartości):
+- **Zostaw** (domyślnie): zostają na końcu jako „Nie zapisane”.
+- **Schowaj:** każde przywrócenie (ręczne, skrót, automat) wyprowadza z pełnego ekranu i
+  minimalizuje przestrzenie pełnoekranowe spoza układu. Zwykłych okien na biurkach nie rusza.
+  W opisie ustawienia: automat schowa też świeżo otwartą, niezapisaną apkę pełnoekranową.
+- Apek nie zamykamy nigdy (niezapisana praca).
+
+**Skróty:**
+- Jeden modyfikator w ustawieniach (np. ⌃⌥), numer pozycji na liście dochodzi sam: ⌃⌥1 =
+  pierwszy układ obecnego zestawu, pozycje 1–9. Przypięte do pozycji, nie do nazwy; przy każdym
+  układzie na liście widać jego skrót. Numer poza końcem listy = sygnał dźwiękowy.
+- Przy modyfikatorze: czy skróty układów przywracają tylko przestawiając, czy z brakującymi.
+- Ostrzeżenie przy skrócie z samym ⌘ (⌘1–9 to karty w przeglądarkach, okna w IntelliJ).
+- Dzisiejsze globalne „Zapisz”, „Przywróć”, „Przywróć z brakującymi”: na wybrany układ.
+
+**Menu w pasku menu:** lista układów obecnego zestawu, ptaszek przy wybranym; klik = przywróć
+(jak skrót).
+
+**Poza zakresem:** automatyczne przełączanie układów, karty przeglądarek
+([improvements.md](improvements.md)); składanie układu z osobnych monitorów.

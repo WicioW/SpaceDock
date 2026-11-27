@@ -88,7 +88,7 @@ myszy i Karabinera; CLI `restore-bridge`, experiments.md P9).
 
 Zestaw monitorów ma listę nazwanych układów (np. „Praca”, „Wieczór”); jeden z nich jest
 **wybrany** i to on jest „na ekranie”. Zapis, przywracanie, automat i porównanie z ekranem
-działają tylko na wybranym układzie. Ustalenia: TODO.md (sekcja „kilka układów”), design:
+działają tylko na wybranym układzie. Ustalenia i design:
 [design-handoff-layouts.md](design-handoff-layouts.md).
 - **Lista:** zwykły wygląd ma drzewko w pasku bocznym (zestaw rozwija się w swoje układy,
   „+ Zapisz jako nowy…” na końcu), Neon to samo drzewko w szynie pod wybranym zestawem; krawędzie

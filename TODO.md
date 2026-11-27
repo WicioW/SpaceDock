@@ -215,3 +215,9 @@ monitorów) i rozwiązanie, lista funkcji ze zrzutami, instalacja (DMG / Homebre
 licencja, macOS 15+), FAQ (uprawnienie Dostępność, czemu brak notaryzacji, prywatne API),
 porównanie z innymi apkami, skróty klawiszowe w tabeli, znane ograniczenia, jak zgłosić błąd
 (log bez tytułów), roadmapa, tłumaczenia README (pl / es / zh).
+
+## Tłumaczenia README (2026-11-27)
+
+**Dopiero po** nowym angielskim README (wyżej). README po polsku, hiszpańsku i chińsku
+(`README.pl.md` itd., linki między nimi na górze). Do ustalenia: kto utrzyma es i zh, czy
+tłumaczyć całość czy tylko górę + instalację.

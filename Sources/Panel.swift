@@ -2501,27 +2501,39 @@ struct PanelDeleteSheet: View {
 /// and bars, to check it without a screen recording permission. Theme and language come from
 /// the usual arguments (`-panelTheme 2 -AppleLanguages '(en)'`). `-shotNormal YES`: the normal look;
 /// `-shotLayout N`: look at layout N of the set (a preview when it is not the selected one);
-/// `-shotRowMenu YES`: with its ⋯ open.
+/// `-shotRowMenu YES`: with its ⋯ open; `-shotDemo <file>`: made-up monitors (Model.demo).
 func panelShot(_ args: [String]) {
     guard let out = args.first else { print("panel-shot <png> [width height [set]]"); return }
     let number = { (i: Int) in args.count > i ? Double(args[i]) : nil }
     NSApplication.shared.setActivationPolicy(.accessory)
     let model = Model()
+    if let demo = UserDefaults.standard.string(forKey: "shotDemo") { model.demo(demo) }
     if let i = number(3).map({ Int($0) - 1 }), model.profiles.indices.contains(i) { model.selection = model.profiles[i] }
     let n = UserDefaults.standard.integer(forKey: "shotLayout"), ls = model.layouts(model.selection ?? model.current)
     if ls.indices.contains(n - 1) { model.viewedID = ls[n - 1].id }
     if UserDefaults.standard.bool(forKey: "shotRowMenu"), ls.indices.contains(n - 1) { model.rowMenu = ls[n - 1].id }   // its ⋯ open
-    model.expanded = Set(model.profiles)
+    if UserDefaults.standard.string(forKey: "shotDemo") == nil { model.expanded = Set(model.profiles) }
     let size = NSSize(width: number(1) ?? 1100, height: number(2) ?? 700)
-    let window = NSWindow(contentRect: NSRect(origin: CGPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
+    let window = NSWindow(contentRect: NSRect(origin: UserDefaults.standard.bool(forKey: "shotOnScreen") ? CGPoint(x: 60, y: 60) : CGPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
     let normal = UserDefaults.standard.bool(forKey: "shotNormal")
+    let dark = UserDefaults.standard.bool(forKey: "shotDark")   // the normal look in dark mode
+    if normal { NSApp.appearance = NSAppearance(named: dark ? .darkAqua : .aqua) }
     let banner = UserDefaults.standard.string(forKey: "shotBanner")   // warn | info | open: the restore banner alone
+    let picked = model.selection, opened = model.expanded
+    if normal { model.selection = nil; model.expanded = [] }   // rows come after the sidebar's width (below)
     let host = NSHostingView(rootView: Group {
-        if let banner { PanelRestoreBanner(warning: banner == "warn", info: BannerInfo(name: "Wieczór", switched: true, opening: banner == "open")) }
-        else if normal { ContentView() } else { PanelView() } }
-        .environmentObject(model).environment(\.colorScheme, normal ? .light : .dark))
+        if let banner { PanelRestoreBanner(warning: banner == "warn", info: BannerInfo(name: UserDefaults.standard.string(forKey: "shotBannerName") ?? "Wieczór", switched: true, opening: banner == "open")) }
+        else if normal { ContentView().background(Color(nsColor: .windowBackgroundColor)) } else { PanelView() } }   // the window's background, which the bitmap leaves out
+        .environmentObject(model).environment(\.colorScheme, normal && !dark ? .light : .dark))
     window.contentView = host
     window.orderFrontRegardless()
+    if normal {   // off screen the sidebar starts narrower than its minimum: widen it before its rows
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        func split(_ v: NSView) -> NSSplitView? { v as? NSSplitView ?? v.subviews.lazy.compactMap(split).first }
+        split(host)?.setPosition(260, ofDividerAt: 0)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        model.selection = picked; model.expanded = opened
+    }
     RunLoop.main.run(until: Date().addingTimeInterval(2))   // past the opening reveal
     // `-panelShotLive YES`: the picture the window server composed (layer shadows, blending), which
     // drawing the view into a bitmap leaves out. A process may take its own window without the

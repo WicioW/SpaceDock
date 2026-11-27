@@ -23,3 +23,8 @@ Dziś komunikat mówi tylko, co SpaceDock robi („Zmieniono układ na …”), 
 gdy po zakończeniu ekran dalej różni się od układu, komunikat zmienia się na „Nie wszystko się
 ułożyło” (pomarańczowy, dłużej, np. 2 s). Ryzyko fałszywego alarmu: różnica bywa chwilowa (apka
 jeszcze się otwiera, wraca na pełny ekran).
+
+## Wsparcie finansowe (2026-11-27, z researchu README)
+
+GitHub Sponsors albo Buy Me a Coffee: przycisk w README / `FUNDING.yml`. Wymaga założenia konta;
+na razie bez decyzji i bez wzmianki w README. Research: [readme-research.md](readme-research.md).

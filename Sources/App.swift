@@ -142,6 +142,19 @@ final class Model: ObservableObject {
         if s != screens { screens = s; try? JSONEncoder().encode(s).write(to: screensFile) }
     }
 
+    /// panel-shot `-shotDemo <file>`: made-up monitors and the connected set instead of this Mac's
+    /// (README pictures without real window titles). The bars are the set's selected layout, so
+    /// the screen matches the save; saves come from `-setsFile`.
+    func demo(_ file: String) {
+        struct Demo: Decodable { let current: String; let screens: [String: ScreenInfo] }
+        guard let d = try? JSONDecoder().decode(Demo.self, from: Data(contentsOf: URL(fileURLWithPath: file))) else { return }
+        timer?.invalidate(); watcher?.invalidate()
+        trusted = true; current = d.current; screens = d.screens; selection = d.current; expanded = [d.current]
+        let layout = saved[d.current] ?? [:]
+        live = layout.mapValues { $0.map(\.key) }
+        liveSpaces = layout.mapValues { $0.enumerated().map { LiveSpace(id: $0.offset + 1, bundle: $0.element.bundleID, window: $0.element.window) } }
+    }
+
     var profiles: [String] {
         Set(sets.keys).union([current]).sorted { ($0.split(separator: "+").count, $0) < ($1.split(separator: "+").count, $1) }
     }
@@ -165,7 +178,8 @@ final class Model: ObservableObject {
     /// Names a Space on the bar now (one that is not in the save).
     func describe(_ s: LiveSpace) -> Entry {
         Entry(bundleID: s.bundle,
-              app: s.bundle == desktopID ? "Biurko" : NSRunningApplication.runningApplications(withBundleIdentifier: s.bundle).first?.localizedName ?? s.bundle,
+              app: s.bundle == desktopID ? "Biurko" : NSRunningApplication.runningApplications(withBundleIdentifier: s.bundle).first?.localizedName
+                  ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: s.bundle)?.deletingPathExtension().lastPathComponent ?? s.bundle,
               title: "", window: s.window)
     }
 

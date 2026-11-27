@@ -1,0 +1,261 @@
+{
+ "11111111-1111-1111-1111-111111111111": {
+  "layouts": [
+   {
+    "id": "E7301DAE-DCA6-4651-9CD3-53D5BC22C5DA",
+    "name": "Travel",
+    "layout": {
+     "11111111-1111-1111-1111-111111111111": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.Safari",
+       "app": "Safari",
+       "title": "Flight check-in",
+       "window": 1007
+      },
+      {
+       "bundleID": "com.apple.mail",
+       "app": "Mail",
+       "title": "Inbox",
+       "window": 1014
+      },
+      {
+       "bundleID": "com.apple.Notes",
+       "app": "Notes",
+       "title": "Trip ideas",
+       "window": 1021
+      },
+      {
+       "bundleID": "com.apple.Music",
+       "app": "Music",
+       "title": "Focus",
+       "window": 1028
+      }
+     ]
+    }
+   }
+  ],
+  "selected": "E7301DAE-DCA6-4651-9CD3-53D5BC22C5DA"
+ },
+ "11111111-1111-1111-1111-111111111111+22222222-2222-2222-2222-222222222222": {
+  "layouts": [
+   {
+    "id": "54992E03-D3E4-425A-8420-2B94CA55070A",
+    "name": "Work",
+    "layout": {
+     "22222222-2222-2222-2222-222222222222": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.Safari",
+       "app": "Safari",
+       "title": "Project plan",
+       "window": 1035
+      },
+      {
+       "bundleID": "com.apple.iWork.Pages",
+       "app": "Pages",
+       "title": "Quarterly report",
+       "window": 1042
+      },
+      {
+       "bundleID": "com.apple.iWork.Numbers",
+       "app": "Numbers",
+       "title": "Budget 2026",
+       "window": 1049
+      }
+     ],
+     "11111111-1111-1111-1111-111111111111": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.mail",
+       "app": "Mail",
+       "title": "Inbox",
+       "window": 1056
+      },
+      {
+       "bundleID": "com.apple.MobileSMS",
+       "app": "Messages",
+       "title": "Team",
+       "window": 1063
+      },
+      {
+       "bundleID": "com.apple.iCal",
+       "app": "Calendar",
+       "title": "This week",
+       "window": 1070
+      }
+     ]
+    }
+   },
+   {
+    "id": "081F1E78-C822-485B-893A-E6045E2867AE",
+    "name": "Evening",
+    "layout": {
+     "22222222-2222-2222-2222-222222222222": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.Music",
+       "app": "Music",
+       "title": "Library",
+       "window": 1077
+      },
+      {
+       "bundleID": "com.apple.Photos",
+       "app": "Photos",
+       "title": "Holidays",
+       "window": 1084
+      },
+      {
+       "bundleID": "com.apple.Safari",
+       "app": "Safari",
+       "title": "Recipes",
+       "window": 1091
+      }
+     ],
+     "11111111-1111-1111-1111-111111111111": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.MobileSMS",
+       "app": "Messages",
+       "title": "Friends",
+       "window": 1098
+      },
+      {
+       "bundleID": "com.apple.Notes",
+       "app": "Notes",
+       "title": "Shopping list",
+       "window": 1105
+      }
+     ]
+    }
+   },
+   {
+    "id": "C6EC9EC5-3010-4231-AE0E-65CFBA44B38B",
+    "name": "Presentation",
+    "layout": {
+     "22222222-2222-2222-2222-222222222222": [
+      {
+       "bundleID": "com.apple.iWork.Keynote",
+       "app": "Keynote",
+       "title": "Product launch",
+       "window": 1112
+      },
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      }
+     ],
+     "11111111-1111-1111-1111-111111111111": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.Notes",
+       "app": "Notes",
+       "title": "Speaker notes",
+       "window": 1119
+      },
+      {
+       "bundleID": "com.apple.Safari",
+       "app": "Safari",
+       "title": "Live demo",
+       "window": 1126
+      }
+     ]
+    }
+   }
+  ],
+  "selected": "54992E03-D3E4-425A-8420-2B94CA55070A"
+ },
+ "11111111-1111-1111-1111-111111111111+22222222-2222-2222-2222-222222222222+33333333-3333-3333-3333-333333333333": {
+  "layouts": [
+   {
+    "id": "681D51B2-A76B-4297-A7D3-0A203D1A57EF",
+    "name": "Studio",
+    "layout": {
+     "33333333-3333-3333-3333-333333333333": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.freeform",
+       "app": "Freeform",
+       "title": "Moodboard",
+       "window": 1133
+      },
+      {
+       "bundleID": "com.apple.Photos",
+       "app": "Photos",
+       "title": "Shoot",
+       "window": 1140
+      }
+     ],
+     "22222222-2222-2222-2222-222222222222": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.Safari",
+       "app": "Safari",
+       "title": "References",
+       "window": 1147
+      },
+      {
+       "bundleID": "com.apple.iWork.Pages",
+       "app": "Pages",
+       "title": "Brief",
+       "window": 1154
+      }
+     ],
+     "11111111-1111-1111-1111-111111111111": [
+      {
+       "bundleID": "desktop",
+       "app": "Biurko",
+       "title": ""
+      },
+      {
+       "bundleID": "com.apple.mail",
+       "app": "Mail",
+       "title": "Inbox",
+       "window": 1161
+      },
+      {
+       "bundleID": "com.apple.Music",
+       "app": "Music",
+       "title": "Focus",
+       "window": 1168
+      }
+     ]
+    }
+   }
+  ],
+  "selected": "681D51B2-A76B-4297-A7D3-0A203D1A57EF"
+ }
+}

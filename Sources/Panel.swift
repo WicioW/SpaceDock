@@ -91,7 +91,7 @@ private let panelMarks = ["配置": "LAYOUT", "接続中": "ONLINE", "保存": "
                           "設定": "SETTINGS", "方式": "METHOD", "言語": "LANGUAGE", "起動": "LOGIN", "監視": "WATCH", "偏差": "DEVIATION",
                           "切替": "SWITCH", "配置中": "BUSY", "操作禁止": "HANDS OFF",
                           "閲覧": "PREVIEW", "現": "NOW", "新規": "NEW", "初回": "FIRST", "削除": "DELETE", "改名": "RENAME",
-                          "外": "OTHER", "残": "LEAVE", "隠": "HIDE", "鍵": "KEYS", "系": "SYSTEM"]
+                          "外": "OTHER", "残": "LEAVE", "隠": "HIDE", "鍵": "KEYS", "系": "SYSTEM", "支援": "SUPPORT"]
 private func J(_ mark: String) -> String { panelChinese ? panelMarks[mark] ?? mark : mark }
 
 /// The restore banner in the panel look (design RV-C, docs/design-handoff-layouts.md): a console
@@ -105,10 +105,12 @@ struct PanelRestoreBanner: View {
 
     var body: some View {
         let th = PanelTheme.number(themeNumber)
-        let role = warning ? th.e : th.k
+        let problems = info?.problems   // the result after a restore: not all of it landed
+        let role = warning || problems != nil ? th.e : th.k
         let name = info?.name.map { $0.uppercased() }
-        let mark = warning ? J("配置中") : J(info?.switched == true ? "切替" : "復元")
-        let line = warning ? U("Układam przestrzenie…") + (name.map { " „\($0)”" } ?? "")
+        let mark = problems != nil ? J("偏差") : warning ? J("配置中") : J(info?.switched == true ? "切替" : "復元")
+        let line = problems != nil ? U("Nie wszystko się ułożyło")
+            : warning ? U("Układam przestrzenie…") + (name.map { " „\($0)”" } ?? "")
             : (info?.switched == true ? U("Zmieniono układ na") : U("Przywrócono układ")) + " „\(name ?? U("Bez nazwy"))”"
         let tape = J("操作禁止") + " · " + U("Nie ruszaj myszy ani klawiatury") + " · " + U("potrwa kilka sekund") + " · "
         let tapeWidth = NSAttributedString(string: tape, attributes: [.font: PanelFont.nsUI(11), .kern: 0.66]).size().width
@@ -126,7 +128,14 @@ struct PanelRestoreBanner: View {
                         .opacity(reduceMotion || time.truncatingRemainder(dividingBy: 1.2) < 0.6 ? 1 : 0)
                 }
                 .font(PanelFont.ui(warning ? 15 : 16, .bold)).tracking(0.64).foregroundStyle(role)
-                if !warning, info?.opening == true {
+                if let problems {
+                    HStack(spacing: 8) {
+                        Text(verbatim: ">")
+                        Text(verbatim: U("Różnice: \(problems) · szczegóły w oknie SpaceDock")).lineLimit(1)
+                    }
+                    .font(PanelFont.mono(11)).foregroundStyle(th.t)
+                    .padding(.top, 4)
+                } else if !warning, info?.opening == true {
                     HStack(spacing: 8) {
                         Text(verbatim: ">")
                         Text(verbatim: (panelChinese ? "OPEN" : "起動") + " " + U("otwieram brakujące apki") + "…").lineLimit(1)
@@ -2175,6 +2184,9 @@ struct PanelSettingsWindow: View {
                         .buttonStyle(.plain)
                     }
                 }
+                row(U("Wsparcie") + " " + J("支援")) {
+                    segment(U("Wesprzyj na Ko-fi") + " ↗", on: false) { NSWorkspace.shared.open(supportURL) }
+                }
                 HStack {
                     Text(verbatim: U("Esc · zamyka · zmiany działają od razu")).font(PanelFont.mono()).foregroundStyle(th.s)
                     Spacer()
@@ -2522,7 +2534,8 @@ func panelShot(_ args: [String]) {
     let picked = model.selection, opened = model.expanded
     if normal { model.selection = nil; model.expanded = [] }   // rows come after the sidebar's width (below)
     let host = NSHostingView(rootView: Group {
-        if let banner { PanelRestoreBanner(warning: banner == "warn", info: BannerInfo(name: UserDefaults.standard.string(forKey: "shotBannerName") ?? "Wieczór", switched: true, opening: banner == "open")) }
+        if let banner { PanelRestoreBanner(warning: banner == "warn", info: BannerInfo(name: UserDefaults.standard.string(forKey: "shotBannerName") ?? "Wieczór", switched: true, opening: banner == "open",
+                                                                       problems: banner == "result" ? 2 : nil)) }
         else if normal { ContentView().background(Color(nsColor: .windowBackgroundColor)) } else { PanelView() } }   // the window's background, which the bitmap leaves out
         .environmentObject(model).environment(\.colorScheme, normal && !dark ? .light : .dark))
     window.contentView = host

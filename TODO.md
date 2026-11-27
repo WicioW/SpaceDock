@@ -188,6 +188,10 @@ Gdy okno SpaceDock jest na wierzchu (nie globalnie):
 
 ## README na GitHubie: zrzuty, GIF-y, lepszy opis (2026-11-26)
 
+**Stan (2026-11-27):** ✅ nowe README (GIF na górze, zrzuty jasne/ciemne z wymyślonych danych, szybki
+start, skróty, FAQ); research i decyzje: [docs/readme-research.md](docs/readme-research.md); obrazki
+odświeża `tools/readme/shots.sh`. Sekcja „Similar apps” odpuszczona.
+
 **Cel:** README, które w kilka sekund pokazuje, co SpaceDock robi i po co. Dziś jest sam tekst.
 
 **Najpierw research:** jak wyglądają porządne README apek na macOS z paska menu (np. Rectangle,
@@ -221,3 +225,9 @@ porównanie z innymi apkami, skróty klawiszowe w tabeli, znane ograniczenia, ja
 **Dopiero po** nowym angielskim README (wyżej). README po polsku, hiszpańsku i chińsku
 (`README.pl.md` itd., linki między nimi na górze). Do ustalenia: kto utrzyma es i zh, czy
 tłumaczyć całość czy tylko górę + instalację.
+
+## Automatyczne przełączanie układów (2026-11-27) — pomysł
+
+Na razie tylko pomysł, bez decyzji o kształcie; szczegóły w
+[docs/improvements.md](docs/improvements.md). Wrócić po pewnym czasie z ręcznym przełączaniem i
+skrótami, jeśli go brakuje: pora dnia / dzień tygodnia albo uruchomione apki wybierają układ.

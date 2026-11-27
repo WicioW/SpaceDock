@@ -109,6 +109,10 @@ działają tylko na wybranym układzie. Ustalenia: TODO.md (sekcja „kilka ukł
   przez całe układanie, co najmniej 0,3 s, potem znika w 0,2 s. Wygląd: zwykły, czerwony
   (ostrzeżenie „nie ruszaj myszy”) albo neonowy (RV-C) przy wyglądzie Neon. Test bez układania:
   `open ~/Applications/SpaceDock.app --args -bannerTest warn` (apka musi być wcześniej zamknięta).
+  Po przywróceniu (1 s, przy otwieraniu apek 3 s) apka porównuje ekran z układem: gdy przestrzenie
+  układu są nie na miejscu, brakuje ich albo nie są na pełnym ekranie, pokazuje na 2,5 s
+  „Nie wszystko się ułożyło · Różnice: N” (pomarańczowy, w Neon czerwony 偏差). Apki spoza układu
+  się nie liczą. Test: `-bannerTest result`.
 - **Apki spoza układu** (Ustawienia → Ogólne): „Zostaw” (domyślnie) albo „Schowaj”: po każdym
   przywróceniu apki pełnoekranowe spoza wybranego układu wychodzą z pełnego ekranu i są
   minimalizowane. Apek SpaceDock nigdy nie zamyka.

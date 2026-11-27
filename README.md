@@ -190,6 +190,13 @@ Found a bug or have an idea? Open an issue first, then a pull request. Translati
 
 For fans of Neon Genesis Evangelion and Akira, there's an easter egg.
 
+## Support
+
+SpaceDock is free and stays free. If it saves you time, you can buy me a coffee. It's a tip:
+it doesn't unlock features or buy priority for issues.
+
+<a href="https://ko-fi.com/wiciow"><img src="https://img.shields.io/badge/Ko--fi-Support%20SpaceDock-FF5E5B?logo=kofi&logoColor=white" alt="Support SpaceDock on Ko-fi"></a>
+
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE): SpaceDock is source-available, not open source in the OSI

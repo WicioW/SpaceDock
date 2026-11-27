@@ -225,7 +225,7 @@ kabla: pomieszać ręcznie i kliknąć **Restore**.
    dawał 404 bez logowania (2026-11-27). mp4 poza repo (`dist/`).
 3. O wyglądzie Neon ani słowa. Zamiast tego jedno zdanie: *For fans of Neon Genesis Evangelion and
    Akira, there's an easter egg.*
-4. „Similar apps”: tak, 4–5 punktów; każde zdanie sprawdzone na stronie danej apki przed publikacją.
+4. „Similar apps”: odpuszczone (2026-11-27).
 5. Brak notaryzacji: powód w jednym zdaniu (płatne konto Apple Developer, apka darmowa).
 6. FAQ: zalecić wyłączenie „Automatically rearrange Spaces based on most recent use”.
 7. Sponsoring: na razie nic w README; pomysł w `docs/improvements.md`.

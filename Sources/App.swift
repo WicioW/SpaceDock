@@ -6,6 +6,7 @@ import ServiceManagement
 // plus a menu bar icon. Reading and saving need no Accessibility; restore and the watcher do.
 
 let logFile = movedFromOldName("spaces-layout.log", "SpaceDock.log", in: "Library/Logs")
+let supportURL = URL(string: "https://ko-fi.com/wiciow")!   // menu bar, Settings (both looks), README
 
 private let languages = ["pl", "en", "es", "zh-Hans"]
 
@@ -373,8 +374,26 @@ final class Model: ObservableObject {
         slowRestoreStarts = { DispatchQueue.main.async { if self.busy { Overlay.show(info: info) } } }
         DispatchQueue.global().async {
             runRestore(openApps: openApps, only: only)
-            DispatchQueue.main.async { Overlay.finish(); self.busy = false; self.refresh() }
+            DispatchQueue.main.async {
+                Overlay.finish(); self.busy = false; self.refresh()
+                // A moment later (apps still opening, windows going full screen): did it all land?
+                guard only == nil, let info else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + (openApps ? 3 : 1)) { self.checkResult(info) }
+            }
         }
+    }
+
+    /// After a restore: Spaces of the layout still out of place, missing or not full screen
+    /// (apps outside the layout do not count: "Leave" keeps them on purpose) show an orange banner.
+    /// ponytail: a saved app that is closed warns after every plain restore; mute it if that nags.
+    private func checkResult(_ info: BannerInfo) {
+        guard !busy else { return }
+        refresh()
+        let n = PanelData(self, key: current).tiles.filter { [.moved, .missing, .noFullScreen].contains($0.state) }.count
+        guard n > 0 else { return }
+        log("Po przywróceniu różnice: \(n)")
+        var i = info; i.problems = n
+        Overlay.flash(i)
     }
 }
 
@@ -385,12 +404,14 @@ enum Overlay {
     static let minimum: TimeInterval = 0.3   // ponytail: first guess, tune once used for a while
     private static var panels: [NSPanel] = []
     private static var shownAt = Date.distantPast
+    private static var generation = 0   // which show() the panels are from
 
     /// `info`: the layout being restored, under the red banner's text or as the quiet one's title.
     /// With the panel look on, both are its banner (design RV-A).
     static func show(red: Bool = true, info: BannerInfo? = nil) {
         if panels.isEmpty { shownAt = Date() }   // red after the quiet one: the time counts from the first
         hide()
+        generation += 1
         panels = NSScreen.screens.map { screen in
             let size = NSSize(width: 440, height: 96)   // the tallest banner; each sits at the bottom of it
             let panel = NSPanel(contentRect: NSRect(x: screen.frame.midX - size.width / 2, y: screen.frame.minY + 90,
@@ -405,6 +426,13 @@ enum Overlay {
             panel.orderFrontRegardless()
             return panel
         }
+    }
+
+    /// A banner on its own for 2.5 s (the result after a restore), unless another one replaces it.
+    static func flash(_ info: BannerInfo) {
+        show(red: false, info: info)
+        let shown = generation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { if generation == shown { finish() } }
     }
 
     static func hide() {
@@ -431,6 +459,7 @@ struct BannerInfo {
     var name: String?   // nil = unnamed
     var switched: Bool
     var opening: Bool
+    var problems: Int? = nil   // set: the result after a restore, this many Spaces not as saved
 }
 
 /// The banner in the look that is on now (it follows a change of the look while shown).
@@ -447,6 +476,12 @@ struct RestoreBanner: View {
         let detail = info?.opening == true ? String(localized: "otwieram brakujące apki") : nil
         Group {
             if panelLook { PanelRestoreBanner(warning: red, info: info) }
+            else if let n = info?.problems {
+                LayoutBanner(title: String(localized: "Nie wszystko się ułożyło"),
+                             detail: String(localized: "Różnice: \(n) · szczegóły w oknie SpaceDock"),
+                             symbol: "exclamationmark.triangle.fill", color: Color.orange.opacity(0.95))
+                    .frame(height: 72)
+            }
             else if red { OverlayView(line: line).frame(height: line == nil ? 76 : 96) }
             else { LayoutBanner(title: line ?? "", detail: detail).frame(height: detail == nil ? 56 : 72) }
         }
@@ -458,10 +493,12 @@ struct RestoreBanner: View {
 struct LayoutBanner: View {
     let title: String
     let detail: String?
+    var symbol = "rectangle.split.3x1"
+    var color = Color.black.opacity(0.72)
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "rectangle.split.3x1").font(.system(size: 20))
+            Image(systemName: symbol).font(.system(size: 20))
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: title).font(.headline).lineLimit(1)
                 if let detail { Text(verbatim: detail).font(.callout).opacity(0.8) }
@@ -470,7 +507,7 @@ struct LayoutBanner: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.72)))
+        .background(RoundedRectangle(cornerRadius: 16).fill(color))
     }
 }
 
@@ -553,7 +590,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // `-bannerTest warn|info|open`: the restore banner at once and for good (until the app
         // quits), to look at it and its animation; the look follows the panel setting.
         if let test = UserDefaults.standard.string(forKey: "bannerTest") {
-            Overlay.show(red: test == "warn", info: BannerInfo(name: "Praca", switched: test != "restore", opening: test == "open"))
+            Overlay.show(red: test == "warn", info: BannerInfo(name: "Praca", switched: test != "restore", opening: test == "open",
+                                                               problems: test == "result" ? 2 : nil))
         }
     }
 
@@ -623,6 +661,7 @@ struct MenuContent: View {
         Button("Pokaż log") { NSWorkspace.shared.open(logFile) }
         CheckForUpdatesButton()
         Button("Ustawienia…") { showSettings(model, openWindow: openWindow, openSettings: openSettings) }
+        Button("Wesprzyj na Ko-fi…") { NSWorkspace.shared.open(supportURL) }
         Divider()
         Button("Zakończ") { NSApp.terminate(nil) }
     }
@@ -959,6 +998,12 @@ struct SettingsPanel: View {
                 }
                 Toggle("Uruchamiaj przy logowaniu", isOn: Binding(get: { model.loginItem }, set: { model.setLoginItem($0) }))
                 AutoUpdateToggle()
+                Divider()
+                Button { NSWorkspace.shared.open(supportURL) } label: {
+                    Label("Wesprzyj na Ko-fi", systemImage: "cup.and.saucer.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color(red: 1, green: 0.37, blue: 0.36))   // Ko-fi's coral
             }
             .tabItem { Label("Apka", systemImage: "macwindow") }
             .tag("app")

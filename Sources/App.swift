@@ -1020,7 +1020,8 @@ struct ProfileView: View {
     var body: some View {
         let viewed = model.viewed(key)
         let preview = viewed != nil && model.isPreview(key)
-        VStack(alignment: .leading, spacing: 20) {
+        // Scrolls in a short window instead of squeezing the monitors (tiles spilled out of them).
+        ScrollView { VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -1071,9 +1072,9 @@ struct ProfileView: View {
                 Text("Ten zestaw nie ma jeszcze żadnego układu. Ułóż przestrzenie i kliknij „Zapisz”.")
                     .foregroundStyle(.secondary)
             }
-            Spacer()
         }
         .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading) }
     }
 
     private var onScreenCapsule: some View {

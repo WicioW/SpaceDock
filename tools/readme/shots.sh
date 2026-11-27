@@ -14,7 +14,7 @@ mkdir -p "$OUT" dist
 for theme in light dark; do
     DARK=(); [ "$theme" = dark ] && DARK=(-shotDark YES)
     "$BIN" panel-shot "$OUT/window-$theme.png" 1100 400 "${DEMO[@]}" ${DARK[@]+"${DARK[@]}"}
-    "$BIN" panel-shot "$OUT/preview-$theme.png" 1100 560 "${DEMO[@]}" -shotLayout 2 ${DARK[@]+"${DARK[@]}"}
+    "$BIN" panel-shot "$OUT/preview-$theme.png" 1100 650 "${DEMO[@]}" -shotLayout 2 ${DARK[@]+"${DARK[@]}"}
 done
 
 swiftc -O tools/readme/hero.swift -o "$TMP/hero"

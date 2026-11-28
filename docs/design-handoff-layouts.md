@@ -435,9 +435,8 @@ oznaczenia zamiast japońskich (jak dotąd).
 ## Otwarte kwestie
 
 - Więcej niż 9 układów: pozycje 10+ nie mają skrótu; wiersz pokazuje sam numer.
-- Strzałki ←/→ i ↑/↓ w oknie apki (osobny punkt w `TODO.md`): w LA układy są w drzewku, gdzie
-  ←/→ systemowo zwija i rozwija. Do ustalenia, czy ←/→ ma zmieniać układ, czy zostać przy
-  zwijaniu.
+- Strzałki w oknie apki: ✅ (2026-11-28) ↑/↓ po układach wszystkich zestawów, ←/→ monitor, Enter
+  wchodzi w apki, Esc wraca; opis w `docs/app.md` („Klawiatura w oknie”).
 - Panel przy oknie mniejszym niż 1100 × 700: blok układów skaluje się razem z całą szyną;
   nie było to osobno rysowane.
 

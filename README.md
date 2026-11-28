@@ -95,7 +95,7 @@ not open.
 
 ## Shortcuts
 
-None are set by default; pick them in **Settings → Shortcuts**. They work from any app.
+None are set by default; pick them in **Settings → Shortcuts**. They work from any app. The arrow keys work only in SpaceDock's window.
 
 | Shortcut | Does |
 |---|---|
@@ -103,6 +103,8 @@ None are set by default; pick them in **Settings → Shortcuts**. They work from
 | Your choice | Restore |
 | Your choice | Restore with missing apps |
 | Modifiers + <kbd>1</kbd>–<kbd>9</kbd>, e.g. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>1</kbd> | Switch to layout 1–9 of the connected monitor set |
+| <kbd>↑</kbd> <kbd>↓</kbd> in the SpaceDock window | Preview the previous / next layout (nothing moves) |
+| <kbd>←</kbd> <kbd>→</kbd>, then <kbd>Return</kbd> | Pick a monitor, step into its Spaces; <kbd>Return</kbd> again shows that Space, <kbd>Esc</kbd> goes back |
 
 <details>
 <summary><b>Restore methods</b></summary>

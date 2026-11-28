@@ -98,6 +98,20 @@ działają tylko na wybranym układzie. Ustalenia i design:
 - **Podgląd:** klik w inny układ pokazuje go bez ruszania ekranu (pasek „Oglądasz zapisany
   układ…”, kolory = różnica z ekranem). „Wczytaj „…”” przywraca go i robi wybranym, „Wróć do
   „…”” wraca do układu na ekranie. W podglądzie zapis jest wyłączony.
+- **Klawiatura w oknie** (od 2026-11-28, oba wyglądy, okno na wierzchu), dwa poziomy:
+  - ↑ / ↓: poprzedni / następny układ na liście, po kolei przez wszystkie zestawy (zestawy bez
+    układu pominięte); tylko podgląd, nic nie przestawia. ← / →: obwódka na monitorze (→ zaczyna
+    od lewego, ← od prawego); w neonie pokazuje ten monitor.
+  - Enter: wejście w apki obwiedzionego monitora (pierwsza zaznaczona), ← / → po kolei po apkach
+    (kolejność paska), ↑ / ↓ nic. Enter na apce przechodzi do jej przestrzeni, jak podwójny klik,
+    ale tylko w układzie na ekranie; inaczej czerwona obwódka i podpis („Ten układ nie jest na
+    ekranie”, „Ten zestaw monitorów nie jest podłączony”, „Nie otwarte”, „Brak biurka”; w neonie
+    w wierszu nad kafelkami).
+  - Esc: z apki do monitora, z monitora bez obwódki. Na końcach list strzałki stoją.
+  - Nie działa przy wpisywaniu nazwy, w okienku nowego układu, usuwania i w ustawieniach neon.
+    Klik myszą w kafelek albo w inny układ zdejmuje zaznaczenie z klawiatury.
+  - Kod: lokalny monitor klawiszy w `Model.init`, `Model.key(_:)`, stan `kbMonitor`, `kbTile`,
+    `kbNote`; render: `panel-shot … -shotKeys "2,1,Nie otwarte"`.
 - **Pasek menu:** sekcja „Układy” z numerami i skrótami; klik przywraca układ.
 - **Skróty układów** (Ustawienia → Skróty): same modyfikatory (np. ⌃⌥) + cyfra 1–9 = pozycja
   układu na liście podłączonego zestawu. Cyfra bez układu daje sygnał. Tryb: „tylko przestawia

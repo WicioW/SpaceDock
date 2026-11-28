@@ -869,7 +869,7 @@ struct PanelView: View {
         let status = preview ? data.previewStatus(th, viewed: viewed.map { model.name(of: $0) } ?? "",
                                                   onScreen: model.sets[key]?.current.map { model.name(of: $0) })
             : data.status(th, busy: model.busy)
-        let picked = state.monitorPick[key].flatMap { u in data.monitors.firstIndex { $0.uuid == u } } ?? data.defaultMonitor
+        let picked = (model.kbMonitor ?? state.monitorPick[key]).flatMap { u in data.monitors.firstIndex { $0.uuid == u } } ?? data.defaultMonitor   // ← / → show the framed one
         let monitor = data.monitors.indices.contains(picked) ? data.monitors[picked] : nil
         return VStack(spacing: 0) {
             ZStack {
@@ -1168,12 +1168,14 @@ struct PanelZone: View {
     /// ↗ on a missing app opens it and restores.
     private func tile(_ t: PanelTile) -> some View {
         let openable = data.connected && !t.entry.isDesktop && (t.state == .missing || t.state == .noFullScreen)
-        return PanelTileView(th: th, tile: t, lit: state.hover == t.index, picked: t.space != nil && t.space == model.pickedSpace,
+        let keyed = model.kbMonitor == data.monitors[picked].uuid && model.kbTile.map { data.monitors[picked].tiles.indices.contains($0) && data.monitors[picked].tiles[$0].index == t.index } == true
+        return PanelTileView(th: th, tile: t, lit: state.hover == t.index,
+                             picked: keyed || (model.kbTile == nil && t.space != nil && t.space == model.pickedSpace),
                              open: openable ? { model.restoreNow(openApps: true, only: t.entry.bundleID) } : nil,
                              openEnabled: !model.busy && model.trusted)
             .onHover { state.point(t.index, $0) }
             .onTapGesture(count: 2) { if let id = t.space { DispatchQueue.global().async { _ = goTo(id) } } }
-            .simultaneousGesture(TapGesture().onEnded { if let id = t.space { model.pickedSpace = id } })
+            .simultaneousGesture(TapGesture().onEnded { model.kbTile = nil; model.kbNote = nil; if let id = t.space { model.pickedSpace = id } })
             .help(t.space == nil ? "" : String(localized: "Kliknij dwa razy, żeby przejść do tej przestrzeni"))
     }
 
@@ -1181,7 +1183,7 @@ struct PanelZone: View {
         let selected = i == picked
         let color = selected ? th.k : m.hasError ? th.e : m.differs ? th.w : th.k
         let number = String(format: "%02d", i + 1)
-        return Button { state.monitorPick[data.key] = m.uuid; state.hover = nil } label: { PanelHot { hot in
+        return Button { state.monitorPick[data.key] = m.uuid; state.hover = nil; model.clearKeyboard() } label: { PanelHot { hot in
             HStack(spacing: 6) {
                 Text(verbatim: (data.monitors.count >= 3 ? "" : (J("画面") + " ")) + number + " · " + m.name)
                     .font(PanelFont.ui(data.monitors.count >= 3 ? 11 : 12, .bold)).lineLimit(1)
@@ -1195,6 +1197,7 @@ struct PanelZone: View {
             .background(PanelScanned(color: selected || hot ? color : .black))
             .overlay(Rectangle().strokeBorder(color, lineWidth: selected || m.differs ? 1.5 : 1))
             .overlay(PanelGlow(on: hot && selected, shape: Rectangle()))
+            .overlay(Rectangle().stroke(th.k, lineWidth: 2).padding(-3).opacity(model.kbMonitor == m.uuid ? 1 : 0))   // framed by ← / →
             .contentShape(Rectangle())
         } }
         .buttonStyle(.plain)
@@ -1202,7 +1205,8 @@ struct PanelZone: View {
 
     /// The hovered tile in full; with nothing hovered, the monitor's first difference.
     private func detail(_ m: PanelMonitor) -> some View {
-        let t = m.tiles.first { $0.index == state.hover } ?? m.tiles.first { $0.state != .ok } ?? m.tiles.first
+        let keyed = model.kbMonitor == m.uuid ? model.kbTile.flatMap { k in m.tiles.first { $0.index == k } } : nil   // picked with the keyboard
+        let t = m.tiles.first { $0.index == state.hover } ?? keyed ?? m.tiles.first { $0.state != .ok } ?? m.tiles.first
         let name = t.map { $0.entry.isDesktop ? String(localized: "Biurko") : $0.entry.app } ?? ""
         let title = t.map { $0.entry.title.isEmpty ? "" : " — " + $0.entry.title } ?? ""
         let window = t?.entry.window.map { " · #\($0)" } ?? ""
@@ -1214,7 +1218,10 @@ struct PanelZone: View {
                 .padding(.horizontal, -5)
             Text(verbatim: name + title + window).foregroundStyle(.white).truncationMode(.tail)
             Spacer(minLength: 0)
-            if let t { Text(verbatim: t.word + " " + t.kanji).foregroundStyle(t.color(th)).fixedSize() }
+            if let note = model.kbNote, keyed != nil, t?.index == keyed?.index {   // why Enter did not go there
+                Text(verbatim: U(String.LocalizationValue(note))).foregroundStyle(.black).padding(.horizontal, 5)
+                    .background(th.e).fixedSize()
+            } else if let t { Text(verbatim: t.word + " " + t.kanji).foregroundStyle(t.color(th)).fixedSize() }
         }
         .font(PanelFont.mono()).lineLimit(1)
         .padding(.horizontal, 8)
@@ -2513,7 +2520,17 @@ struct PanelDeleteSheet: View {
 /// and bars, to check it without a screen recording permission. Theme and language come from
 /// the usual arguments (`-panelTheme 2 -AppleLanguages '(en)'`). `-shotNormal YES`: the normal look;
 /// `-shotLayout N`: look at layout N of the set (a preview when it is not the selected one);
-/// `-shotRowMenu YES`: with its ⋯ open; `-shotDemo <file>`: made-up monitors (Model.demo).
+/// `-shotRowMenu YES`: with its ⋯ open; `-shotDemo <file>`: made-up monitors (Model.demo);
+/// `-shotKeys "2,1,Nie otwarte"`: monitor 2 framed, its first Space picked, with that note.
+/// `-shotKeys "monitor[,tile[,note]]"` (1-based): the keyboard state for panel-shot.
+private func shotKeys(_ model: Model) {
+    guard let k = UserDefaults.standard.string(forKey: "shotKeys") else { return }
+    let p = k.split(separator: ",", maxSplits: 2).map(String.init), ms = model.displays(model.selection ?? model.current)
+    if let m = Int(p[0]), ms.indices.contains(m - 1) { model.kbMonitor = ms[m - 1] }
+    if p.count > 1, let t = Int(p[1]) { model.kbTile = t - 1 }
+    if p.count > 2 { model.kbNote = p[2] }
+}
+
 func panelShot(_ args: [String]) {
     guard let out = args.first else { print("panel-shot <png> [width height [set]]"); return }
     let number = { (i: Int) in args.count > i ? Double(args[i]) : nil }
@@ -2524,6 +2541,7 @@ func panelShot(_ args: [String]) {
     let n = UserDefaults.standard.integer(forKey: "shotLayout"), ls = model.layouts(model.selection ?? model.current)
     if ls.indices.contains(n - 1) { model.viewedID = ls[n - 1].id }
     if UserDefaults.standard.bool(forKey: "shotRowMenu"), ls.indices.contains(n - 1) { model.rowMenu = ls[n - 1].id }   // its ⋯ open
+    shotKeys(model)
     if UserDefaults.standard.string(forKey: "shotDemo") == nil { model.expanded = Set(model.profiles) }
     let size = NSSize(width: number(1) ?? 1100, height: number(2) ?? 700)
     let window = NSWindow(contentRect: NSRect(origin: UserDefaults.standard.bool(forKey: "shotOnScreen") ? CGPoint(x: 60, y: 60) : CGPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
@@ -2546,6 +2564,7 @@ func panelShot(_ args: [String]) {
         split(host)?.setPosition(260, ofDividerAt: 0)
         RunLoop.main.run(until: Date().addingTimeInterval(0.3))
         model.selection = picked; model.expanded = opened
+        shotKeys(model)   // the selection change above cleared them
     }
     RunLoop.main.run(until: Date().addingTimeInterval(2))   // past the opening reveal
     // `-panelShotLive YES`: the picture the window server composed (layer shadows, blending), which

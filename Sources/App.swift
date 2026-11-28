@@ -69,7 +69,10 @@ final class Model: ObservableObject {
     @Published var saved: [String: Layout] = [:]   // selected layout of each set
     @Published var sets: [String: LayoutSet] = [:]
     @Published var viewedID: String? {   // layout clicked in the sidebar for `selection`; nil = its selected one
-        didSet { if renaming != nil, renaming != viewedID { commitRenaming() } }   // clicking elsewhere saves a rename
+        didSet {
+            if renaming != nil, renaming != viewedID { commitRenaming() }   // clicking elsewhere saves a rename
+            if viewedID != oldValue { clearKeyboard() }   // another layout: the monitor frame belongs to the old one
+        }
     }
     @Published var expanded: Set<String> = []   // sets opened in the sidebar tree
     @Published var naming: Naming?   // "save as new" / first save sheet
@@ -83,7 +86,7 @@ final class Model: ObservableObject {
     @Published var live: [String: [String]] = [:]
     @Published var liveSpaces: [String: [LiveSpace]] = [:]   // bars now, for the saved-vs-live tiles
     @Published var screens = (try? JSONDecoder().decode([String: ScreenInfo].self, from: Data(contentsOf: screensFile))) ?? [:]
-    @Published var selection: String?
+    @Published var selection: String? { didSet { if selection != oldValue { clearKeyboard() } } }
     @Published var busy = false
     @Published var pickedSpace: Int?   // tile clicked once in the window (white ring); twice = go there
     @Published var columns = NavigationSplitViewVisibility.all   // sidebar shown or hidden (@State needs a macro plugin the CLI toolchain lacks)
@@ -91,6 +94,7 @@ final class Model: ObservableObject {
     @Published var loginItem = SMAppService.mainApp.status == .enabled
     private var timer: Timer?
     private var watcher: Timer?
+    private var arrows: Any?
 
     init() {
         refresh()
@@ -108,6 +112,90 @@ final class Model: ObservableObject {
                                   self.save() },
                               .restore: { restore(false) }, .restoreOpen: { restore(true) }],
                              layouts: { [weak self] in self?.restorePosition($0) })
+        // Keys while the window is on top (both looks), two levels:
+        // ↑ / ↓ the previous / next layout of any set (preview only), ← / → a monitor of it (framed);
+        // Enter goes into the framed monitor's Spaces, ← / → walk them, Enter shows that Space
+        // (layout on screen only), Esc goes back a level. Not while typing a name or with a sheet open.
+        arrows = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+            guard let self, e.window?.identifier?.rawValue.contains("main") == true,
+                  e.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty,
+                  !(e.window?.firstResponder is NSText),
+                  self.naming == nil, self.renaming == nil, self.deleting == nil, !self.panelSettingsOpen,
+                  self.key(e.keyCode) else { return e }
+            return nil   // handled: the sidebar list would otherwise also move its row or fold the set
+        }
+    }
+
+    // MARK: Keyboard in the window (docs/app.md, "Klawiatura w oknie")
+
+    @Published var kbMonitor: String?   // monitor framed by ← / →
+    @Published var kbTile: Int?         // its Space picked after Enter (index in the monitor's tiles)
+    @Published var kbNote: String?      // why Enter did not go there: a red ring and this under the tile
+
+    func clearKeyboard() { kbMonitor = nil; kbTile = nil; kbNote = nil }
+
+    /// The tiles of the framed monitor as the window shows them.
+    private func kbTiles() -> [PanelTile] {
+        let key = selection ?? current
+        return PanelData(self, key: key, layout: viewed(key)?.layout).monitors.first { $0.uuid == kbMonitor }?.tiles ?? []
+    }
+
+    /// One key; false = not ours (the window gets it).
+    private func key(_ code: UInt16) -> Bool {
+        let key = selection ?? current
+        switch code {
+        case 126, 125:   // ↑ ↓
+            if kbTile == nil { stepLayout(code == 125 ? 1 : -1) }
+        case 123, 124:   // ← →
+            let d = code == 124 ? 1 : -1
+            if let t = kbTile {
+                if kbTiles().indices.contains(t + d) { kbTile = t + d; kbNote = nil }
+            } else {
+                let ms = displays(key)
+                guard !ms.isEmpty else { return true }
+                if let m = kbMonitor, let i = ms.firstIndex(of: m) {
+                    if ms.indices.contains(i + d) { kbMonitor = ms[i + d] }
+                } else {
+                    kbMonitor = d > 0 ? ms.first : ms.last
+                }
+            }
+        case 36, 76:   // Return, Enter
+            if let t = kbTile {
+                let ts = kbTiles()
+                guard ts.indices.contains(t) else { kbTile = nil; return true }
+                if key != current { kbNote = "Ten zestaw monitorów nie jest podłączony" }
+                else if isPreview(key) { kbNote = "Ten układ nie jest na ekranie" }
+                else if let id = ts[t].space { kbNote = nil; pickedSpace = id; DispatchQueue.global().async { _ = goTo(id) } }
+                else { kbNote = ts[t].entry.isDesktop ? "Brak biurka" : "Nie otwarte" }
+            } else if kbMonitor != nil {
+                if kbTiles().isEmpty { NSSound.beep() } else { kbTile = 0 }
+            } else { return false }
+        case 53:   // Esc
+            if kbTile != nil { kbTile = nil; kbNote = nil }
+            else if kbMonitor != nil { kbMonitor = nil }
+            else { return false }
+        default: return false
+        }
+        return true
+    }
+
+    /// ↑ / ↓: the previous / next layout in the sidebar, across sets (sets without one are skipped).
+    /// Stops at the ends.
+    func stepLayout(_ d: Int) {
+        let ps = profiles
+        let all = ps.flatMap { k in layouts(k).map { (k, $0.id) } }
+        let key = selection ?? current, at = ps.firstIndex(of: key) ?? 0
+        let next: (String, String)?
+        if let id = viewed(key)?.id, let i = all.firstIndex(where: { $0 == (key, id) }) {
+            next = all.indices.contains(i + d) ? all[i + d] : nil
+        } else {   // a set with no layout: the nearest one after / before it
+            next = d > 0 ? all.first { (ps.firstIndex(of: $0.0) ?? 0) > at } : all.last { (ps.firstIndex(of: $0.0) ?? 0) < at }
+        }
+        guard let (k, id) = next else { return }
+        selection = k
+        viewedID = id
+        expanded.insert(k)
+        clearKeyboard()
     }
 
     func refresh() {
@@ -1106,7 +1194,7 @@ struct ProfileView: View {
                 // The panel look's states (ok, moved, missing, …): one computation for both looks.
                 HStack(alignment: .top, spacing: 16) {
                     ForEach(PanelData(model, key: key, layout: viewed.layout).monitors, id: \.uuid) { m in
-                        MonitorView(name: model.name(m.uuid), tiles: m.tiles)
+                        MonitorView(uuid: m.uuid, name: model.name(m.uuid), tiles: m.tiles)
                     }
                 }
             } else if model.sets.isEmpty {
@@ -1295,6 +1383,8 @@ struct FirstSteps: View {
 }
 
 struct MonitorView: View {
+    @EnvironmentObject var model: Model
+    let uuid: String
     let name: String
     let tiles: [PanelTile]
 
@@ -1307,7 +1397,7 @@ struct MonitorView: View {
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], alignment: .leading, spacing: 8) {
                         ForEach(Array(tiles.enumerated()), id: \.offset) { i, t in
-                            SpaceTile(index: i + 1, tile: t)
+                            SpaceTile(index: i + 1, tile: t, keyed: model.kbMonitor == uuid && model.kbTile == i)
                         }
                     }
                 }
@@ -1316,6 +1406,9 @@ struct MonitorView: View {
             .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
             .background(RoundedRectangle(cornerRadius: 10).fill(.quaternary))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.secondary.opacity(0.35), lineWidth: 2))
+            .overlay {   // framed by ← / →
+                if model.kbMonitor == uuid { RoundedRectangle(cornerRadius: 12).strokeBorder(Color.accentColor, lineWidth: 3).padding(-4) }
+            }
             Text(name).font(.headline)
         }
         // One tile wide at least (120 + padding): the grid wraps tiles into more rows instead, so
@@ -1328,6 +1421,7 @@ struct SpaceTile: View {
     @EnvironmentObject var model: Model
     let index: Int
     let tile: PanelTile
+    var keyed = false   // picked with the keyboard (the same ring as a click; red with a note when Enter can't go there)
     private var entry: Entry { tile.entry }
 
     /// Yellow text is unreadable on the light background: a darker yellow there.
@@ -1388,16 +1482,25 @@ struct SpaceTile: View {
                 .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
             }
         }
-        .overlay {   // picked by a click: a ring just outside the tile, so a colored mark stays visible
-            if tile.space != nil, tile.space == model.pickedSpace {
-                RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary, lineWidth: 2).padding(-4)
+        .overlay {   // picked by a click or the keyboard: a ring just outside the tile, so a colored mark stays visible
+            if keyed || (model.kbTile == nil && tile.space != nil && tile.space == model.pickedSpace) {
+                RoundedRectangle(cornerRadius: 10).strokeBorder(keyed && model.kbNote != nil ? Color.red : Color.primary, lineWidth: 2).padding(-4)
             }
         }
+        .overlay(alignment: .bottom) {   // why Enter did not go there
+            if keyed, let note = model.kbNote {
+                Text(LocalizedStringKey(note)).font(.caption2.weight(.semibold)).foregroundStyle(.white).lineLimit(1).fixedSize()
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(Capsule().fill(Color.red))
+                    .offset(y: 12)
+            }
+        }
+        .zIndex(keyed ? 1 : 0)
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {   // double click: show this Space (its app, full screen)
             if let id = tile.space { DispatchQueue.global().async { _ = goTo(id) } }
         }
-        .simultaneousGesture(TapGesture().onEnded { if let id = tile.space { model.pickedSpace = id } })
+        .simultaneousGesture(TapGesture().onEnded { model.kbTile = nil; model.kbNote = nil; if let id = tile.space { model.pickedSpace = id } })
         .help(tile.space == nil ? (entry.title.isEmpty ? name : "\(name) — \(entry.title)")
               : (entry.title.isEmpty ? name : "\(name) — \(entry.title)") + "\n" + String(localized: "Kliknij dwa razy, żeby przejść do tej przestrzeni"))
     }

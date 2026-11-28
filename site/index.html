@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta name="darkreader-lock">
-<title>Keep macOS Spaces in order when monitors change | SpaceDock</title>
-<meta name="description" content="Free macOS menu bar app that remembers the order of your Spaces and full screen apps for every set of monitors and restores it after you plug or unplug a display. macOS 15 or later.">
+<title>Keep Mac Spaces and full-screen apps in place | SpaceDock</title>
+<meta name="description" content="Free Mac menu bar app: saves the order of your Spaces (desktops) and full-screen apps for each set of monitors and puts it back after you unplug or plug in a display. macOS 15+.">
 <link rel="canonical" href="https://wiciow.github.io/SpaceDock/">
 <link rel="icon" type="image/png" href="img/icon.png">
 <meta property="og:type" content="website">
@@ -16,7 +16,7 @@
 <meta property="og:image" content="https://wiciow.github.io/SpaceDock/img/social.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
-<meta property="og:image:alt" content="SpaceDock: a monitor and a laptop with every Space back in place, and the line Keeps your Spaces in order when monitors come and go">
+<meta property="og:image:alt" content="SpaceDock for macOS: an external monitor and a MacBook with every Space back in place, and the line Keeps your Spaces in order when monitors come and go">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -192,7 +192,7 @@ footer a:hover { color: var(--text); }
     <div class="wrap">
       <img class="icon" src="img/icon.png" alt="SpaceDock icon: a space shuttle carrying three windows" width="96" height="96">
       <h1 class="heading-1">Your Spaces,<br> back where<br> you left them</h1>
-      <p class="lead title-2">macOS shuffles your Spaces when monitors come and go. SpaceDock remembers their order for every set of displays and puts it back after you plug in or unplug.</p>
+      <p class="lead title-2">Unplug a monitor and macOS piles your desktops and full screen apps onto the laptop. SpaceDock remembers their order for every set of displays and puts each one back when you plug in again.</p>
       <div class="cta">
         <a class="button button-md" href="https://github.com/WicioW/SpaceDock/releases/latest/download/SpaceDock.dmg"><i class="ph ph-download-simple" aria-hidden="true"></i>Download for Mac</a>
         <div class="brew"><code>brew tap wiciow/spacedock &amp;&amp; brew trust wiciow/spacedock &amp;&amp; brew install --cask spacedock</code><button class="caption-4" type="button" data-copy="brew tap wiciow/spacedock &amp;&amp; brew trust wiciow/spacedock &amp;&amp; brew install --cask spacedock" aria-label="Copy Homebrew command"><i class="ph ph-copy" aria-hidden="true"></i><span>Copy</span></button></div>
@@ -204,7 +204,7 @@ footer a:hover { color: var(--text); }
         <li><i class="ph ph-code" aria-hidden="true"></i>Source on GitHub</li>
       </ul>
       <div class="shot rise">
-        <img src="img/hero.gif" width="800" height="450" alt="Unplugging a monitor piles every Space on the laptop; SpaceDock puts each one back on its display, in the saved order">
+        <img src="img/hero.gif" width="800" height="450" alt="Unplugging an external monitor piles every Space on the MacBook; SpaceDock puts each desktop and full-screen app back on its display, in the saved order">
       </div>
     </div>
   </section>
@@ -273,7 +273,7 @@ footer a:hover { color: var(--text); }
         <p class="body-3 muted">The set that is connected now has a tick. The window shows its Spaces display by display, in the saved order.</p>
         <picture class="shot">
           <source media="(prefers-color-scheme: dark)" srcset="img/window-dark.png">
-          <img src="img/window-light.png" width="1100" height="420" loading="lazy" alt="SpaceDock window: monitor sets with their layouts in the sidebar, the Spaces of the layout on screen for the laptop and a DELL monitor">
+          <img src="img/window-light.png" width="1100" height="420" loading="lazy" alt="SpaceDock, a Mac menu bar app: monitor sets with their layouts in the sidebar, and the Spaces of the current layout for the MacBook and a DELL external monitor">
         </picture>
       </div>
       <div class="feature center rise">
@@ -281,7 +281,7 @@ footer a:hover { color: var(--text); }
         <p class="body-3 muted">Blue is open now but not in the layout. Red is in the layout but not open. Nothing moves until you click Restore.</p>
         <picture class="shot">
           <source media="(prefers-color-scheme: dark)" srcset="img/preview-dark.png">
-          <img src="img/preview-light.png" width="1100" height="650" loading="lazy" alt="Preview of the Evening layout while Work is on screen, differences marked in color">
+          <img src="img/preview-light.png" width="1100" height="650" loading="lazy" alt="Preview of the Evening Spaces layout while Work is on screen; apps that would open or close are marked in color">
         </picture>
       </div>
     </div>
@@ -305,16 +305,24 @@ footer a:hover { color: var(--text); }
     <div class="wrap">
       <h2 class="heading-3 center">Questions</h2>
       <div class="faq">
-        <details><summary class="title-2">How do I keep my Spaces in order when I connect an external monitor?<i class="ph ph-plus" aria-hidden="true"></i></summary>
-          <div class="answer body-3"><p>Save a layout in SpaceDock for each monitor set. When you connect or disconnect a display, SpaceDock restores the saved order of Spaces and full screen apps on every screen.</p></div></details>
+        <details><summary class="title-2">How do I keep my Spaces on the external monitor after I unplug it and plug it back in?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>macOS moves the Spaces of a disconnected display to the laptop and doesn&#8217;t split them back when the display returns. Save a layout in SpaceDock for each monitor set: when the monitors settle, it puts your desktops and full screen apps back on their displays, in the saved order.</p></div></details>
+        <details><summary class="title-2">Why do full screen apps end up on the laptop, or at the end of the Spaces bar, after I reconnect a monitor?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>When a display goes away, macOS moves its full screen apps to the remaining one, and a full screen Space that macOS recreates always goes to the end of the bar. SpaceDock moves each one back to its saved place.</p></div></details>
+        <details><summary class="title-2">Why do my Mac desktops keep changing order?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Usually because of &#8220;Automatically rearrange Spaces based on most recent use&#8221;: turn it off in System Settings → Desktop &amp; Dock → Mission Control. With it on, macOS reorders Spaces every time you switch. The other cause is connecting or disconnecting a display, which SpaceDock fixes.</p></div></details>
+        <details><summary class="title-2">How do I stop my Mac from combining Spaces when I unplug a monitor?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>macOS has no setting for it. SpaceDock can&#8217;t prevent the merge, but it undoes it after you plug the monitor back in.</p></div></details>
+        <details><summary class="title-2">Can I save my Spaces layout on a Mac and restore it later?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Yes. Save Current Layout stores the order of your Spaces; Restore puts it back. Keep several layouts per monitor set, like &#8220;Work&#8221; and &#8220;Evening&#8221;, and switch with a shortcut such as <kbd>⌃</kbd><kbd>⌥</kbd><kbd>1</kbd>.</p></div></details>
+        <details><summary class="title-2">Can I have different desktops for home and office monitors?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Yes. Each combination of connected displays is its own monitor set with its own layouts, and SpaceDock picks the right one by the monitors it sees.</p></div></details>
         <details><summary class="title-2">How do I open SpaceDock the first time?<i class="ph ph-plus" aria-hidden="true"></i></summary>
           <div class="answer body-3"><p>Notarization needs a paid Apple Developer Program membership, and SpaceDock is free, so macOS blocks the first launch. Open System Settings → Privacy &amp; Security, scroll down and click Open Anyway. Or run this in Terminal:</p><pre><code>xattr -dr com.apple.quarantine /Applications/SpaceDock.app</code></pre><p>Updates after that install without the prompt.</p></div></details>
         <details><summary class="title-2">Why does it need the Accessibility permission?<i class="ph ph-plus" aria-hidden="true"></i></summary>
           <div class="answer body-3"><p>To read which window is on which Space and to move windows in and out of full screen. Nothing leaves your Mac.</p></div></details>
-        <details><summary class="title-2">Does it use private APIs?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <details><summary class="title-2">Does it use private APIs? Do I need to turn off SIP, like with yabai?<i class="ph ph-plus" aria-hidden="true"></i></summary>
           <div class="answer body-3"><p>Yes: SkyLight, the framework macOS itself uses for Spaces. It needs no changes to System Integrity Protection. A macOS update can break these calls; SpaceDock then falls back to slower restore methods.</p></div></details>
-        <details><summary class="title-2">Should I turn off “Automatically rearrange Spaces based on most recent use”?<i class="ph ph-plus" aria-hidden="true"></i></summary>
-          <div class="answer body-3"><p>Yes, in System Settings → Desktop &amp; Dock → Mission Control. With it on, macOS reorders Spaces every time you switch, so the saved order drifts even without a monitor change.</p></div></details>
         <details><summary class="title-2">Does it quit or close my apps?<i class="ph ph-plus" aria-hidden="true"></i></summary>
           <div class="answer body-3"><p>Never. Hiding apps outside the layout only takes them out of full screen and minimizes them. Restore with Missing Apps opens closed apps, but they start fresh: SpaceDock does not bring back what was open inside them, such as browser tabs.</p></div></details>
         <details><summary class="title-2">What does it send over the network?<i class="ph ph-plus" aria-hidden="true"></i></summary>

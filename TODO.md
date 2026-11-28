@@ -31,9 +31,9 @@ tematów i strony (`homepageUrl` pusty), 0 gwiazdek, repo od 2026-11-22. Ikona w
 - ✅ (a) (2026-11-28: opis 298 znaków, 20 tematów, adres strony) GitHub „About”: opis do 350 znaków z frazami, których ludzie szukają, + do 20 tematów
   (`gh repo edit --description … --add-topic …`). Wyszukiwarka GitHuba szuka tylko po nazwie,
   opisie i tematach.
-- (b) Research dla SpaceDock jak `4-seo.md`: słowa kluczowe (słowa użytkowników z wątków, nie
+- ✅ (b) (2026-11-28, `research/1-seo.md`, poza gitem) Research dla SpaceDock jak `4-seo.md`: słowa kluczowe (słowa użytkowników z wątków, nie
   nasze), konkurencja, istniejące wątki z pytaniami.
-- (c) README pod te frazy: tabela „Compared with other tools” (narzędzie, co robi, czy robi to co
+- ✅ (c) (2026-11-28: pierwszy akapit, FAQ jako zapytania, alt, title i meta strony; tabela porównania czeka na decyzję) README pod te frazy: tabela „Compared with other tools” (narzędzie, co robi, czy robi to co
   SpaceDock; wcześniej odpuszczone „Similar apps” — wrócić po researchu), pytania FAQ jak zapytania
   („How do I … on a Mac?”), alt obrazków ze słowami kluczowymi.
 - ✅ (d) (2026-11-28) `tools/release.sh`: opis wydania z instrukcją instalacji (`--notes` + `--generate-notes`)
@@ -49,14 +49,14 @@ tematów i strony (`homepageUrl` pusty), 0 gwiazdek, repo od 2026-11-22. Ikona w
   osobny folder albo wykluczenia). Dark Reader przebarwia tła z CSS: `<meta name="darkreader-lock">`.
 - ✅ (f) (2026-11-28: `docs/readme/social.png` z `tools/readme/social.swift`, w `shots.sh`; og:image strony; do GitHuba wgrać ręcznie) Obrazek podglądu linków 1280×640 (`docs/readme/social.png`), wgrywany ręcznie: repo →
   Settings → General → Social preview (brak API).
-- (g) VoiceOver: etykieta ikony paska jest; sprawdzić toolTip i czy VoiceOver czyta menu.
+- ✅ (g) (2026-11-28: etykiety przycisków z samą ikoną w obu wyglądach, kafelek = jeden element z akcją „przejdź”, komunikaty na ekranie czytane przez VoiceOver; opis w docs/app.md) VoiceOver: etykieta ikony paska jest; sprawdzić toolTip i czy VoiceOver czyta menu.
 - (h) PR do list bez wymogu OSI: jaywcjlove/awesome-mac (jedna apka na PR, alfabetycznie, wpis w
   README i wersjach zh/ja/ko, ikona Freeware, nie OSS), iCHAIT/awesome-macOS (freeware),
   open-saas-directory/awesome-native-macosx-apps (szablon issue „App Suggestion”).
 - (i) Katalogi: AlternativeTo (kolejka miesiące; nie zaznaczać Open Source), MacUpdate (bezpośredni
   URL do DMG), macmenubar.com (min. 3 prawdziwe zrzuty paska menu), thriftmac, formac.app,
   macapps.org.
-- (j) Lista maili do twórców i redakcji z plików 2 i 3 (kontakty trzymać poza repo).
+- (j) [szkice: `research/2-listings-and-outreach.md`, poza gitem, też dla (h), (i), (k)] Lista maili do twórców i redakcji z plików 2 i 3 (kontakty trzymać poza repo).
 - (k) Plan postów: r/macapps, forum MacRumors (Mac Apps), Show HN, polskie kanały.
 
 **Zasady z researchu:**

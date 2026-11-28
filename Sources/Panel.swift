@@ -1125,7 +1125,7 @@ struct PanelPath: View {
         HStack(spacing: 0) {
             Text(verbatim: p.dropLast().map { $0 + " > " }.joined()).foregroundStyle(th.k)
             Text(verbatim: p.last ?? "").foregroundStyle(model.kbNote != nil ? th.e : th.k)
-            th.k.frame(width: 8, height: 13).padding(.leading, 3)
+            th.k.frame(width: 8, height: 13).padding(.leading, 3).accessibilityHidden(true)
         }
         .font(PanelFont.mono(12, .bold)).lineLimit(1)
         .help(String(localized: "Zestaw > układ > monitor od lewej > przestrzeń"))
@@ -1303,6 +1303,7 @@ struct PanelTileView: View {
         .buttonStyle(.plain)
         .allowsHitTesting(openEnabled)   // not .disabled: that would dim the black and the line too
         .accessibilityAddTraits(openEnabled ? [] : .isStaticText)
+        .accessibilityLabel("Otwórz apkę")
         .frame(width: 24 - inset)
         .padding([.top, .bottom, .trailing], inset)
         .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
@@ -2136,6 +2137,7 @@ struct PanelSettingsWindow: View {
                     Text(verbatim: "✕").font(PanelFont.ui(12, .bold)).frame(width: 26, height: 22).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Zamknij")
                 .overlay(alignment: .leading) { Color.black.frame(width: 1.5) }
             }
             .foregroundStyle(.black)

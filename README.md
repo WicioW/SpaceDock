@@ -24,13 +24,15 @@
 
 <!-- Hero animation: tools/readme/shots.sh -->
 <p align="center">
-  <img src="docs/readme/hero.gif" width="800" alt="Unplugging a monitor piles every Space on the laptop; SpaceDock puts each one back on its display, in the saved order">
+  <img src="docs/readme/hero.gif" width="800" alt="Unplugging an external monitor piles every Space on the MacBook; SpaceDock puts each desktop and full-screen app back on its display, in the saved order">
 </p>
 
-macOS shuffles Spaces when monitors come and go: full-screen apps end up on the wrong display or
-at the end of the bar, and plugging the monitor back in doesn't undo it. SpaceDock saves the order
-of your Spaces for each set of monitors ("Laptop only", "Laptop + DELL", …) and restores it on its
-own, or when you click **Restore**.
+Unplug an external monitor and macOS piles its desktops and full-screen apps onto the laptop. Plug
+it back in and they stay there, or come back in a different order, with full-screen apps at the end
+of the Spaces bar. SpaceDock saves the order of your Spaces (desktops) and full-screen apps for each
+set of monitors ("Laptop only", "Laptop + DELL", …) and puts every one back on its display when the
+monitors settle, or when you click **Restore**. No Hammerspoon or yabai scripts, no changes to
+System Integrity Protection.
 
 - **Restores on its own** after a display is connected or disconnected, or by hand from the window,
   the menu bar or a shortcut
@@ -83,7 +85,7 @@ display by display.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/window-dark.png">
-  <img src="docs/readme/window-light.png" width="800" alt="SpaceDock window: monitor sets with their layouts in the sidebar, the Spaces of the layout on screen for the laptop and the DELL monitor">
+  <img src="docs/readme/window-light.png" width="800" alt="SpaceDock, a Mac menu bar app: monitor sets with their layouts in the sidebar, and the Spaces of the current layout for the MacBook and a DELL external monitor">
 </picture>
 
 **Preview a layout before you switch.** Click another layout to see it without touching the screen.
@@ -92,7 +94,7 @@ not open.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/preview-dark.png">
-  <img src="docs/readme/preview-light.png" width="800" alt="Preview of the Evening layout while Work is on screen, with differences in color">
+  <img src="docs/readme/preview-light.png" width="800" alt="Preview of the Evening Spaces layout while Work is on screen; apps that would open or close are marked in color">
 </picture>
 
 ## Shortcuts
@@ -124,6 +126,28 @@ If Direct fails, SpaceDock tries Drag, then Full Screen.
 
 ## FAQ
 
+### How do I keep my Spaces on the external monitor after I unplug it and plug it back in?
+macOS moves the Spaces of a disconnected display to the laptop and doesn't split them back when the
+display returns. Save a layout in SpaceDock for each monitor set: when the monitors settle, it puts
+your desktops and full-screen apps back on their displays, in the saved order.
+
+### Why do full-screen apps end up on the laptop, or at the end of the Spaces bar, after I reconnect a monitor?
+When a display goes away, macOS moves its full-screen apps to the remaining one, and a full-screen
+Space that macOS recreates always goes to the end of the bar. SpaceDock moves each one back to its
+saved place.
+
+### How do I stop my Mac from combining Spaces when I unplug a monitor?
+macOS has no setting for it. SpaceDock can't prevent the merge, but it undoes it after you plug the
+monitor back in.
+
+### Can I save my Spaces layout on a Mac and restore it later?
+Yes. **Save Current Layout** stores the order of your Spaces; **Restore** puts it back. Keep several
+layouts per monitor set ("Work", "Evening") and switch with a shortcut such as <kbd>⌃</kbd><kbd>⌥</kbd><kbd>1</kbd>.
+
+### Can I have different desktops for home and office monitors?
+Yes. Each combination of connected displays is its own monitor set with its own layouts, and
+SpaceDock picks the right one by the monitors it sees.
+
 ### Why does SpaceDock need the Accessibility permission?
 To read which window is on which Space and to move windows in and out of full screen. Nothing
 leaves your Mac.
@@ -132,14 +156,16 @@ leaves your Mac.
 Notarization needs a paid Apple Developer Program membership, and SpaceDock is free. Allow it once
 with **Open Anyway**; updates after that install without the prompt.
 
-### Does it use private APIs?
+### Does it use private APIs? Do I need to turn off SIP, like with yabai?
 Yes: SkyLight, the framework macOS itself uses for Spaces, to read and move them. It needs no
 changes to System Integrity Protection. A macOS update can break these calls; SpaceDock then falls
 back to the slower restore methods.
 
-### Should I turn off "Automatically rearrange Spaces based on most recent use"?
-Yes (**System Settings → Desktop & Dock → Mission Control**). With it on, macOS reorders Spaces
-every time you switch, so the saved order drifts even without a monitor change.
+### Why do my Mac desktops keep changing order?
+Usually because of "Automatically rearrange Spaces based on most recent use": turn it off in
+**System Settings → Desktop & Dock → Mission Control**. With it on, macOS reorders Spaces every time
+you switch, so the saved order drifts even without a monitor change. The other cause is connecting
+or disconnecting a display, which SpaceDock fixes.
 
 ### Does it quit or close my apps?
 Never. Hiding apps that aren't in the layout only takes them out of full screen and minimizes them.

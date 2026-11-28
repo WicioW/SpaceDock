@@ -528,6 +528,26 @@ enum Overlay {
             panel.orderFrontRegardless()
             return panel
         }
+        announce(red: red, info: info)
+    }
+
+    /// VoiceOver says what the banner says: it sits in a window that never takes focus, so it
+    /// would otherwise go unnoticed. Once per text (red, then quiet with the same line: once).
+    private static var announced: String?
+    private static func announce(red: Bool, info: BannerInfo?) {
+        let name = info.map { $0.name ?? String(localized: "Bez nazwy") }
+        let text: String
+        if let n = info?.problems {
+            text = String(localized: "Nie wszystko się ułożyło") + ". " + String(localized: "Różnice: \(n) · szczegóły w oknie SpaceDock")
+        } else if let info, let name {
+            text = info.switched ? String(localized: "Zmieniono układ na „\(name)”") : String(localized: "Przywrócono układ „\(name)”")
+        } else if red {
+            text = String(localized: "Układam przestrzenie…")
+        } else { return }
+        guard text != announced else { return }
+        announced = text
+        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
+                             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
     }
 
     /// A banner on its own for 2.5 s (the result after a restore), unless another one replaces it.
@@ -544,6 +564,7 @@ enum Overlay {
 
     /// End of a restore: after `minimum` from the first banner, a 0.2 s fade (none with Reduce motion).
     static func finish() {
+        announced = nil
         let fading = panels
         panels = []   // a banner shown meanwhile is not taken down with these
         DispatchQueue.main.asyncAfter(deadline: .now() + max(0, minimum - Date().timeIntervalSince(shownAt))) {
@@ -866,6 +887,7 @@ struct ContentView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Image(systemName: key.contains("+") ? "display.2" : "laptopcomputer")
                         .frame(width: 22)
+                        .accessibilityHidden(true)   // the set's name follows
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.title(key))
                         (Text("Układy: \(model.layouts(key).count) · ") + Text("\(model.spaceCount(key)) przestrzeni"))
@@ -1154,6 +1176,7 @@ struct SidebarStatus: View {
             } label: { Image(systemName: "gearshape") }
             .buttonStyle(.borderless)
             .help("Ustawienia")
+            .accessibilityLabel("Ustawienia")
         }
         .font(.callout)
         .lineLimit(1)
@@ -1252,7 +1275,7 @@ struct ProfileView: View {
     private func banner(_ viewed: NamedLayout) -> some View {
         let onScreen = model.sets[key]?.current
         return HStack(spacing: 10) {
-            Image(systemName: "eye")
+            Image(systemName: "eye").accessibilityHidden(true)
             if let onScreen {
                 Text("Oglądasz zapisany układ **„\(model.name(of: viewed))”**. Na ekranie jest **„\(model.name(of: onScreen))”**. Kolory pokazują, czym różni się od ekranu.")
             } else {
@@ -1309,6 +1332,7 @@ struct LayoutRow: View {
             .fixedSize()
             .foregroundStyle(.secondary)
             .help("Zmień nazwę albo usuń")
+            .accessibilityLabel("Zmień nazwę albo usuń")
         }
         .frame(minHeight: 28)
     }
@@ -1389,6 +1413,7 @@ struct FirstSteps: View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: done ? "checkmark.circle.fill" : "\(n).circle")
                 .foregroundStyle(done ? Color.green : Color.secondary)
+                .accessibilityLabel(done ? Text("Zrobione") : Text("Krok \(n)"))
             VStack(alignment: .leading, spacing: 6) {
                 // No fixedSize(vertical:) here: the split view's first layout proposes a very narrow width,
                 // the text then wrapped into a column thousands of points tall, and AppKit saved
@@ -1488,6 +1513,12 @@ struct SpaceTile: View {
                 Text(verbatim: "#\(w)").font(.caption2.monospacedDigit()).foregroundStyle(.tertiary)
             }
         }
+        // VoiceOver: one element, "3. Pages, Quarterly report, Przestawione › 4"; Enter on it goes there.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(index). \(name)" + (entry.title.isEmpty ? "" : ", \(entry.title)") + (mark.map { ", \($0.text)" } ?? "")))
+        .accessibilityAddTraits(tile.space != nil ? .isButton : [])
+        .accessibilityAction { if let id = tile.space { DispatchQueue.global().async { _ = goTo(id) } } }
+        .accessibilityHint(tile.space != nil ? Text("Przejdź do tej przestrzeni") : Text(verbatim: ""))
         .opacity(tile.state == .missing ? 0.55 : 1)   // a saved place with nothing behind it now
         .padding(.horizontal, 6)
         .frame(width: 120, height: 96)
@@ -1496,7 +1527,7 @@ struct SpaceTile: View {
             if let mark { RoundedRectangle(cornerRadius: 8).strokeBorder(mark.color, lineWidth: 2) }
         }
         .overlay(alignment: .topLeading) {
-            Text("\(index)").font(.caption2.bold()).foregroundStyle(.secondary).padding(5)
+            Text("\(index)").font(.caption2.bold()).foregroundStyle(.secondary).padding(5).accessibilityHidden(true)   // in the tile's label
         }
         .overlay(alignment: .topTrailing) {
             // A red app tile: open the app (if closed), full screen, and the restore puts it in place.
@@ -1510,6 +1541,7 @@ struct SpaceTile: View {
                 .padding(4)
                 .disabled(model.busy || !model.trusted)
                 .help("Otwórz, włącz pełny ekran i ustaw jak w zapisie (przywraca cały układ)")
+                .accessibilityLabel("Otwórz apkę")
             }
         }
         .overlay {   // picked by a click or the keyboard: a ring just outside the tile, so a colored mark stays visible

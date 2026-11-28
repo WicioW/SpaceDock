@@ -240,3 +240,13 @@ Przycisk Download prowadzi na stały link `…/releases/latest/download/SpaceDoc
 `tools/release.sh` dokłada do każdego wydania kopię DMG o tej nazwie i opis wydania z instrukcją
 instalacji (`--notes` + `--generate-notes`). Obrazek podglądu linków (og:image, Social preview na GitHubie): `docs/readme/social.png`, 1280 × 640, robi go `tools/readme/shots.sh` (`social.swift`); na GitHubie wgrywa się go ręcznie (Settings → General → Social preview). Podgląd lokalny: `tools/site/build.sh <tmp>/SpaceDock`
 i `python3 -m http.server --directory <tmp>`, adres `http://localhost:<port>/SpaceDock/`.
+
+## VoiceOver (od 2026-11-28)
+
+Przyciski z samą ikoną mają etykiety (zębatka „Ustawienia”, ⋯ „Zmień nazwę albo usuń”, ↗ na
+czerwonym kafelku „Otwórz apkę”, w neonie ✕ „Zamknij”); ikony obok tekstu są ukryte. Kafelek
+zwykłego wyglądu to jeden element: „3. Pages, Quarterly report, Przestawione › 4”, a jego akcja
+(VO-Spacja) przechodzi do tej przestrzeni, jak podwójny klik. Komunikaty na ekranie („Układam
+przestrzenie…”, „Zmieniono układ na …”, „Nie wszystko się ułożyło”) siedzą w oknie bez fokusu,
+więc `Overlay.announce` mówi je przez `NSAccessibility` (`announcementRequested`), raz na tekst.
+Ikona w pasku menu ma etykietę „SpaceDock”.

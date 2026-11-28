@@ -28,7 +28,7 @@ tematów i strony (`homepageUrl` pusty), 0 gwiazdek, repo od 2026-11-22. Ikona w
 `accessibilityLabel("SpaceDock")` (App.swift, `MenuBarExtra`); Ko-fi i `FUNDING.yml` są.
 
 **Zadania** (w kolejności opłacalności):
-- (a) GitHub „About”: opis do 350 znaków z frazami, których ludzie szukają, + do 20 tematów
+- ✅ (a) (2026-11-28: opis 298 znaków, 20 tematów, adres strony) GitHub „About”: opis do 350 znaków z frazami, których ludzie szukają, + do 20 tematów
   (`gh repo edit --description … --add-topic …`). Wyszukiwarka GitHuba szuka tylko po nazwie,
   opisie i tematach.
 - (b) Research dla SpaceDock jak `4-seo.md`: słowa kluczowe (słowa użytkowników z wątków, nie

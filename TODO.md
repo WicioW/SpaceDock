@@ -40,14 +40,14 @@ tematów i strony (`homepageUrl` pusty), 0 gwiazdek, repo od 2026-11-22. Ikona w
   zamiast samego „Full Changelog”; w każdym wydaniu dodatkowo `SpaceDock.dmg` o stałej nazwie,
   czyli stały link `…/releases/latest/download/SpaceDock.dmg` do README, strony i postów.
 - ✅ (e) (2026-11-28, zrobione inaczej: `site/` + GitHub Actions, nie folder `docs/`; opis w
-  docs/app.md, „Strona”; zostaje obrazek og:image z (f), dziś zrzut okna) Strona GitHub Pages z `docs/` (`index.html`, `404.html`, `.nojekyll`, ikona): title, meta
+  docs/app.md, „Strona”; og:image = social.png z (f)) Strona GitHub Pages z `docs/` (`index.html`, `404.html`, `.nojekyll`, ikona): title, meta
   description, og:image, canonical, JSON-LD SoftwareApplication (bez wymyślonych ocen), FAQ w
   zwykłym HTML, tabela porównania, przycisk Download na stały link. Włączenie:
   `gh api -X POST repos/WicioW/SpaceDock/pages -f "source[branch]=main" -f "source[path]=/docs"`,
   potem `gh repo edit --homepage <adres>`. Wzór: `inverted-cursor/docs/index.html`. Uwaga:
   `docs/` ma już dokumentację po polsku — sprawdzić, czy strona nie wystawi jej publicznie (np.
   osobny folder albo wykluczenia). Dark Reader przebarwia tła z CSS: `<meta name="darkreader-lock">`.
-- (f) Obrazek podglądu linków 1280×640 (`docs/readme/social.png`), wgrywany ręcznie: repo →
+- ✅ (f) (2026-11-28: `docs/readme/social.png` z `tools/readme/social.swift`, w `shots.sh`; og:image strony; do GitHuba wgrać ręcznie) Obrazek podglądu linków 1280×640 (`docs/readme/social.png`), wgrywany ręcznie: repo →
   Settings → General → Social preview (brak API).
 - (g) VoiceOver: etykieta ikony paska jest; sprawdzić toolTip i czy VoiceOver czyta menu.
 - (h) PR do list bez wymogu OSI: jaywcjlove/awesome-mac (jedna apka na PR, alfabetycznie, wpis w

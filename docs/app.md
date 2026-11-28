@@ -238,5 +238,5 @@ przy każdym pushu do `main`, który dotyka tych plików; źródło Pages w usta
 „GitHub Actions”, nie folder, więc reszta `docs/` (notatki po polsku) nie trafia na stronę.
 Przycisk Download prowadzi na stały link `…/releases/latest/download/SpaceDock.dmg`:
 `tools/release.sh` dokłada do każdego wydania kopię DMG o tej nazwie i opis wydania z instrukcją
-instalacji (`--notes` + `--generate-notes`). Podgląd lokalny: `tools/site/build.sh <tmp>/SpaceDock`
+instalacji (`--notes` + `--generate-notes`). Obrazek podglądu linków (og:image, Social preview na GitHubie): `docs/readme/social.png`, 1280 × 640, robi go `tools/readme/shots.sh` (`social.swift`); na GitHubie wgrywa się go ręcznie (Settings → General → Social preview). Podgląd lokalny: `tools/site/build.sh <tmp>/SpaceDock`
 i `python3 -m http.server --directory <tmp>`, adres `http://localhost:<port>/SpaceDock/`.

@@ -11,6 +11,6 @@ mkdir -p "$OUT/img"
 cp site/index.html site/404.html "$OUT/"
 touch "$OUT/.nojekyll"
 cp docs/readme/hero.gif docs/readme/window-light.png docs/readme/window-dark.png \
-   docs/readme/preview-light.png docs/readme/preview-dark.png "$OUT/img/"
+   docs/readme/preview-light.png docs/readme/preview-dark.png docs/readme/social.png "$OUT/img/"
 sips -z 256 256 assets/icon/AppIcon-1024.png --out "$OUT/img/icon.png" >/dev/null 2>&1 || cp assets/icon/AppIcon-1024.png "$OUT/img/icon.png"
 echo "Strona: $OUT"

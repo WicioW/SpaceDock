@@ -2,7 +2,8 @@
 # README pictures from made-up data (demo-sets.json, demo.json): no real window titles.
 # Builds a throwaway SpaceDock.app (English UI needs the bundle's translations) in a temp folder,
 # renders the window with panel-shot into docs/readme/, and the hero animation (hero.swift) into
-# docs/readme/hero.gif + dist/hero.mp4 (ffmpeg; the mp4 stays out of git).
+# docs/readme/hero.gif + dist/hero.mp4 (ffmpeg; the mp4 stays out of git), and the link preview
+# docs/readme/social.png (social.swift).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 TMP="$(mktemp -d)"
@@ -24,5 +25,9 @@ ffmpeg -loglevel error -y -framerate 15 -i "$TMP/frames/frame-%04d.png" \
     -loop 0 "$OUT/hero.gif"
 ffmpeg -loglevel error -y -framerate 15 -i "$TMP/frames/frame-%04d.png" -vf "scale=1600:-2" \
     -c:v libx264 -pix_fmt yuv420p -crf 20 -movflags +faststart dist/hero.mp4
+# Link preview (GitHub social preview, the site's og:image): the hero's last arranged frame (t = 7 s),
+# without its caption, above the name band. GitHub takes it only by hand: Settings → General → Social preview.
+swiftc -O tools/readme/social.swift -o "$TMP/social"
+"$TMP/social" "$OUT/social.png" assets/icon/AppIcon-1024.png "$TMP/frames/frame-0105.png" 0.17 >/dev/null
 rm -rf "$TMP"
 ls -la "$OUT"

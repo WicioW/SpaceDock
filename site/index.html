@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="darkreader-lock">
+<title>Keep macOS Spaces in order when monitors change | SpaceDock</title>
+<meta name="description" content="Free macOS menu bar app that remembers the order of your Spaces and full screen apps for every set of monitors and restores it after you plug or unplug a display. macOS 15 or later.">
+<link rel="canonical" href="https://wiciow.github.io/SpaceDock/">
+<link rel="icon" type="image/png" href="img/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SpaceDock: your Spaces, back where you left them">
+<meta property="og:description" content="macOS shuffles Spaces when monitors come and go. SpaceDock saves their order for each set of displays and puts it back. Free for macOS 15 or later.">
+<meta property="og:url" content="https://wiciow.github.io/SpaceDock/">
+<meta property="og:image" content="https://wiciow.github.io/SpaceDock/img/window-light.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"SpaceDock","operatingSystem":"macOS 15 or later",
+ "applicationCategory":"UtilitiesApplication","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+ "description":"Menu bar app for macOS that saves the order of Spaces and full screen apps for each set of monitors and restores it when displays are connected or disconnected.",
+ "downloadUrl":"https://github.com/WicioW/SpaceDock/releases/latest/download/SpaceDock.dmg","url":"https://wiciow.github.io/SpaceDock/"}
+</script>
+<style>
+/* Spacing: 2 4 8 12 16 24 32 40 48 64 80 96. Type: Tailwind's scale. One curve for all motion. */
+:root {
+  --bg: #FFFFFF; --surface: #F5F5F5; --raised: #FFFFFF; --line: #E5E5E5;
+  --text: #000000; --muted: #666666; --hero-from: #000000; --hero-to: #666666;
+  --button: #000000; --on-button: #FFFFFF; --nav: rgba(255, 255, 255, 0.72);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000; --surface: #181818; --raised: #1F1F1F; --line: #313131;
+    --text: #FFFFFF; --muted: #9B9B9B; --hero-from: #FFFFFF; --hero-to: #9B9B9B;
+    --button: #FFFFFF; --on-button: #000000; --nav: rgba(24, 24, 24, 0.72);
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: "Geist", system-ui, sans-serif; font-size: 16px; line-height: 24px; -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; border-radius: 4px; }
+h1, h2, h3 { text-wrap: balance; }
+p, li, dd, summary { text-wrap: pretty; }
+code, kbd { font-family: "Geist Mono", ui-monospace, monospace; }
+
+/* Text styles (B1) */
+.heading-1 { font-size: 60px; line-height: 60px; font-weight: 600; }
+.heading-3 { font-size: 36px; line-height: 40px; font-weight: 600; }
+.heading-4 { font-size: 30px; line-height: 36px; font-weight: 600; }
+.heading-6 { font-size: 20px; line-height: 28px; font-weight: 600; }
+.title-2 { font-size: 18px; line-height: 28px; font-weight: 500; }
+.title-3 { font-size: 16px; line-height: 24px; font-weight: 500; }
+.body-3 { font-size: 16px; line-height: 24px; font-weight: 400; }
+.body-6 { font-size: 14px; line-height: 20px; font-weight: 400; }
+.button-md { font-size: 16px; line-height: 24px; font-weight: 600; }
+.button-sm { font-size: 14px; line-height: 20px; font-weight: 600; }
+.caption-2 { font-size: 14px; line-height: 20px; font-weight: 400; }
+.caption-4 { font-size: 12px; line-height: 16px; font-weight: 500; }
+.muted { color: var(--muted); }
+
+.skip { position: absolute; left: 16px; top: -64px; background: var(--surface); padding: 8px 12px; border-radius: 8px; z-index: 20; }
+.skip:focus { top: 16px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 24px; }
+section { padding-block: 96px; }
+.center { text-align: center; }
+.lead { max-width: 680px; margin: 16px auto 0; color: var(--muted); }
+
+/* Nav (B7): floating, translucent, sized to its content */
+nav { position: fixed; top: 16px; left: 0; right: 0; margin-inline: auto; width: max-content; max-width: calc(100% - 32px); z-index: 10;
+  display: flex; align-items: center; gap: 24px; padding: 8px 8px 8px 12px; border: 1px solid var(--line); border-radius: 16px;
+  background: var(--nav); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); white-space: nowrap; }
+.brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.brand img { width: 24px; height: 24px; }
+.links { display: flex; gap: 24px; list-style: none; }
+.links a { text-decoration: none; color: var(--muted); transition: color 300ms var(--ease); }
+.links a:hover, .links a[aria-current="true"] { color: var(--text); }
+
+/* Buttons (B2: 8px / 12px padding; B9 states) */
+.button { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; text-decoration: none; border: 1px solid transparent;
+  background: var(--button); color: var(--on-button); cursor: pointer; font-family: inherit;
+  transition: transform 300ms var(--ease), opacity 300ms var(--ease); }
+.button:hover { opacity: 0.85; transform: translateY(-1px); }
+.button:active { transform: scale(0.98); }
+.button.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+.button i { font-size: 20px; }
+nav .button i { font-size: 16px; }
+
+/* Hero (B5) */
+.hero { padding-top: 160px; padding-bottom: 64px; }
+.hero img.icon { width: 96px; height: 96px; margin: 0 auto 24px; }
+.hero h1 { max-width: 680px; margin-inline: auto; background: linear-gradient(90deg, var(--hero-from), var(--hero-to));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero .lead { margin-top: 24px; }
+.cta { margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.brew { display: inline-flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); max-width: 100%; }
+.brew code { font-size: 14px; line-height: 20px; overflow-x: auto; white-space: nowrap; }
+.brew button { flex: none; display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--muted); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-family: inherit;
+  transition: color 300ms var(--ease); }
+.brew button:hover { color: var(--text); }
+.facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin-top: 16px; list-style: none; }
+.facts li { display: inline-flex; align-items: center; gap: 4px; }
+.shot { display: block; margin-top: 64px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
+.shot img { width: 100%; }
+.feature + .feature { margin-top: 96px; }
+.feature .shot { margin-top: 32px; }
+.feature p { max-width: 680px; margin: 16px auto 0; }
+
+/* Tagline reveal (B11) */
+.reveal-text { max-width: 760px; margin-inline: auto; }
+.reveal-text span { color: var(--text); opacity: 0.3; transition: opacity 600ms var(--ease); }
+.reveal-text span.on { opacity: 1; }
+
+/* Cards */
+.grid { display: grid; gap: 16px; margin-top: 48px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.card { border: 1px solid var(--line); border-radius: 16px; padding: 24px; background: var(--surface); }
+.card i { font-size: 24px; display: block; margin-bottom: 16px; }
+.card p { margin-top: 8px; }
+.split { display: grid; gap: 48px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: center; }
+.split + .split { margin-top: 96px; }
+.split p { margin-top: 16px; }
+.steps { list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: 16px; padding-block: 24px; }
+.steps li + li { border-top: 1px solid var(--line); }
+.steps li::before { content: counter(step); width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; font-weight: 600; }
+.steps p { margin-top: 4px; }
+kbd { font-size: 14px; line-height: 20px; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; background: var(--surface); }
+
+/* FAQ */
+.faq { max-width: 760px; margin: 48px auto 0; }
+.faq details { border-top: 1px solid var(--line); }
+.faq details:last-child { border-bottom: 1px solid var(--line); }
+.faq summary { list-style: none; cursor: pointer; padding-block: 24px; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary i { flex: none; transition: transform 500ms var(--ease); }
+.faq details[open] summary i { transform: rotate(45deg); }
+.faq .answer { padding-bottom: 24px; color: var(--muted); }
+.faq .answer p + p, .faq .answer p + pre { margin-top: 12px; }
+.faq pre { padding: 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; font-size: 14px; line-height: 20px; color: var(--text); }
+
+footer { border-top: 1px solid var(--line); padding-block: 48px; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; }
+footer ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+footer a { color: var(--muted); text-decoration: none; transition: color 300ms var(--ease); }
+footer a:hover { color: var(--text); }
+
+/* Scroll reveals (B7) */
+.rise { opacity: 0; transform: translateY(32px); transition: opacity 700ms var(--ease), transform 700ms var(--ease); }
+.rise.in { opacity: 1; transform: none; }
+
+@media (max-width: 720px) {
+  .links { display: none; }
+  .heading-1 { font-size: 36px; line-height: 40px; }
+  .heading-3 { font-size: 30px; line-height: 36px; }
+  section { padding-block: 64px; }
+  .hero { padding-top: 120px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .rise { transform: none; transition: opacity 300ms linear; }
+  .reveal-text span { opacity: 1; transition: none; }
+  .button:hover, .button:active { transform: none; }
+}
+</style>
+</head>
+<body>
+<a class="skip body-6" href="#main">Skip to content</a>
+
+<nav aria-label="Main">
+  <a class="brand title-3" href="#top"><img src="img/icon.png" alt="" width="24" height="24">SpaceDock</a>
+  <ul class="links body-6">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="https://github.com/WicioW/SpaceDock">GitHub</a></li>
+  </ul>
+  <a class="button button-sm" href="https://github.com/WicioW/SpaceDock/releases/latest/download/SpaceDock.dmg"><i class="ph ph-download-simple" aria-hidden="true"></i>Download</a>
+</nav>
+
+<main id="main">
+  <section class="hero center" id="top">
+    <div class="wrap">
+      <img class="icon" src="img/icon.png" alt="SpaceDock icon: a space shuttle carrying three windows" width="96" height="96">
+      <h1 class="heading-1">Your Spaces,<br> back where<br> you left them</h1>
+      <p class="lead title-2">macOS shuffles your Spaces when monitors come and go. SpaceDock remembers their order for every set of displays and puts it back after you plug in or unplug.</p>
+      <div class="cta">
+        <a class="button button-md" href="https://github.com/WicioW/SpaceDock/releases/latest/download/SpaceDock.dmg"><i class="ph ph-download-simple" aria-hidden="true"></i>Download for Mac</a>
+        <div class="brew"><code>brew tap wiciow/spacedock &amp;&amp; brew trust wiciow/spacedock &amp;&amp; brew install --cask spacedock</code><button class="caption-4" type="button" data-copy="brew tap wiciow/spacedock &amp;&amp; brew trust wiciow/spacedock &amp;&amp; brew install --cask spacedock" aria-label="Copy Homebrew command"><i class="ph ph-copy" aria-hidden="true"></i><span>Copy</span></button></div>
+      </div>
+      <ul class="facts caption-2 muted">
+        <li><i class="ph ph-tag" aria-hidden="true"></i>Free</li>
+        <li><i class="ph ph-apple-logo" aria-hidden="true"></i>macOS 15 or later</li>
+        <li><i class="ph ph-lock-simple" aria-hidden="true"></i>Nothing leaves your Mac</li>
+        <li><i class="ph ph-code" aria-hidden="true"></i>Source on GitHub</li>
+      </ul>
+      <div class="shot rise">
+        <img src="img/hero.gif" width="800" height="450" alt="Unplugging a monitor piles every Space on the laptop; SpaceDock puts each one back on its display, in the saved order">
+      </div>
+    </div>
+  </section>
+
+  <section id="problem">
+    <div class="wrap split rise">
+      <div>
+        <h2 class="heading-4">Unplug once, and the order is gone</h2>
+        <p class="body-3 muted">Disconnect a display and macOS moves every Space to the laptop. Connect it again and nothing goes back: full screen apps stay on the wrong screen or land at the end of the bar, and you drag them around in Mission Control by hand.</p>
+      </div>
+      <div>
+        <h2 class="heading-4">SpaceDock puts it back</h2>
+        <p class="body-3 muted">It saves the order of your Spaces for each set of monitors, like “Laptop only” or “Laptop and DELL”. When the displays settle, it restores that order on its own, or when you click Restore.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <h2 class="heading-3 center">What it does</h2>
+      <div class="grid">
+        <article class="card rise">
+          <i class="ph ph-arrows-clockwise" aria-hidden="true"></i>
+          <h3 class="heading-6">Restores on its own</h3>
+          <p class="body-3 muted">After a display connects or disconnects. Or by hand from the window, the menu bar or a shortcut.</p>
+        </article>
+        <article class="card rise">
+          <i class="ph ph-stack" aria-hidden="true"></i>
+          <h3 class="heading-6">Several layouts per monitor set</h3>
+          <p class="body-3 muted">Keep “Work”, “Evening” and “Presentation” for the same desk. Switch with <kbd>⌃</kbd><kbd>⌥</kbd><kbd>1</kbd> to <kbd>9</kbd>; a banner names the one that is on.</p>
+        </article>
+        <article class="card rise">
+          <i class="ph ph-eye" aria-hidden="true"></i>
+          <h3 class="heading-6">Preview before you switch</h3>
+          <p class="body-3 muted">Click another layout to see it without touching the screen. Colors show what would change.</p>
+        </article>
+        <article class="card rise">
+          <i class="ph ph-app-window" aria-hidden="true"></i>
+          <h3 class="heading-6">Reopens missing apps</h3>
+          <p class="body-3 muted">Restore with Missing Apps launches the closed apps of a layout first, then puts every Space in place.</p>
+        </article>
+        <article class="card rise">
+          <i class="ph ph-shield-check" aria-hidden="true"></i>
+          <h3 class="heading-6">Never quits your apps</h3>
+          <p class="body-3 muted">Apps outside the layout can stay or be hidden: hiding only takes them out of full screen and minimizes them.</p>
+        </article>
+        <article class="card rise">
+          <i class="ph ph-keyboard" aria-hidden="true"></i>
+          <h3 class="heading-6">Works from the keyboard</h3>
+          <p class="body-3 muted">Arrow keys walk layouts and monitors in the window, <kbd>Return</kbd> jumps to a Space. English, Polish, Spanish and Chinese.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="tagline" aria-label="In short">
+    <div class="wrap center">
+      <p class="heading-3 reveal-text" data-reveal>macOS forgets where your Spaces go.<br> SpaceDock remembers, for every desk you sit at.</p>
+    </div>
+  </section>
+
+  <section id="look">
+    <div class="wrap">
+      <div class="feature center rise">
+        <h2 class="heading-4">Every monitor set, with its layouts</h2>
+        <p class="body-3 muted">The set that is connected now has a tick. The window shows its Spaces display by display, in the saved order.</p>
+        <picture class="shot">
+          <source media="(prefers-color-scheme: dark)" srcset="img/window-dark.png">
+          <img src="img/window-light.png" width="1100" height="420" loading="lazy" alt="SpaceDock window: monitor sets with their layouts in the sidebar, the Spaces of the layout on screen for the laptop and a DELL monitor">
+        </picture>
+      </div>
+      <div class="feature center rise">
+        <h2 class="heading-4">See the difference first</h2>
+        <p class="body-3 muted">Blue is open now but not in the layout. Red is in the layout but not open. Nothing moves until you click Restore.</p>
+        <picture class="shot">
+          <source media="(prefers-color-scheme: dark)" srcset="img/preview-dark.png">
+          <img src="img/preview-light.png" width="1100" height="650" loading="lazy" alt="Preview of the Evening layout while Work is on screen, differences marked in color">
+        </picture>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap split">
+      <div class="rise">
+        <h2 class="heading-3">Set it up once</h2>
+        <p class="body-3 muted">The first launch needs one extra click, because SpaceDock is not notarized by Apple. Updates come inside the app after that.</p>
+      </div>
+      <ol class="steps rise">
+        <li><div><h3 class="title-2">Arrange your Spaces</h3><p class="body-3 muted">Put full screen apps and desktops in the order you like on the monitors you have now.</p></div></li>
+        <li><div><h3 class="title-2">Save the layout</h3><p class="body-3 muted">Click Save Current Layout and give it a name. Repeat for every monitor set you use.</p></div></li>
+        <li><div><h3 class="title-2">Plug and unplug as usual</h3><p class="body-3 muted">SpaceDock puts the Spaces back when the displays settle.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2 class="heading-3 center">Questions</h2>
+      <div class="faq">
+        <details><summary class="title-2">How do I keep my Spaces in order when I connect an external monitor?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Save a layout in SpaceDock for each monitor set. When you connect or disconnect a display, SpaceDock restores the saved order of Spaces and full screen apps on every screen.</p></div></details>
+        <details><summary class="title-2">How do I open SpaceDock the first time?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Notarization needs a paid Apple Developer Program membership, and SpaceDock is free, so macOS blocks the first launch. Open System Settings → Privacy &amp; Security, scroll down and click Open Anyway. Or run this in Terminal:</p><pre><code>xattr -dr com.apple.quarantine /Applications/SpaceDock.app</code></pre><p>Updates after that install without the prompt.</p></div></details>
+        <details><summary class="title-2">Why does it need the Accessibility permission?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>To read which window is on which Space and to move windows in and out of full screen. Nothing leaves your Mac.</p></div></details>
+        <details><summary class="title-2">Does it use private APIs?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Yes: SkyLight, the framework macOS itself uses for Spaces. It needs no changes to System Integrity Protection. A macOS update can break these calls; SpaceDock then falls back to slower restore methods.</p></div></details>
+        <details><summary class="title-2">Should I turn off “Automatically rearrange Spaces based on most recent use”?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Yes, in System Settings → Desktop &amp; Dock → Mission Control. With it on, macOS reorders Spaces every time you switch, so the saved order drifts even without a monitor change.</p></div></details>
+        <details><summary class="title-2">Does it quit or close my apps?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Never. Hiding apps outside the layout only takes them out of full screen and minimizes them. Restore with Missing Apps opens closed apps, but they start fresh: SpaceDock does not bring back what was open inside them, such as browser tabs.</p></div></details>
+        <details><summary class="title-2">What does it send over the network?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3" id="privacy"><p>Only the daily update check, which downloads <code>appcast.xml</code> from the latest GitHub release; you can turn it off in Settings. Layouts stay in <code>~/Library/Application Support/SpaceDock</code> and contain app names and window titles.</p></div></details>
+        <details><summary class="title-2">How do I uninstall it?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>Quit SpaceDock and delete the app. Optionally remove <code>~/Library/Application Support/SpaceDock</code>, <code>~/Library/Logs/SpaceDock.log</code> and the permission:</p><pre><code>tccutil reset Accessibility io.github.wiciow.spacedock</code></pre></div></details>
+        <details><summary class="title-2">Can I use it at work?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+          <div class="answer body-3"><p>For noncommercial use, yes. SpaceDock is source-available under the PolyForm Noncommercial license; commercial use needs the author's permission, so open an issue on GitHub.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="center" id="download">
+    <div class="wrap rise">
+      <h2 class="heading-3">Put your Spaces back</h2>
+      <p class="lead body-3">Free for macOS 15 or later. Fastest on macOS 26.</p>
+      <div class="cta">
+        <a class="button button-md" href="https://github.com/WicioW/SpaceDock/releases/latest/download/SpaceDock.dmg"><i class="ph ph-download-simple" aria-hidden="true"></i>Download for Mac</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap caption-2">
+    <p class="muted">SpaceDock. For fans of Neon Genesis Evangelion and Akira, there's an easter egg.</p>
+    <ul>
+      <li><a href="https://github.com/WicioW/SpaceDock">GitHub</a></li>
+      <li><a href="https://github.com/WicioW/SpaceDock/releases">Releases</a></li>
+      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="https://github.com/WicioW/SpaceDock/blob/main/LICENSE">License</a></li>
+      <li><a href="https://ko-fi.com/wiciow">Support on Ko‑fi</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Sections rise once as they enter the viewport.
+  const rise = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); rise.unobserve(e.target); }
+  }, { rootMargin: "0px 0px -10% 0px" });
+  document.querySelectorAll(".rise").forEach((el) => rise.observe(el));
+
+  // Tagline: each word lights up as it crosses a line 40% above the bottom of the screen.
+  for (const el of document.querySelectorAll("[data-reveal]")) {
+    const parts = el.innerHTML.split(/(<br>\s*)/);
+    el.innerHTML = parts.map((p) => p.startsWith("<br") ? p : p.split(/(\s+)/).map((w) => w.trim() ? `<span>${w}</span>` : w).join("")).join("");
+    const words = el.querySelectorAll("span");
+    if (still) { words.forEach((w) => w.classList.add("on")); continue; }
+    const light = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { e.target.classList.add("on"); light.unobserve(e.target); }
+    }, { rootMargin: "0px 0px -40% 0px" });
+    words.forEach((w) => light.observe(w));
+  }
+
+  // The nav marks the section in view.
+  const links = [...document.querySelectorAll('.links a[href^="#"]')];
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting)
+      links.forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === "#" + e.target.id ? "true" : "false"));
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  links.forEach((a) => { const s = document.querySelector(a.getAttribute("href")); if (s) spy.observe(s); });
+
+  // Copy the Homebrew command (tap, trust, install).
+  for (const b of document.querySelectorAll("[data-copy]")) {
+    b.addEventListener("click", async () => {
+      const label = b.querySelector("span");
+      try { await navigator.clipboard.writeText(b.dataset.copy); label.textContent = "Copied"; }
+      catch { label.textContent = "Select and copy"; }
+      setTimeout(() => { label.textContent = "Copy"; }, 2000);
+    });
+  }
+})();
+</script>
+</body>
+</html>

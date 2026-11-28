@@ -227,3 +227,16 @@ Sprawdzone lokalnie 2026-11-22: 0.1.0 → 0.1.1 z `localhost`.
 4. **Edycja przeciąganiem w oknie** (zapisany układ), zmiana nazw zestawów.
 5. **Pomocnik systemowy** zamiast `sudoers` (SMAppService / LaunchDaemon) dla wirtualnej myszy.
 6. **Drobne:** Split View w `list`/`restore`.
+
+## Strona (GitHub Pages, od 2026-11-28)
+
+`https://wiciow.github.io/SpaceDock/`, po angielsku, jasny i ciemny motyw według systemu. Źródło:
+`site/index.html` i `site/404.html` (jeden plik HTML, czysty CSS, font Geist, ikony Phosphor);
+obrazki nie mają własnych kopii, `tools/site/build.sh <folder>` składa stronę z `site/`,
+`docs/readme/` (GIF, zrzuty) i ikony apki. Wdraża ją `.github/workflows/pages.yml` (GitHub Actions)
+przy każdym pushu do `main`, który dotyka tych plików; źródło Pages w ustawieniach repo to
+„GitHub Actions”, nie folder, więc reszta `docs/` (notatki po polsku) nie trafia na stronę.
+Przycisk Download prowadzi na stały link `…/releases/latest/download/SpaceDock.dmg`:
+`tools/release.sh` dokłada do każdego wydania kopię DMG o tej nazwie i opis wydania z instrukcją
+instalacji (`--notes` + `--generate-notes`). Podgląd lokalny: `tools/site/build.sh <tmp>/SpaceDock`
+i `python3 -m http.server --directory <tmp>`, adres `http://localhost:<port>/SpaceDock/`.

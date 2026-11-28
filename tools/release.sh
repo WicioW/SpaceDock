@@ -58,6 +58,15 @@ XML
 echo "Appcast: dist/appcast.xml"
 
 if [ "$2" = "--publish" ]; then
-    gh release create "v$VERSION" "$ZIP" "$ZIP.sha256" "$DMG" "$DMG.sha256" dist/appcast.xml --title "SpaceDock $VERSION" --generate-notes
+    # The same DMG under a name that never changes: …/releases/latest/download/SpaceDock.dmg
+    # (website, README, posts) always gets the newest version.
+    cp "$DMG" dist/SpaceDock.dmg
+    NOTES="**Install:** download \`SpaceDock-$VERSION.dmg\` below and drag SpaceDock to Applications. SpaceDock is not notarized: the first time, open System Settings → Privacy & Security and click **Open Anyway**. Homebrew: \`brew tap wiciow/spacedock && brew trust wiciow/spacedock && brew install --cask spacedock\`.
+
+**Update:** SpaceDock offers this version on its own (or menu bar → Check for Updates…).
+
+Requires macOS 15 or later. Website: https://wiciow.github.io/SpaceDock/"
+    gh release create "v$VERSION" "$ZIP" "$ZIP.sha256" "$DMG" "$DMG.sha256" dist/SpaceDock.dmg dist/appcast.xml \
+        --title "SpaceDock $VERSION" --notes "$NOTES" --generate-notes
     tools/update-cask.sh "$VERSION" --publish   # Homebrew: brew install --cask wiciow/spacedock/spacedock
 fi

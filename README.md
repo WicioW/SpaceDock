@@ -20,6 +20,8 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-lightgrey" alt="License: PolyForm Noncommercial"></a>
 </p>
 
+<p align="center"><a href="https://wiciow.github.io/SpaceDock/"><b>Website</b></a> · <a href="../../releases/latest/download/SpaceDock.dmg"><b>Download</b></a></p>
+
 <!-- Hero animation: tools/readme/shots.sh -->
 <p align="center">
   <img src="docs/readme/hero.gif" width="800" alt="Unplugging a monitor piles every Space on the laptop; SpaceDock puts each one back on its display, in the saved order">
@@ -44,8 +46,8 @@ own, or when you click **Restore**.
 
 Requires macOS 15 or later. The fastest restore method needs macOS 26; older systems use a slower one.
 
-1. Download `SpaceDock-<version>.dmg` from [Releases](../../releases/latest) and drag `SpaceDock.app`
-   to `/Applications`.
+1. Download [SpaceDock.dmg](../../releases/latest/download/SpaceDock.dmg) (latest version; all
+   versions in [Releases](../../releases)) and drag `SpaceDock.app` to `/Applications`.
 2. Open it. SpaceDock is not notarized by Apple, so macOS blocks the first launch. Go to
    **System Settings → Privacy & Security** and click **Open Anyway**. Or, in Terminal:
    ```bash

@@ -876,8 +876,10 @@ struct PanelView: View {
                 HStack {
                     Text(verbatim: "SPACEDOCK").font(PanelFont.display(12)).tracking(3).foregroundStyle(th.t)
                     Spacer()
+                    PanelPath(th: th).frame(width: 264, alignment: .leading)   // above the sets rail
                 }
                 .padding(.leading, 82 / scale)   // the window buttons do not scale
+                .padding(.trailing, 14)
                 PanelShuttle(th: th)
             }
             .frame(height: 30)
@@ -1109,6 +1111,24 @@ struct PanelHeader: View {
             .frame(width: 172, height: 84, alignment: .topLeading)
             .padding(.top, 6)
         }
+    }
+}
+
+/// Where the window is, in numbers: "02 > 01 > 02 > 03" and a cursor (set / layout / monitor
+/// from the left / Space on it); the last one red when Enter could not go there.
+struct PanelPath: View {
+    @EnvironmentObject var model: Model
+    let th: PanelTheme
+
+    var body: some View {
+        let p = model.pathNumbers().map { String(format: "%02d", $0) }
+        HStack(spacing: 0) {
+            Text(verbatim: p.dropLast().map { $0 + " > " }.joined()).foregroundStyle(th.k)
+            Text(verbatim: p.last ?? "").foregroundStyle(model.kbNote != nil ? th.e : th.k)
+            th.k.frame(width: 8, height: 13).padding(.leading, 3)
+        }
+        .font(PanelFont.mono(12, .bold)).lineLimit(1)
+        .help(String(localized: "Zestaw > układ > monitor od lewej > przestrzeń"))
     }
 }
 

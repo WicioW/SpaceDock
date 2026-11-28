@@ -134,6 +134,20 @@ final class Model: ObservableObject {
 
     func clearKeyboard() { kbMonitor = nil; kbTile = nil; kbNote = nil }
 
+    /// Where the window is, as numbers (1-based): set / layout / monitor from the left / Space on it.
+    /// As deep as the selection goes: no monitor framed = set / layout.
+    func pathNumbers() -> [Int] {
+        let key = selection ?? current
+        guard let s = profiles.firstIndex(of: key) else { return [] }
+        var p = [s + 1]
+        guard let id = viewed(key)?.id, let l = layouts(key).firstIndex(where: { $0.id == id }) else { return p }
+        p.append(l + 1)
+        guard let m = kbMonitor, let d = displays(key).firstIndex(of: m) else { return p }
+        p.append(d + 1)
+        if let t = kbTile { p.append(t + 1) }
+        return p
+    }
+
     /// The tiles of the framed monitor as the window shows them.
     private func kbTiles() -> [PanelTile] {
         let key = selection ?? current
@@ -1208,6 +1222,10 @@ struct ProfileView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading) }
+        .safeAreaInset(edge: .bottom) {   // where the window is, in numbers, like Finder's path bar
+            VStack(spacing: 0) { Divider(); PathText().frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(.vertical, 6) }
+                .background(.bar)
+        }
     }
 
     private var onScreenCapsule: some View {
@@ -1379,6 +1397,18 @@ struct FirstSteps: View {
                 if !done { action() }
             }
         }
+    }
+}
+
+/// The path in numbers, "2 > 1 > 2 > 3"; the last one red when Enter could not go there.
+struct PathText: View {
+    @EnvironmentObject var model: Model
+    var body: some View {
+        let p = model.pathNumbers().map(String.init)
+        let head = p.dropLast().map { $0 + " > " }.joined()
+        (Text(verbatim: head) + Text(verbatim: p.last ?? "").foregroundColor(model.kbNote != nil ? .red : nil))
+            .font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+            .help("Zestaw > układ > monitor od lewej > przestrzeń")
     }
 }
 

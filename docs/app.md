@@ -110,6 +110,11 @@ działają tylko na wybranym układzie. Ustalenia i design:
   - Esc: z apki do monitora, z monitora bez obwódki. Na końcach list strzałki stoją.
   - Nie działa przy wpisywaniu nazwy, w okienku nowego układu, usuwania i w ustawieniach neon.
     Klik myszą w kafelek albo w inny układ zdejmuje zaznaczenie z klawiatury.
+  - **Ścieżka w numerach** (jak pasek ścieżki w Finderze): zestaw / układ / monitor od lewej /
+    przestrzeń, np. `2 > 1 > 2 > 3`, tak głęboko, jak sięga zaznaczenie (bez obwódki: `2 > 1`).
+    Ostatni numer czerwony, gdy Enter nie mógł przejść. Zwykły wygląd: pasek na dole okna (`PathText`);
+    neon: w wierszu tytułu nad szyną zestawów, `02 > 01 > 02 > 03` z kursorem (`PanelPath`).
+    Liczy `Model.pathNumbers()`.
   - Kod: lokalny monitor klawiszy w `Model.init`, `Model.key(_:)`, stan `kbMonitor`, `kbTile`,
     `kbNote`; render: `panel-shot … -shotKeys "2,1,Nie otwarte"`.
 - **Pasek menu:** sekcja „Układy” z numerami i skrótami; klik przywraca układ.
